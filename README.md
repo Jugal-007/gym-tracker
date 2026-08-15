@@ -1,24 +1,49 @@
-# Gym Logbook
+# Gym Log — Minimal Workout Tracker
 
-I want to make a web app for me that tracks my gym sessions. i can log and see the data of my sessions
+A minimal, powerful web application designed to track and log gym workout sessions in real time. Log exercises, sets, reps, and weights live while training, set rest timers, save custom workout plans/templates, and analyze workout history and progress stats.
 
-This project was built with [Lovable](https://lovable.dev).
+## Features
 
-## Build with Lovable
+- **Live Session Tracking**: Log sets, reps, weights, and rest timers as you work out.
+- **Workout Templates**: Create, save, and launch custom workout plans (e.g., Push/Pull/Legs).
+- **Personal Records (PRs)**: Automatically tracks personal bests (highest weight, max volume, total reps).
+- **History & Logs**: Review past workout sessions with exercise breakdowns.
+- **Analytics & Stats**: Visual graphs and stats (using Recharts) to analyze training volume and progress over time.
+- **Minimalist Dark UI**: Built with a clean, responsive black-and-white minimalist design.
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/359c7c6f-88d8-4cd0-aeeb-f8ae721b2ebb).
+## Tech Stack
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+- **Framework**: React 19, Vite, TanStack Router, TanStack Start
+- **Styling**: Tailwind CSS, Radix UI Primitives, Lucide React Icons
+- **Data Visualization**: Recharts
+- **Storage**: Local Storage
 
-## Development
+## Getting Started
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+### Prerequisites
 
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
-```
+- [Node.js](https://nodejs.org/) (v18 or higher recommended)
+- npm or bun
+
+### Installation
+
+1. Clone the repository:
+   ```sh
+   git clone https://github.com/Jugal-007/gym-tracker.git
+   cd gym-tracker
+   ```
+
+2. Install dependencies:
+   ```sh
+   npm install
+   ```
+
+3. Run the development server:
+   ```sh
+   npm run dev
+   ```
+
+4. Build for production:
+   ```sh
+   npm run build
+   ```
