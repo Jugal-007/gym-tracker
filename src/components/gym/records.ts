@@ -75,7 +75,7 @@ export function buildRecords(sessions: Session[]): Record<string, ExerciseRecord
 export function detectPR(
   record: ExerciseRecord | undefined,
   weight: number,
-  reps: number
+  reps: number,
 ): PRKind | null {
   if (weight <= 0 || reps <= 0) return null;
   if (!record) return "weight";

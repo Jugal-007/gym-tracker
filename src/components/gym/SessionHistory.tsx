@@ -2,10 +2,7 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { ChevronDown, Trash2, Calendar, LayoutTemplate, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  computeSessionSets,
-  computeSessionVolume,
-} from "./storage";
+import { computeSessionSets, computeSessionVolume } from "./storage";
 import type { Session } from "./types";
 
 interface SessionHistoryProps {
@@ -25,11 +22,7 @@ function formatDuration(ms: number): string {
   return `${minutes}m ${seconds}s`;
 }
 
-export function SessionHistory({
-  sessions,
-  onDelete,
-  onSaveTemplate,
-}: SessionHistoryProps) {
+export function SessionHistory({ sessions, onDelete, onSaveTemplate }: SessionHistoryProps) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
 
@@ -67,16 +60,14 @@ export function SessionHistory({
         History ({sessions.length})
       </h2>
       {sorted.map((session, index) => {
-        const duration = session.endedAt
-          ? session.endedAt - session.startedAt
-          : 0;
+        const duration = session.endedAt ? session.endedAt - session.startedAt : 0;
         const sets = computeSessionSets(session);
         const volume = computeSessionVolume(session);
         const isExpanded = expanded[session.id];
         const isDeleting = deletingIds.has(session.id);
         const prs = session.exercises.reduce(
           (sum, ex) => sum + ex.sets.filter((s) => s.pr).length,
-          0
+          0,
         );
 
         return (
@@ -84,13 +75,11 @@ export function SessionHistory({
             key={session.id}
             className={cn(
               "overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-all hover:border-foreground/20 hover:shadow-md",
-              isDeleting && "deleting"
+              isDeleting && "deleting",
             )}
           >
             <button
-              onClick={() =>
-                setExpanded((prev) => ({ ...prev, [session.id]: !isExpanded }))
-              }
+              onClick={() => setExpanded((prev) => ({ ...prev, [session.id]: !isExpanded }))}
               className="flex w-full items-center justify-between px-4 py-4 text-left"
             >
               <div>
@@ -104,9 +93,7 @@ export function SessionHistory({
                   )}
                 </p>
                 {session.templateName && (
-                  <p className="text-xs text-muted-foreground">
-                    {session.templateName}
-                  </p>
+                  <p className="text-xs text-muted-foreground">{session.templateName}</p>
                 )}
                 <p className="text-xs text-muted-foreground">
                   {format(session.startedAt, "h:mm a")} ·{" "}
@@ -126,7 +113,7 @@ export function SessionHistory({
                 <ChevronDown
                   className={cn(
                     "h-4 w-4 text-muted-foreground transition-transform duration-300",
-                    isExpanded && "rotate-180"
+                    isExpanded && "rotate-180",
                   )}
                 />
               </div>
@@ -135,21 +122,19 @@ export function SessionHistory({
             <div
               className={cn(
                 "grid transition-all duration-300 ease-out",
-                isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+                isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
               )}
             >
               <div className="overflow-hidden">
                 <div className="border-t border-border px-4 py-3">
                   {session.exercises.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                      No exercises logged.
-                    </p>
+                    <p className="text-sm text-muted-foreground">No exercises logged.</p>
                   ) : (
                     <ul className="space-y-2">
                       {session.exercises.map((exercise, exIndex) => {
                         const exVolume = exercise.sets.reduce(
                           (sum, set) => sum + set.reps * set.weight,
-                          0
+                          0,
                         );
                         const exPr = exercise.sets.some((set) => set.pr);
                         return (
@@ -174,22 +159,22 @@ export function SessionHistory({
                       Total volume: {volume.toLocaleString()} kg
                     </p>
                     <div className="flex items-center gap-1">
-                    {onSaveTemplate && (
+                      {onSaveTemplate && (
+                        <button
+                          onClick={() => onSaveTemplate(session)}
+                          className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium text-muted-foreground transition-all hover:bg-muted hover:text-foreground active:scale-[0.96]"
+                        >
+                          <LayoutTemplate className="h-3.5 w-3.5" />
+                          Save as template
+                        </button>
+                      )}
                       <button
-                        onClick={() => onSaveTemplate(session)}
-                        className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium text-muted-foreground transition-all hover:bg-muted hover:text-foreground active:scale-[0.96]"
+                        onClick={() => handleDelete(session.id)}
+                        className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium text-destructive transition-all hover:bg-destructive/10 active:scale-[0.96]"
                       >
-                        <LayoutTemplate className="h-3.5 w-3.5" />
-                        Save as template
+                        <Trash2 className="h-3.5 w-3.5" />
+                        Delete
                       </button>
-                    )}
-                    <button
-                      onClick={() => handleDelete(session.id)}
-                      className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium text-destructive transition-all hover:bg-destructive/10 active:scale-[0.96]"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                      Delete
-                    </button>
                     </div>
                   </div>
                 </div>

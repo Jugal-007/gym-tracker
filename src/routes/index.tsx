@@ -13,12 +13,7 @@ import {
   sessionFromTemplate,
   templateFromSession,
 } from "@/components/gym/templates";
-import {
-  generateId,
-  getExerciseNames,
-  loadSessions,
-  saveSessions,
-} from "@/components/gym/storage";
+import { generateId, getExerciseNames, loadSessions, saveSessions } from "@/components/gym/storage";
 import type { Session, Template } from "@/components/gym/types";
 import { cn } from "@/lib/utils";
 
@@ -34,8 +29,7 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "LFT — Minimal Workout Tracker" },
       {
         property: "og:description",
-        content:
-          "Track your gym sessions with a minimal black-and-white workout logger.",
+        content: "Track your gym sessions with a minimal black-and-white workout logger.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -66,10 +60,7 @@ function Index() {
     saveTemplates(templates);
   }, [templates]);
 
-  const exerciseNames = useMemo(
-    () => getExerciseNames(sessions),
-    [sessions]
-  );
+  const exerciseNames = useMemo(() => getExerciseNames(sessions), [sessions]);
 
   const records = useMemo(() => buildRecords(sessions), [sessions]);
 
@@ -112,18 +103,14 @@ function Index() {
   function saveTemplate(template: Template) {
     setTemplates((prev) => {
       const exists = prev.some((t) => t.id === template.id);
-      return exists
-        ? prev.map((t) => (t.id === template.id ? template : t))
-        : [template, ...prev];
+      return exists ? prev.map((t) => (t.id === template.id ? template : t)) : [template, ...prev];
     });
   }
 
   function saveSessionAsTemplate(session: Session) {
     const name =
       session.templateName ??
-      (session.exercises[0]?.name
-        ? `${session.exercises[0].name} day`
-        : "New template");
+      (session.exercises[0]?.name ? `${session.exercises[0].name} day` : "New template");
     saveTemplate(templateFromSession(session, name));
     setView("templates");
   }
@@ -161,9 +148,7 @@ function Index() {
             className="flex items-center gap-2 text-foreground transition-opacity hover:opacity-70"
           >
             <Dumbbell className="h-6 w-6" />
-            <span className="whitespace-nowrap text-lg font-extrabold tracking-wider">
-              LFT
-            </span>
+            <span className="whitespace-nowrap text-lg font-extrabold tracking-wider">LFT</span>
           </button>
           <TabNav view={view} setView={setView} />
         </div>
@@ -265,10 +250,7 @@ function TabNav({ view, setView }: { view: View; setView: (v: View) => void }) {
     <nav ref={navRef} className="relative flex items-center gap-1">
       {/* Sliding pill indicator */}
       <div
-        className={cn(
-          "tab-indicator",
-          indicator.ready ? "opacity-100" : "opacity-0"
-        )}
+        className={cn("tab-indicator", indicator.ready ? "opacity-100" : "opacity-0")}
         style={{
           width: indicator.width,
           transform: `translate3d(${indicator.x}px, 0, 0)`,
@@ -286,7 +268,7 @@ function TabNav({ view, setView }: { view: View; setView: (v: View) => void }) {
             "px-2 sm:px-3",
             view === tab.key
               ? "text-primary-foreground"
-              : "text-muted-foreground hover:text-foreground"
+              : "text-muted-foreground hover:text-foreground",
           )}
         >
           {tab.icon}
@@ -329,12 +311,8 @@ function LandingView({
   return (
     <div className="mx-auto max-w-xl">
       <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">
-          Ready to train?
-        </h1>
-        <p className="mt-2 text-muted-foreground">
-          Start a session and log your sets as you go.
-        </p>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">Ready to train?</h1>
+        <p className="mt-2 text-muted-foreground">Start a session and log your sets as you go.</p>
       </div>
 
       <div className="mb-8 flex items-end gap-2">
@@ -392,9 +370,7 @@ function LandingView({
                 className="flex w-full items-center justify-between rounded-xl border border-border bg-card px-4 py-3 text-left transition-all hover:border-foreground/30 hover:-translate-y-0.5 hover:shadow-sm active:scale-[0.99]"
               >
                 <span>
-                  <span className="block font-medium text-foreground">
-                    {template.name}
-                  </span>
+                  <span className="block font-medium text-foreground">{template.name}</span>
                   <span className="text-xs text-muted-foreground">
                     {template.exercises.length} exercises
                   </span>

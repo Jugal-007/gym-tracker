@@ -67,12 +67,12 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
   const records = useMemo(() => buildRecords(sessions), [sessions]);
   const recordList = useMemo(
     () => Object.values(records).sort((a, b) => b.bestE1rm - a.bestE1rm),
-    [records]
+    [records],
   );
 
   const ordered = useMemo(
     () => [...sessions].sort((a, b) => a.startedAt - b.startedAt),
-    [sessions]
+    [sessions],
   );
 
   const volumeSeries = useMemo(
@@ -81,7 +81,7 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
         label: format(session.startedAt, "MMM d"),
         volume: computeSessionVolume(session),
       })),
-    [ordered]
+    [ordered],
   );
 
   const weekSeries = useMemo(() => {
@@ -99,10 +99,7 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
       }));
   }, [ordered]);
 
-  const exerciseOptions = useMemo(
-    () => recordList.map((record) => record.name),
-    [recordList]
-  );
+  const exerciseOptions = useMemo(() => recordList.map((record) => record.name), [recordList]);
   const activeExercise = selectedExercise || exerciseOptions[0] || "";
 
   const progressSeries = useMemo(() => {
@@ -134,9 +131,7 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
     const totalVolume = sessions.reduce((s, x) => s + computeSessionVolume(x), 0);
     const totalSets = sessions.reduce((s, x) => s + computeSessionSets(x), 0);
     const weeks = new Set(
-      sessions.map((s) =>
-        startOfWeek(s.startedAt, { weekStartsOn: 1 }).getTime()
-      )
+      sessions.map((s) => startOfWeek(s.startedAt, { weekStartsOn: 1 }).getTime()),
     );
     const perWeek = weeks.size ? sessions.length / weeks.size : 0;
     return {
@@ -218,7 +213,10 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
             <CartesianGrid strokeDasharray="2 4" stroke="var(--border)" vertical={false} />
             <XAxis dataKey="label" {...axisProps} />
             <YAxis allowDecimals={false} {...axisProps} width={34} />
-            <Tooltip content={<MonoTooltip suffix=" sessions" />} cursor={{ fill: "var(--muted)" }} />
+            <Tooltip
+              content={<MonoTooltip suffix=" sessions" />}
+              cursor={{ fill: "var(--muted)" }}
+            />
             <Bar
               dataKey="sessions"
               fill="var(--foreground)"
@@ -251,7 +249,10 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
               <CartesianGrid strokeDasharray="2 4" stroke="var(--border)" vertical={false} />
               <XAxis dataKey="label" {...axisProps} />
               <YAxis {...axisProps} width={44} />
-              <Tooltip content={<MonoTooltip suffix=" kg" />} cursor={{ stroke: "var(--border)" }} />
+              <Tooltip
+                content={<MonoTooltip suffix=" kg" />}
+                cursor={{ stroke: "var(--border)" }}
+              />
               <Line
                 type="monotone"
                 dataKey="e1rm"
@@ -283,10 +284,7 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
         </h3>
         <ul className="divide-y divide-border">
           {recordList.map((record) => (
-            <li
-              key={record.name}
-              className="flex items-center justify-between py-2.5"
-            >
+            <li key={record.name} className="flex items-center justify-between py-2.5">
               <span className="text-sm font-medium text-foreground">{record.name}</span>
               <span className="text-right text-xs text-muted-foreground">
                 <span className="block font-mono text-sm text-foreground">
@@ -317,9 +315,7 @@ function StatCard({
   delay?: number;
 }) {
   const animatedValue = useCountUp(Math.round(value), 450);
-  const displayValue = isDecimal
-    ? value.toFixed(1)
-    : animatedValue.toLocaleString();
+  const displayValue = isDecimal ? value.toFixed(1) : animatedValue.toLocaleString();
 
   return (
     <div className="rounded-xl border border-border bg-card p-4 shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
@@ -328,7 +324,8 @@ function StatCard({
         {label}
       </p>
       <p className="mt-1 font-mono text-xl font-semibold text-foreground">
-        {displayValue}{suffix ?? ""}
+        {displayValue}
+        {suffix ?? ""}
       </p>
     </div>
   );
@@ -374,9 +371,7 @@ function MonoTooltip({
       {payload.map((entry, i) => (
         <p key={i} className="font-mono text-muted-foreground">
           {entry.name ? `${entry.name}: ` : ""}
-          {typeof entry.value === "number"
-            ? entry.value.toLocaleString()
-            : entry.value}
+          {typeof entry.value === "number" ? entry.value.toLocaleString() : entry.value}
           {suffix}
         </p>
       ))}

@@ -2,19 +2,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Trash2, Plus, Clock, Dumbbell, Trophy, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ExerciseNameInput } from "./ExerciseNameInput";
-import {
-  computeSessionSets,
-  computeSessionVolume,
-  generateId,
-} from "./storage";
+import { computeSessionSets, computeSessionVolume, generateId } from "./storage";
 import { PR_LABEL, detectPR, normalizeName } from "./records";
-import type {
-  Exercise,
-  ExerciseRecord,
-  PRKind,
-  Session,
-  WorkoutSet,
-} from "./types";
+import type { Exercise, ExerciseRecord, PRKind, Session, WorkoutSet } from "./types";
 
 interface ActiveSessionProps {
   session: Session;
@@ -45,7 +35,7 @@ function DigitSlot({ digit }: { digit: string }) {
         key={digit}
         className={cn(
           "inline-block w-full text-center will-change-transform",
-          animating && "animate-digit-scroll"
+          animating && "animate-digit-scroll",
         )}
       >
         {digit}
@@ -56,9 +46,7 @@ function DigitSlot({ digit }: { digit: string }) {
 
 function ColonSeparator() {
   return (
-    <span className="inline-block px-[1px] font-mono select-none opacity-60 align-middle">
-      :
-    </span>
+    <span className="inline-block px-[1px] font-mono select-none opacity-60 align-middle">:</span>
   );
 }
 
@@ -109,12 +97,8 @@ export function ActiveSession({
   const totalVolume = useMemo(() => computeSessionVolume(session), [session]);
   const totalSets = useMemo(() => computeSessionSets(session), [session]);
   const prCount = useMemo(
-    () =>
-      session.exercises.reduce(
-        (sum, ex) => sum + ex.sets.filter((set) => set.pr).length,
-        0
-      ),
-    [session]
+    () => session.exercises.reduce((sum, ex) => sum + ex.sets.filter((set) => set.pr).length, 0),
+    [session],
   );
 
   function addExercise() {
@@ -131,9 +115,7 @@ export function ActiveSession({
 
   function addSet(exerciseId: string, reps: number, weight: number) {
     const exercise = session.exercises.find((ex) => ex.id === exerciseId);
-    const record = exercise
-      ? records[normalizeName(exercise.name)]
-      : undefined;
+    const record = exercise ? records[normalizeName(exercise.name)] : undefined;
     // Also respect PRs already set earlier in this same session.
     const liveRecord = exercise
       ? exercise.sets.reduce(
@@ -153,7 +135,7 @@ export function ActiveSession({
             totalSets: 0,
             lastPerformedAt: 0,
             achievedAt: 0,
-          }
+          },
         )
       : record;
     const pr =
@@ -170,7 +152,7 @@ export function ActiveSession({
     onUpdate({
       ...session,
       exercises: session.exercises.map((ex) =>
-        ex.id === exerciseId ? { ...ex, sets: [...ex.sets, set] } : ex
+        ex.id === exerciseId ? { ...ex, sets: [...ex.sets, set] } : ex,
       ),
     });
   }
@@ -183,12 +165,10 @@ export function ActiveSession({
           ? {
               ...ex,
               sets: ex.sets.map((set) =>
-                set.id === setId
-                  ? { ...set, completed: !set.completed }
-                  : set
+                set.id === setId ? { ...set, completed: !set.completed } : set,
               ),
             }
-          : ex
+          : ex,
       ),
     });
   }
@@ -197,9 +177,7 @@ export function ActiveSession({
     onUpdate({
       ...session,
       exercises: session.exercises.map((ex) =>
-        ex.id === exerciseId
-          ? { ...ex, sets: ex.sets.filter((set) => set.id !== setId) }
-          : ex
+        ex.id === exerciseId ? { ...ex, sets: ex.sets.filter((set) => set.id !== setId) } : ex,
       ),
     });
   }
@@ -285,9 +263,7 @@ export function ActiveSession({
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-border animate-float">
               <Dumbbell className="h-8 w-8 text-muted-foreground" />
             </div>
-            <p className="text-muted-foreground">
-              Add your first exercise to start logging sets.
-            </p>
+            <p className="text-muted-foreground">Add your first exercise to start logging sets.</p>
           </div>
         )}
 
@@ -329,12 +305,8 @@ function ExerciseCard({
   onDeleteSet,
   onDeleteExercise,
 }: ExerciseCardProps) {
-  const [reps, setReps] = useState(
-    exercise.targetReps ? String(exercise.targetReps) : ""
-  );
-  const [weight, setWeight] = useState(
-    exercise.targetWeight ? String(exercise.targetWeight) : ""
-  );
+  const [reps, setReps] = useState(exercise.targetReps ? String(exercise.targetReps) : "");
+  const [weight, setWeight] = useState(exercise.targetWeight ? String(exercise.targetWeight) : "");
   const [addGlow, setAddGlow] = useState(false);
 
   const canAdd = !!reps && !!weight;
@@ -360,7 +332,7 @@ function ExerciseCard({
 
   const volume = useMemo(
     () => exercise.sets.reduce((sum, set) => sum + set.reps * set.weight, 0),
-    [exercise.sets]
+    [exercise.sets],
   );
 
   return (
@@ -406,9 +378,7 @@ function ExerciseCard({
 
       <div className="flex items-end gap-2">
         <div className="flex-1">
-          <label className="mb-1 block text-xs font-medium text-muted-foreground">
-            Reps
-          </label>
+          <label className="mb-1 block text-xs font-medium text-muted-foreground">Reps</label>
           <input
             type="number"
             inputMode="numeric"
@@ -445,7 +415,7 @@ function ExerciseCard({
           disabled={!reps || !weight}
           className={cn(
             "inline-flex items-center justify-center rounded-lg bg-secondary p-2.5 text-secondary-foreground transition-all hover:bg-secondary/80 active:scale-[0.96] disabled:opacity-40 disabled:active:scale-100",
-            addGlow && "animate-border-glow"
+            addGlow && "animate-border-glow",
           )}
           aria-label="Add set"
         >
@@ -492,7 +462,7 @@ function SetRow({ set, index, onToggle, onDelete }: SetRowProps) {
         deleting && "deleting",
         set.completed && !justCompleted && "bg-muted/50",
         justCompleted && "set-completed-sweep",
-        set.pr && "border-foreground shadow-sm"
+        set.pr && "border-foreground shadow-sm",
       )}
     >
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1">
@@ -503,18 +473,12 @@ function SetRow({ set, index, onToggle, onDelete }: SetRowProps) {
             set.completed
               ? "border-foreground bg-foreground text-primary-foreground"
               : "border-border text-transparent hover:border-foreground/50",
-            justCompleted && "check-ripple"
+            justCompleted && "check-ripple",
           )}
           aria-label={set.completed ? "Mark incomplete" : "Mark complete"}
         >
           {set.completed ? (
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 14 14"
-              fill="none"
-              className="relative z-10"
-            >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="relative z-10">
               <path
                 d="M3 7.5L6 10.5L11 4"
                 stroke="currentColor"
@@ -537,9 +501,7 @@ function SetRow({ set, index, onToggle, onDelete }: SetRowProps) {
           )}
         </button>
         <div>
-          <p className="text-sm font-medium text-foreground">
-            Set {index + 1}
-          </p>
+          <p className="text-sm font-medium text-foreground">Set {index + 1}</p>
           <p className="text-xs text-muted-foreground">
             {set.reps} reps × {set.weight} kg
           </p>

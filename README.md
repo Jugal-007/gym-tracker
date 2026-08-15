@@ -38,17 +38,20 @@ A minimalist, high-focus web application designed to track and log gym workout s
 ### Installation
 
 1. Clone the repository:
+
    ```sh
    git clone https://github.com/Jugal-007/gym-tracker.git
    cd gym-tracker
    ```
 
 2. Install dependencies:
+
    ```sh
    npm install
    ```
 
 3. Run the development server:
+
    ```sh
    npm run dev
    ```

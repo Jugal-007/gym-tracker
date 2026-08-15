@@ -14,13 +14,7 @@ interface TemplatesProps {
   onDelete: (id: string) => void;
 }
 
-export function Templates({
-  templates,
-  exerciseNames,
-  onStart,
-  onSave,
-  onDelete,
-}: TemplatesProps) {
+export function Templates({ templates, exerciseNames, onStart, onSave, onDelete }: TemplatesProps) {
   const [editing, setEditing] = useState<Template | null>(null);
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
 
@@ -90,7 +84,7 @@ export function Templates({
             key={template.id}
             className={cn(
               "rounded-xl border border-border bg-card p-4 shadow-sm transition-all hover:border-foreground/20 hover:shadow-md",
-              deletingIds.has(template.id) && "deleting"
+              deletingIds.has(template.id) && "deleting",
             )}
           >
             <div className="flex items-start justify-between gap-3">
@@ -102,10 +96,7 @@ export function Templates({
                 </p>
                 <ul className="mt-3 space-y-1">
                   {template.exercises.map((exercise) => (
-                    <li
-                      key={exercise.id}
-                      className="flex items-center justify-between text-sm"
-                    >
+                    <li key={exercise.id} className="flex items-center justify-between text-sm">
                       <span className="text-foreground">{exercise.name}</span>
                       <span className="font-mono text-xs text-muted-foreground">
                         {exercise.targetSets}×{exercise.targetReps} @ {exercise.targetWeight} kg
@@ -145,27 +136,19 @@ interface TemplateEditorProps {
   onSave: (template: Template) => void;
 }
 
-function TemplateEditor({
-  template,
-  exerciseNames,
-  onCancel,
-  onSave,
-}: TemplateEditorProps) {
+function TemplateEditor({ template, exerciseNames, onCancel, onSave }: TemplateEditorProps) {
   const [name, setName] = useState(template.name);
   const [exercises, setExercises] = useState<TemplateExercise[]>(
-    template.exercises.length ? template.exercises : [emptyTemplateExercise()]
+    template.exercises.length ? template.exercises : [emptyTemplateExercise()],
   );
 
   function update(id: string, patch: Partial<TemplateExercise>) {
     setExercises((prev) =>
-      prev.map((exercise) =>
-        exercise.id === id ? { ...exercise, ...patch } : exercise
-      )
+      prev.map((exercise) => (exercise.id === id ? { ...exercise, ...patch } : exercise)),
     );
   }
 
-  const canSave =
-    name.trim().length > 0 && exercises.some((exercise) => exercise.name.trim());
+  const canSave = name.trim().length > 0 && exercises.some((exercise) => exercise.name.trim());
 
   return (
     <div className="mx-auto max-w-xl space-y-4 animate-fade-in">
@@ -196,10 +179,7 @@ function TemplateEditor({
 
       <div className="space-y-3">
         {exercises.map((exercise) => (
-          <div
-            key={exercise.id}
-            className="rounded-xl border border-border bg-card p-4 shadow-sm"
-          >
+          <div key={exercise.id} className="rounded-xl border border-border bg-card p-4 shadow-sm">
             <div className="mb-3 flex items-end gap-2">
               <ExerciseNameInput
                 suggestions={exerciseNames}
@@ -209,9 +189,7 @@ function TemplateEditor({
                 placeholder="Exercise name..."
               />
               <button
-                onClick={() =>
-                  setExercises((prev) => prev.filter((e) => e.id !== exercise.id))
-                }
+                onClick={() => setExercises((prev) => prev.filter((e) => e.id !== exercise.id))}
                 className="inline-flex items-center justify-center rounded-lg p-2.5 text-muted-foreground transition-all hover:bg-destructive/10 hover:text-destructive active:scale-[0.96]"
                 aria-label="Remove exercise"
               >
@@ -278,9 +256,7 @@ function NumberField({
 }) {
   return (
     <div>
-      <label className="mb-1 block text-xs font-medium text-muted-foreground">
-        {label}
-      </label>
+      <label className="mb-1 block text-xs font-medium text-muted-foreground">{label}</label>
       <input
         type="number"
         min={0}

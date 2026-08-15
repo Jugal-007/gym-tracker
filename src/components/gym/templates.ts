@@ -1,15 +1,43 @@
+import { z } from "zod";
 import { generateId } from "./storage";
 import type { Session, Template, TemplateExercise } from "./types";
 
 const TEMPLATES_KEY = "gym-tracker-templates-v1";
+
+const TemplateExerciseSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  targetSets: z.number().nonnegative(),
+  targetReps: z.number().nonnegative(),
+  targetWeight: z.number().nonnegative(),
+});
+
+const TemplateSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  exercises: z.array(TemplateExerciseSchema),
+  createdAt: z.number(),
+});
+
+const TemplatesListSchema = z.array(TemplateSchema);
 
 export function loadTemplates(): Template[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = window.localStorage.getItem(TEMPLATES_KEY);
     if (!raw) return [];
-    const parsed = JSON.parse(raw) as Template[];
-    return Array.isArray(parsed) ? parsed : [];
+    const parsed = JSON.parse(raw);
+    const result = TemplatesListSchema.safeParse(parsed);
+    if (result.success) {
+      return result.data;
+    }
+    if (Array.isArray(parsed)) {
+      return parsed
+        .map((item) => TemplateSchema.safeParse(item))
+        .filter((res): res is z.SafeParseSuccess<Template> => res.success)
+        .map((res) => res.data);
+    }
+    return [];
   } catch {
     return [];
   }
@@ -37,10 +65,10 @@ export function templateFromSession(session: Session, name: string): Template {
     name: name.trim() || "Untitled template",
     createdAt: Date.now(),
     exercises: session.exercises.map((exercise) => {
-      const best = exercise.sets.reduce(
-        (top, set) => (set.weight > top.weight ? set : top),
-        { weight: 0, reps: 8 } as { weight: number; reps: number }
-      );
+      const best = exercise.sets.reduce((top, set) => (set.weight > top.weight ? set : top), {
+        weight: 0,
+        reps: 8,
+      } as { weight: number; reps: number });
       return {
         id: generateId(),
         name: exercise.name,

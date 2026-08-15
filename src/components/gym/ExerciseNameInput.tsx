@@ -23,17 +23,12 @@ export function ExerciseNameInput({
   const filtered = useMemo(() => {
     const query = value.trim().toLowerCase();
     if (!query) return suggestions.slice(0, 6);
-    return suggestions
-      .filter((name) => name.toLowerCase().includes(query))
-      .slice(0, 6);
+    return suggestions.filter((name) => name.toLowerCase().includes(query)).slice(0, 6);
   }, [suggestions, value]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setOpen(false);
       }
     }
@@ -70,7 +65,7 @@ export function ExerciseNameInput({
         className={cn(
           "w-full rounded-lg border border-border bg-background px-4 py-3 text-base text-foreground outline-none transition-all",
           "focus:border-foreground focus:ring-2 focus:ring-foreground/10",
-          "placeholder:text-muted-foreground"
+          "placeholder:text-muted-foreground",
         )}
       />
       {open && filtered.length > 0 && (
@@ -80,7 +75,7 @@ export function ExerciseNameInput({
               key={name}
               className={cn(
                 "cursor-pointer px-4 py-3 text-sm text-foreground transition-colors hover:bg-muted",
-                index !== filtered.length - 1 && "border-b border-border"
+                index !== filtered.length - 1 && "border-b border-border",
               )}
               style={{ animationDelay: `${index * 30}ms` }}
               onClick={() => handleSelect(name)}
