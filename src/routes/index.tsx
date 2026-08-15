@@ -208,6 +208,8 @@ function Index() {
               templates={templates}
               onStartTemplate={startFromTemplate}
               onManageTemplates={() => setView("templates")}
+              onDeleteSession={deleteSession}
+              onSaveTemplate={saveSessionAsTemplate}
             />
           )}
         </div>
@@ -307,6 +309,8 @@ interface LandingViewProps {
   templates: Template[];
   onStartTemplate: (template: Template) => void;
   onManageTemplates: () => void;
+  onDeleteSession: (id: string) => void;
+  onSaveTemplate: (session: Session) => void;
 }
 
 function LandingView({
@@ -319,6 +323,8 @@ function LandingView({
   templates,
   onStartTemplate,
   onManageTemplates,
+  onDeleteSession,
+  onSaveTemplate,
 }: LandingViewProps) {
   return (
     <div className="mx-auto max-w-xl">
@@ -405,7 +411,11 @@ function LandingView({
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
             Recent sessions
           </h2>
-          <SessionHistory sessions={recentSessions} onDelete={() => {}} />
+          <SessionHistory
+            sessions={recentSessions}
+            onDelete={onDeleteSession}
+            onSaveTemplate={onSaveTemplate}
+          />
         </div>
       )}
     </div>
