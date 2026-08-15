@@ -24,7 +24,7 @@ function DigitSlot({ digit }: { digit: string }) {
     if (prevRef.current !== digit) {
       prevRef.current = digit;
       setAnimating(true);
-      const timer = setTimeout(() => setAnimating(false), 240);
+      const timer = setTimeout(() => setAnimating(false), 360);
       return () => clearTimeout(timer);
     }
   }, [digit]);

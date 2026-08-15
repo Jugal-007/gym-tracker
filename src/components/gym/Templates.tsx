@@ -36,7 +36,7 @@ export function Templates({ templates, exerciseNames, onStart, onSave, onDelete 
         next.delete(id);
         return next;
       });
-    }, 350);
+    }, 400);
   }
 
   if (editing) {

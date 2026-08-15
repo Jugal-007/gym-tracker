@@ -264,11 +264,11 @@
   }
 }
 
-/* Single-digit rolling counter scroll (top to bottom entry, GPU accelerated) */
+/* Soft ease-in-out single-digit rolling counter scroll */
 @keyframes digit-scroll {
   0% {
-    transform: translateY(60%);
-    opacity: 0.2;
+    transform: translateY(35%);
+    opacity: 0;
   }
   100% {
     transform: translateY(0);
@@ -278,7 +278,7 @@
 
 .animate-digit-scroll {
   display: inline-block;
-  animation: digit-scroll 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: digit-scroll 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   will-change: transform, opacity;
 }
 
@@ -330,23 +330,23 @@
   }
 }
 
-/* Slide out + collapse for delete */
+/* Soft slide-out and height collapse for delete */
 @keyframes slide-out-collapse {
   0% {
     opacity: 1;
-    transform: translateX(0);
-    max-height: 160px;
+    transform: scale(1) translateY(0);
+    max-height: 240px;
     margin-bottom: 0.75rem;
   }
-  60% {
+  40% {
     opacity: 0;
-    transform: translateX(30px);
-    max-height: 160px;
+    transform: scale(0.97) translateY(-4px);
+    max-height: 240px;
     margin-bottom: 0.75rem;
   }
   100% {
     opacity: 0;
-    transform: translateX(30px);
+    transform: scale(0.95) translateY(-8px);
     max-height: 0;
     margin-bottom: 0;
     padding-top: 0;
@@ -405,7 +405,7 @@
 
 /* Item being deleted */
 .deleting {
-  animation: slide-out-collapse 0.3s ease-out forwards;
+  animation: slide-out-collapse 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   pointer-events: none;
 }
 

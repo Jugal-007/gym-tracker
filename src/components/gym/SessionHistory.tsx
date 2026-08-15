@@ -35,7 +35,7 @@ export function SessionHistory({ sessions, onDelete, onSaveTemplate }: SessionHi
         next.delete(id);
         return next;
       });
-    }, 350);
+    }, 400);
   }
 
   if (sessions.length === 0) {
@@ -112,7 +112,7 @@ export function SessionHistory({ sessions, onDelete, onSaveTemplate }: SessionHi
                 {/* Chevron with rotation animation */}
                 <ChevronDown
                   className={cn(
-                    "h-4 w-4 text-muted-foreground transition-transform duration-300",
+                    "h-4 w-4 text-muted-foreground transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
                     isExpanded && "rotate-180",
                   )}
                 />
@@ -121,7 +121,7 @@ export function SessionHistory({ sessions, onDelete, onSaveTemplate }: SessionHi
 
             <div
               className={cn(
-                "grid transition-all duration-300 ease-out",
+                "grid transition-all duration-350 ease-[cubic-bezier(0.4,0,0.2,1)]",
                 isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
               )}
             >
