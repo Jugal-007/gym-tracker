@@ -25,42 +25,65 @@ interface ActiveSessionProps {
   onCancel: () => void;
 }
 
-function formatDuration(ms: number): string {
-  const totalSeconds = Math.floor(ms / 1000);
+/* ─── Single-digit rolling counter slot ─── */
+function DigitSlot({ digit }: { digit: string }) {
+  const prevRef = useRef(digit);
+  const [animating, setAnimating] = useState(false);
+
+  useEffect(() => {
+    if (prevRef.current !== digit) {
+      prevRef.current = digit;
+      setAnimating(true);
+      const timer = setTimeout(() => setAnimating(false), 240);
+      return () => clearTimeout(timer);
+    }
+  }, [digit]);
+
+  return (
+    <span className="relative inline-block h-[1.15em] w-[0.62em] overflow-hidden align-middle font-mono tabular-nums text-center select-none">
+      <span
+        key={digit}
+        className={cn(
+          "inline-block w-full text-center will-change-transform",
+          animating && "animate-digit-scroll"
+        )}
+      >
+        {digit}
+      </span>
+    </span>
+  );
+}
+
+function ColonSeparator() {
+  return (
+    <span className="inline-block px-[1px] font-mono select-none opacity-60 align-middle">
+      :
+    </span>
+  );
+}
+
+export function TimerDisplay({ ms }: { ms: number }) {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
-  if (hours > 0) {
-    return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
-  }
-  return `${minutes}:${String(seconds).padStart(2, "0")}`;
-}
 
-/* ─── Animated digit display for the timer ─── */
-function TimerDigits({ value }: { value: string }) {
-  const prevRef = useRef(value);
-  const [animKey, setAnimKey] = useState(0);
-
-  useEffect(() => {
-    if (value !== prevRef.current) {
-      prevRef.current = value;
-      setAnimKey((k) => k + 1);
-    }
-  }, [value]);
+  const mStr = String(minutes).padStart(2, "0");
+  const sStr = String(seconds).padStart(2, "0");
 
   return (
-    <span className="inline-flex overflow-hidden">
-      {value.split("").map((char, i) => (
-        <span
-          key={`${i}-${char}-${animKey}`}
-          className={cn(
-            "inline-block",
-            char !== ":" && "animate-flip-digit"
-          )}
-        >
-          {char}
-        </span>
-      ))}
+    <span className="inline-flex items-center font-mono text-3xl font-semibold tracking-tight text-foreground tabular-nums select-none">
+      {hours > 0 && (
+        <>
+          <DigitSlot digit={String(hours)} />
+          <ColonSeparator />
+        </>
+      )}
+      <DigitSlot digit={mStr[0]} />
+      <DigitSlot digit={mStr[1]} />
+      <ColonSeparator />
+      <DigitSlot digit={sStr[0]} />
+      <DigitSlot digit={sStr[1]} />
     </span>
   );
 }
@@ -192,8 +215,6 @@ export function ActiveSession({
     onFinish({ ...session, endedAt: Date.now() });
   }
 
-  const timerStr = formatDuration(elapsed);
-
   return (
     <div className="mx-auto max-w-xl animate-fade-in">
       <div className="sticky top-0 z-10 mb-6 border-b border-border bg-background/95 px-4 py-4 backdrop-blur-sm">
@@ -206,9 +227,7 @@ export function ActiveSession({
               <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 Live session
               </p>
-              <p className="font-mono text-3xl font-semibold tracking-tight text-foreground">
-                <TimerDigits value={timerStr} />
-              </p>
+              <TimerDisplay ms={elapsed} />
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -345,10 +364,7 @@ function ExerciseCard({
   );
 
   return (
-    <div
-      className="animate-slide-up rounded-xl border border-border bg-card p-4 shadow-sm transition-shadow hover:shadow-md"
-      style={{ animationDelay: `${index * 60}ms` }}
-    >
+    <div className="rounded-xl border border-border bg-card p-4 shadow-sm transition-all duration-150 hover:shadow-md">
       <div className="mb-3 flex items-center justify-between">
         <div>
           <h3 className="font-semibold text-foreground">{exercise.name}</h3>

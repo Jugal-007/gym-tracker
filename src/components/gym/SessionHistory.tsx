@@ -83,10 +83,9 @@ export function SessionHistory({
           <div
             key={session.id}
             className={cn(
-              "animate-slide-up overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-all hover:border-foreground/20 hover:shadow-md",
+              "overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-all hover:border-foreground/20 hover:shadow-md",
               isDeleting && "deleting"
             )}
-            style={{ animationDelay: `${index * 60}ms` }}
           >
             <button
               onClick={() =>
@@ -156,11 +155,7 @@ export function SessionHistory({
                         return (
                           <li
                             key={exercise.id}
-                            className={cn(
-                              "flex items-center justify-between text-sm",
-                              isExpanded && "animate-slide-up"
-                            )}
-                            style={isExpanded ? { animationDelay: `${exIndex * 40}ms` } : undefined}
+                            className="flex items-center justify-between text-sm py-0.5"
                           >
                             <span className="flex items-center gap-1.5 font-medium text-foreground">
                               {exercise.name}

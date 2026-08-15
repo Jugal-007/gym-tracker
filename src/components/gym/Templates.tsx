@@ -85,14 +85,13 @@ export function Templates({
           </p>
         </div>
       ) : (
-        templates.map((template, index) => (
+        templates.map((template) => (
           <div
             key={template.id}
             className={cn(
-              "animate-slide-up rounded-xl border border-border bg-card p-4 shadow-sm transition-all hover:border-foreground/20 hover:shadow-md",
+              "rounded-xl border border-border bg-card p-4 shadow-sm transition-all hover:border-foreground/20 hover:shadow-md",
               deletingIds.has(template.id) && "deleting"
             )}
-            style={{ animationDelay: `${index * 60}ms` }}
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
@@ -196,11 +195,10 @@ function TemplateEditor({
       </div>
 
       <div className="space-y-3">
-        {exercises.map((exercise, index) => (
+        {exercises.map((exercise) => (
           <div
             key={exercise.id}
-            className="animate-slide-up rounded-xl border border-border bg-card p-4 shadow-sm"
-            style={{ animationDelay: `${index * 50}ms` }}
+            className="rounded-xl border border-border bg-card p-4 shadow-sm"
           >
             <div className="mb-3 flex items-end gap-2">
               <ExerciseNameInput

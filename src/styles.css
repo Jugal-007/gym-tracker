@@ -162,23 +162,21 @@
   }
 }
 
-/* ─── Existing keyframes ─── */
+/* ─── Custom keyframes ─── */
 
 @keyframes fade-in {
   from {
     opacity: 0;
-    transform: translateY(10px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
 @keyframes slide-up {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
@@ -189,7 +187,7 @@
 @keyframes scale-in {
   from {
     opacity: 0;
-    transform: scale(0.95);
+    transform: scale(0.97);
   }
   to {
     opacity: 1;
@@ -207,17 +205,6 @@
   }
 }
 
-@keyframes slide-out-right {
-  from {
-    opacity: 1;
-    transform: translateX(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateX(100%);
-  }
-}
-
 @keyframes draw {
   from {
     stroke-dashoffset: 100;
@@ -227,20 +214,15 @@
   }
 }
 
-/* ─── New keyframes ─── */
-
-/* PR badge: scale with overshoot bounce */
+/* PR badge: scale with subtle spring bounce */
 @keyframes bounce-scale-in {
   0% {
     opacity: 0;
-    transform: scale(0);
+    transform: scale(0.6);
   }
-  50% {
+  60% {
     opacity: 1;
-    transform: scale(1.25);
-  }
-  70% {
-    transform: scale(0.95);
+    transform: scale(1.12);
   }
   100% {
     opacity: 1;
@@ -254,11 +236,11 @@
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-6px);
+    transform: translateY(-4px);
   }
 }
 
-/* Set completion: background sweep from left */
+/* Set completion: smooth background sweep */
 @keyframes sweep-right {
   from {
     background-position: -100% 0;
@@ -273,19 +255,19 @@
   0% {
     box-shadow: 0 0 0 0 var(--foreground);
   }
-  40% {
-    box-shadow: 0 0 0 6px transparent;
+  50% {
+    box-shadow: 0 0 0 5px transparent;
   }
   100% {
     box-shadow: 0 0 0 0 transparent;
   }
 }
 
-/* Timer digit flip */
-@keyframes flip-digit {
+/* Single-digit rolling counter scroll (top to bottom entry, GPU accelerated) */
+@keyframes digit-scroll {
   0% {
-    transform: translateY(-30%);
-    opacity: 0.4;
+    transform: translateY(60%);
+    opacity: 0.2;
   }
   100% {
     transform: translateY(0);
@@ -293,16 +275,26 @@
   }
 }
 
-/* View enter transition */
+.animate-digit-scroll {
+  display: inline-block;
+  animation: digit-scroll 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+/* Fast, smooth view transition */
 @keyframes view-enter {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(3px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.animate-view-enter {
+  animation: view-enter 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* Checkmark SVG draw */
@@ -318,11 +310,11 @@
 /* Tap ripple on checkmark */
 @keyframes ripple {
   0% {
-    transform: scale(0.5);
-    opacity: 0.5;
+    transform: scale(0.6);
+    opacity: 0.4;
   }
   100% {
-    transform: scale(2.5);
+    transform: scale(2.2);
     opacity: 0;
   }
 }
@@ -342,18 +334,18 @@
   0% {
     opacity: 1;
     transform: translateX(0);
-    max-height: 200px;
+    max-height: 160px;
     margin-bottom: 0.75rem;
   }
-  50% {
+  60% {
     opacity: 0;
-    transform: translateX(60px);
-    max-height: 200px;
+    transform: translateX(30px);
+    max-height: 160px;
     margin-bottom: 0.75rem;
   }
   100% {
     opacity: 0;
-    transform: translateX(60px);
+    transform: translateX(30px);
     max-height: 0;
     margin-bottom: 0;
     padding-top: 0;
@@ -370,7 +362,7 @@
   background: linear-gradient(90deg, var(--muted) 50%, transparent 50%);
   background-size: 200% 100%;
   background-position: 100% 0;
-  animation: sweep-right 0.35s ease-out forwards;
+  animation: sweep-right 0.28s ease-out forwards;
 }
 
 /* Check circle ripple effect */
@@ -383,7 +375,7 @@
   inset: 0;
   border-radius: 50%;
   background: var(--foreground);
-  animation: ripple 0.4s ease-out forwards;
+  animation: ripple 0.35s ease-out forwards;
   pointer-events: none;
 }
 
@@ -391,7 +383,7 @@
 .check-draw-path {
   stroke-dasharray: 14;
   stroke-dashoffset: 14;
-  animation: check-draw 0.25s ease-out 0.1s forwards;
+  animation: check-draw 0.2s ease-out forwards;
 }
 
 /* Sliding tab indicator */
@@ -402,14 +394,16 @@
   height: 100%;
   border-radius: var(--radius-lg);
   background: var(--foreground);
-  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-              width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              width 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.15s ease-out;
   z-index: 0;
+  will-change: transform, width;
 }
 
 /* Item being deleted */
 .deleting {
-  animation: slide-out-collapse 0.35s ease-out forwards;
+  animation: slide-out-collapse 0.3s ease-out forwards;
   pointer-events: none;
 }
 

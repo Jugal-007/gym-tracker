@@ -28,14 +28,17 @@ const axisProps = {
 } as const;
 
 /* ─── Count-up hook ─── */
-function useCountUp(target: number, duration = 800): number {
+function useCountUp(target: number, duration = 450): number {
   const [current, setCurrent] = useState(0);
   const prevTarget = useRef(0);
 
   useEffect(() => {
     const start = prevTarget.current;
     const diff = target - start;
-    if (diff === 0) return;
+    if (diff === 0) {
+      setCurrent(target);
+      return;
+    }
 
     const startTime = performance.now();
 
@@ -279,11 +282,10 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
           Personal records
         </h3>
         <ul className="divide-y divide-border">
-          {recordList.map((record, index) => (
+          {recordList.map((record) => (
             <li
               key={record.name}
-              className="animate-slide-up flex items-center justify-between py-2.5"
-              style={{ animationDelay: `${index * 40}ms` }}
+              className="flex items-center justify-between py-2.5"
             >
               <span className="text-sm font-medium text-foreground">{record.name}</span>
               <span className="text-right text-xs text-muted-foreground">
@@ -306,25 +308,21 @@ function StatCard({
   value,
   suffix,
   isDecimal,
-  delay,
 }: {
   icon: React.ReactNode;
   label: string;
   value: number;
   suffix?: string;
   isDecimal?: boolean;
-  delay: number;
+  delay?: number;
 }) {
-  const animatedValue = useCountUp(Math.round(value), 800);
+  const animatedValue = useCountUp(Math.round(value), 450);
   const displayValue = isDecimal
     ? value.toFixed(1)
     : animatedValue.toLocaleString();
 
   return (
-    <div
-      className="animate-slide-up rounded-xl border border-border bg-card p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
-      style={{ animationDelay: `${delay}ms` }}
-    >
+    <div className="rounded-xl border border-border bg-card p-4 shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
       <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
         {icon}
         {label}

@@ -228,7 +228,11 @@ const TAB_ITEMS: { key: View; label: string; icon: React.ReactNode }[] = [
 function TabNav({ view, setView }: { view: View; setView: (v: View) => void }) {
   const navRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef<Map<View, HTMLButtonElement>>(new Map());
-  const [indicator, setIndicator] = useState({ x: 0, width: 0 });
+  const [indicator, setIndicator] = useState<{ x: number; width: number; ready: boolean }>({
+    x: 0,
+    width: 0,
+    ready: false,
+  });
 
   const updateIndicator = useCallback(() => {
     const button = tabRefs.current.get(view);
@@ -239,7 +243,10 @@ function TabNav({ view, setView }: { view: View; setView: (v: View) => void }) {
       setIndicator({
         x: btnRect.left - navRect.left,
         width: btnRect.width,
+        ready: true,
       });
+    } else {
+      setIndicator((prev) => ({ ...prev, ready: false }));
     }
   }, [view]);
 
@@ -256,10 +263,13 @@ function TabNav({ view, setView }: { view: View; setView: (v: View) => void }) {
     <nav ref={navRef} className="relative flex items-center gap-1">
       {/* Sliding pill indicator */}
       <div
-        className="tab-indicator"
+        className={cn(
+          "tab-indicator",
+          indicator.ready ? "opacity-100" : "opacity-0"
+        )}
         style={{
           width: indicator.width,
-          transform: `translateX(${indicator.x}px)`,
+          transform: `translate3d(${indicator.x}px, 0, 0)`,
         }}
       />
       {TAB_ITEMS.map((tab) => (
@@ -270,7 +280,7 @@ function TabNav({ view, setView }: { view: View; setView: (v: View) => void }) {
           }}
           onClick={() => setView(tab.key)}
           className={cn(
-            "relative z-10 inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-200 active:scale-[0.96]",
+            "relative z-10 inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150 active:scale-[0.96]",
             "px-2 sm:px-3",
             view === tab.key
               ? "text-primary-foreground"
@@ -312,17 +322,16 @@ function LandingView({
 }: LandingViewProps) {
   return (
     <div className="mx-auto max-w-xl">
-      {/* Staggered hero entrance */}
-      <div className="mb-8 text-center animate-slide-up" style={{ animationDelay: "0ms" }}>
+      <div className="mb-8 text-center">
         <h1 className="text-3xl font-bold tracking-tight text-foreground">
           Ready to train?
         </h1>
-        <p className="mt-2 text-muted-foreground animate-slide-up" style={{ animationDelay: "80ms" }}>
+        <p className="mt-2 text-muted-foreground">
           Start a session and log your sets as you go.
         </p>
       </div>
 
-      <div className="mb-8 flex items-end gap-2 animate-slide-up" style={{ animationDelay: "160ms" }}>
+      <div className="mb-8 flex items-end gap-2">
         <ExerciseNameInput
           suggestions={exerciseNames}
           value={newExerciseName}
@@ -342,14 +351,13 @@ function LandingView({
 
       <button
         onClick={onStart}
-        className="mb-10 flex w-full items-center justify-center gap-2 rounded-xl bg-foreground px-6 py-4 text-lg font-semibold text-primary-foreground transition-all hover:bg-foreground/90 hover:shadow-lg active:scale-[0.96] animate-slide-up"
-        style={{ animationDelay: "240ms" }}
+        className="mb-10 flex w-full items-center justify-center gap-2 rounded-xl bg-foreground px-6 py-4 text-lg font-semibold text-primary-foreground transition-all hover:bg-foreground/90 hover:shadow-md active:scale-[0.97]"
       >
         <Dumbbell className="h-5 w-5" />
         Start Empty Workout
       </button>
 
-      <div className="mb-10 animate-slide-up" style={{ animationDelay: "320ms" }}>
+      <div className="mb-10">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
             Templates
@@ -371,12 +379,11 @@ function LandingView({
           </button>
         ) : (
           <div className="space-y-2">
-            {templates.slice(0, 4).map((template, index) => (
+            {templates.slice(0, 4).map((template) => (
               <button
                 key={template.id}
                 onClick={() => onStartTemplate(template)}
-                style={{ animationDelay: `${320 + index * 50}ms` }}
-                className="animate-slide-up flex w-full items-center justify-between rounded-xl border border-border bg-card px-4 py-3 text-left transition-all hover:border-foreground/30 hover:-translate-y-0.5 hover:shadow-sm active:scale-[0.99]"
+                className="flex w-full items-center justify-between rounded-xl border border-border bg-card px-4 py-3 text-left transition-all hover:border-foreground/30 hover:-translate-y-0.5 hover:shadow-sm active:scale-[0.99]"
               >
                 <span>
                   <span className="block font-medium text-foreground">
@@ -394,7 +401,7 @@ function LandingView({
       </div>
 
       {recentSessions.length > 0 && (
-        <div className="animate-slide-up" style={{ animationDelay: "400ms" }}>
+        <div>
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
             Recent sessions
           </h2>
