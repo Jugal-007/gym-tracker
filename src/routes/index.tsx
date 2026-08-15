@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { BarChart3, Dumbbell, History, LayoutTemplate, Play, Plus } from "lucide-react";
 import { ActiveSession } from "@/components/gym/ActiveSession";
 import { ExerciseNameInput } from "@/components/gym/ExerciseNameInput";
@@ -165,102 +165,127 @@ function Index() {
               LFT
             </span>
           </button>
-          <nav className="flex items-center gap-1">
-            <TabButton
-              active={view === "landing"}
-              onClick={() => setView("landing")}
-              label="Start"
-            />
-            <TabButton
-              active={view === "templates"}
-              onClick={() => setView("templates")}
-              label="Plans"
-              icon={<LayoutTemplate className="h-4 w-4" />}
-            />
-            <TabButton
-              active={view === "stats"}
-              onClick={() => setView("stats")}
-              label="Stats"
-              icon={<BarChart3 className="h-4 w-4" />}
-            />
-            <TabButton
-              active={view === "history"}
-              onClick={() => setView("history")}
-              label="History"
-              icon={<History className="h-4 w-4" />}
-            />
-          </nav>
+          <TabNav view={view} setView={setView} />
         </div>
       </header>
 
       <main className="px-4 py-6">
-        {view === "active" && activeSession ? (
-          <ActiveSession
-            session={activeSession}
-            exerciseNames={exerciseNames}
-            records={records}
-            onUpdate={updateActiveSession}
-            onFinish={finishSession}
-            onCancel={cancelSession}
-          />
-        ) : view === "history" ? (
-          <SessionHistory
-            sessions={sessions}
-            onDelete={deleteSession}
-            onSaveTemplate={saveSessionAsTemplate}
-          />
-        ) : view === "stats" ? (
-          <StatsPanel sessions={sessions} />
-        ) : view === "templates" ? (
-          <Templates
-            templates={templates}
-            exerciseNames={exerciseNames}
-            onStart={startFromTemplate}
-            onSave={saveTemplate}
-            onDelete={deleteTemplate}
-          />
-        ) : (
-          <LandingView
-            newExerciseName={newExerciseName}
-            setNewExerciseName={setNewExerciseName}
-            exerciseNames={exerciseNames}
-            onStart={startSession}
-            onQuickAdd={addExerciseFromLanding}
-            recentSessions={sessions.slice(0, 3)}
-            templates={templates}
-            onStartTemplate={startFromTemplate}
-            onManageTemplates={() => setView("templates")}
-          />
-        )}
+        {/* key forces re-mount → triggers view-enter animation on tab switch */}
+        <div key={view} className="animate-view-enter">
+          {view === "active" && activeSession ? (
+            <ActiveSession
+              session={activeSession}
+              exerciseNames={exerciseNames}
+              records={records}
+              onUpdate={updateActiveSession}
+              onFinish={finishSession}
+              onCancel={cancelSession}
+            />
+          ) : view === "history" ? (
+            <SessionHistory
+              sessions={sessions}
+              onDelete={deleteSession}
+              onSaveTemplate={saveSessionAsTemplate}
+            />
+          ) : view === "stats" ? (
+            <StatsPanel sessions={sessions} />
+          ) : view === "templates" ? (
+            <Templates
+              templates={templates}
+              exerciseNames={exerciseNames}
+              onStart={startFromTemplate}
+              onSave={saveTemplate}
+              onDelete={deleteTemplate}
+            />
+          ) : (
+            <LandingView
+              newExerciseName={newExerciseName}
+              setNewExerciseName={setNewExerciseName}
+              exerciseNames={exerciseNames}
+              onStart={startSession}
+              onQuickAdd={addExerciseFromLanding}
+              recentSessions={sessions.slice(0, 3)}
+              templates={templates}
+              onStartTemplate={startFromTemplate}
+              onManageTemplates={() => setView("templates")}
+            />
+          )}
+        </div>
       </main>
     </div>
   );
 }
 
-interface TabButtonProps {
-  active: boolean;
-  onClick: () => void;
-  label: string;
-  icon?: React.ReactNode;
-}
+/* ─── Sliding Tab Navigation ─── */
 
-function TabButton({ active, onClick, label, icon }: TabButtonProps) {
+const TAB_ITEMS: { key: View; label: string; icon: React.ReactNode }[] = [
+  { key: "landing", label: "Start", icon: undefined },
+  { key: "templates", label: "Plans", icon: <LayoutTemplate className="h-4 w-4" /> },
+  { key: "stats", label: "Stats", icon: <BarChart3 className="h-4 w-4" /> },
+  { key: "history", label: "History", icon: <History className="h-4 w-4" /> },
+];
+
+function TabNav({ view, setView }: { view: View; setView: (v: View) => void }) {
+  const navRef = useRef<HTMLDivElement>(null);
+  const tabRefs = useRef<Map<View, HTMLButtonElement>>(new Map());
+  const [indicator, setIndicator] = useState({ x: 0, width: 0 });
+
+  const updateIndicator = useCallback(() => {
+    const button = tabRefs.current.get(view);
+    const nav = navRef.current;
+    if (button && nav) {
+      const navRect = nav.getBoundingClientRect();
+      const btnRect = button.getBoundingClientRect();
+      setIndicator({
+        x: btnRect.left - navRect.left,
+        width: btnRect.width,
+      });
+    }
+  }, [view]);
+
+  useLayoutEffect(() => {
+    updateIndicator();
+  }, [updateIndicator]);
+
+  useEffect(() => {
+    window.addEventListener("resize", updateIndicator);
+    return () => window.removeEventListener("resize", updateIndicator);
+  }, [updateIndicator]);
+
   return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-all active:scale-[0.96]",
-        "px-2 sm:px-3",
-        active
-          ? "bg-foreground text-primary-foreground"
-          : "text-muted-foreground hover:bg-muted hover:text-foreground"
-      )}
-    >
-      {icon}
-      <span className={cn(icon && "hidden sm:inline")}>{label}</span>
-    </button>
+    <nav ref={navRef} className="relative flex items-center gap-1">
+      {/* Sliding pill indicator */}
+      <div
+        className="tab-indicator"
+        style={{
+          width: indicator.width,
+          transform: `translateX(${indicator.x}px)`,
+        }}
+      />
+      {TAB_ITEMS.map((tab) => (
+        <button
+          key={tab.key}
+          ref={(el) => {
+            if (el) tabRefs.current.set(tab.key, el);
+          }}
+          onClick={() => setView(tab.key)}
+          className={cn(
+            "relative z-10 inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-200 active:scale-[0.96]",
+            "px-2 sm:px-3",
+            view === tab.key
+              ? "text-primary-foreground"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          {tab.icon}
+          <span className={cn(tab.icon && "hidden sm:inline")}>{tab.label}</span>
+        </button>
+      ))}
+    </nav>
   );
 }
+
+/* ─── Landing View ─── */
 
 interface LandingViewProps {
   newExerciseName: string;
@@ -286,17 +311,18 @@ function LandingView({
   onManageTemplates,
 }: LandingViewProps) {
   return (
-    <div className="mx-auto max-w-xl animate-fade-in">
-      <div className="mb-8 text-center">
+    <div className="mx-auto max-w-xl">
+      {/* Staggered hero entrance */}
+      <div className="mb-8 text-center animate-slide-up" style={{ animationDelay: "0ms" }}>
         <h1 className="text-3xl font-bold tracking-tight text-foreground">
           Ready to train?
         </h1>
-        <p className="mt-2 text-muted-foreground">
+        <p className="mt-2 text-muted-foreground animate-slide-up" style={{ animationDelay: "80ms" }}>
           Start a session and log your sets as you go.
         </p>
       </div>
 
-      <div className="mb-8 flex items-end gap-2">
+      <div className="mb-8 flex items-end gap-2 animate-slide-up" style={{ animationDelay: "160ms" }}>
         <ExerciseNameInput
           suggestions={exerciseNames}
           value={newExerciseName}
@@ -307,7 +333,7 @@ function LandingView({
         <button
           onClick={onQuickAdd}
           disabled={!newExerciseName.trim()}
-          className="inline-flex items-center justify-center rounded-lg bg-foreground p-3 text-primary-foreground transition-all hover:bg-foreground/90 active:scale-[0.96] disabled:opacity-40 disabled:active:scale-100"
+          className="inline-flex items-center justify-center rounded-lg bg-foreground p-3 text-primary-foreground transition-all hover:bg-foreground/90 hover:shadow-md active:scale-[0.96] disabled:opacity-40 disabled:active:scale-100"
           aria-label="Start workout with exercise"
         >
           <Plus className="h-5 w-5" />
@@ -316,13 +342,14 @@ function LandingView({
 
       <button
         onClick={onStart}
-        className="mb-10 flex w-full items-center justify-center gap-2 rounded-xl bg-foreground px-6 py-4 text-lg font-semibold text-primary-foreground transition-all hover:bg-foreground/90 active:scale-[0.96]"
+        className="mb-10 flex w-full items-center justify-center gap-2 rounded-xl bg-foreground px-6 py-4 text-lg font-semibold text-primary-foreground transition-all hover:bg-foreground/90 hover:shadow-lg active:scale-[0.96] animate-slide-up"
+        style={{ animationDelay: "240ms" }}
       >
         <Dumbbell className="h-5 w-5" />
         Start Empty Workout
       </button>
 
-      <div className="mb-10 animate-fade-in">
+      <div className="mb-10 animate-slide-up" style={{ animationDelay: "320ms" }}>
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
             Templates
@@ -348,8 +375,8 @@ function LandingView({
               <button
                 key={template.id}
                 onClick={() => onStartTemplate(template)}
-                style={{ animationDelay: `${index * 50}ms` }}
-                className="animate-slide-up flex w-full items-center justify-between rounded-xl border border-border bg-card px-4 py-3 text-left transition-all hover:border-foreground/30 hover:-translate-y-0.5 active:scale-[0.99]"
+                style={{ animationDelay: `${320 + index * 50}ms` }}
+                className="animate-slide-up flex w-full items-center justify-between rounded-xl border border-border bg-card px-4 py-3 text-left transition-all hover:border-foreground/30 hover:-translate-y-0.5 hover:shadow-sm active:scale-[0.99]"
               >
                 <span>
                   <span className="block font-medium text-foreground">
@@ -367,7 +394,7 @@ function LandingView({
       </div>
 
       {recentSessions.length > 0 && (
-        <div className="animate-fade-in">
+        <div className="animate-slide-up" style={{ animationDelay: "400ms" }}>
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
             Recent sessions
           </h2>

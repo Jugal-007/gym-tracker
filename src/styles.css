@@ -67,6 +67,16 @@
   --animate-pulse-soft: pulse-soft 2s ease-in-out infinite;
   --animate-slide-out-right: slide-out-right 0.3s ease-out forwards;
   --animate-draw: draw 1.5s ease-out forwards;
+  --animate-bounce-scale-in: bounce-scale-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  --animate-float: float 3s ease-in-out infinite;
+  --animate-sweep-right: sweep-right 0.35s ease-out forwards;
+  --animate-glow-ring: glow-ring 0.6s ease-out forwards;
+  --animate-flip-digit: flip-digit 0.25s ease-out;
+  --animate-view-enter: view-enter 0.25s ease-out forwards;
+  --animate-check-draw: check-draw 0.25s ease-out forwards;
+  --animate-ripple: ripple 0.4s ease-out forwards;
+  --animate-border-glow: border-glow 0.8s ease-out;
+  --animate-slide-out-collapse: slide-out-collapse 0.35s ease-out forwards;
 }
 
 :root {
@@ -152,7 +162,8 @@
   }
 }
 
-/* Custom keyframes */
+/* ─── Existing keyframes ─── */
+
 @keyframes fade-in {
   from {
     opacity: 0;
@@ -216,6 +227,192 @@
   }
 }
 
+/* ─── New keyframes ─── */
+
+/* PR badge: scale with overshoot bounce */
+@keyframes bounce-scale-in {
+  0% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.25);
+  }
+  70% {
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Empty state: gentle float */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+/* Set completion: background sweep from left */
+@keyframes sweep-right {
+  from {
+    background-position: -100% 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+
+/* PR glow ring */
+@keyframes glow-ring {
+  0% {
+    box-shadow: 0 0 0 0 var(--foreground);
+  }
+  40% {
+    box-shadow: 0 0 0 6px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+/* Timer digit flip */
+@keyframes flip-digit {
+  0% {
+    transform: translateY(-30%);
+    opacity: 0.4;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* View enter transition */
+@keyframes view-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Checkmark SVG draw */
+@keyframes check-draw {
+  from {
+    stroke-dashoffset: 14;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Tap ripple on checkmark */
+@keyframes ripple {
+  0% {
+    transform: scale(0.5);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+/* Input border glow pulse */
+@keyframes border-glow {
+  0% {
+    box-shadow: 0 0 0 2px var(--foreground);
+  }
+  100% {
+    box-shadow: 0 0 0 2px transparent;
+  }
+}
+
+/* Slide out + collapse for delete */
+@keyframes slide-out-collapse {
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+    max-height: 200px;
+    margin-bottom: 0.75rem;
+  }
+  50% {
+    opacity: 0;
+    transform: translateX(60px);
+    max-height: 200px;
+    margin-bottom: 0.75rem;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(60px);
+    max-height: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-width: 0;
+    overflow: hidden;
+  }
+}
+
+/* ─── Utility classes ─── */
+
+/* Completed set row sweep background */
+.set-completed-sweep {
+  background: linear-gradient(90deg, var(--muted) 50%, transparent 50%);
+  background-size: 200% 100%;
+  background-position: 100% 0;
+  animation: sweep-right 0.35s ease-out forwards;
+}
+
+/* Check circle ripple effect */
+.check-ripple {
+  position: relative;
+}
+.check-ripple::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--foreground);
+  animation: ripple 0.4s ease-out forwards;
+  pointer-events: none;
+}
+
+/* Checkmark SVG stroke animation */
+.check-draw-path {
+  stroke-dasharray: 14;
+  stroke-dashoffset: 14;
+  animation: check-draw 0.25s ease-out 0.1s forwards;
+}
+
+/* Sliding tab indicator */
+.tab-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 100%;
+  border-radius: var(--radius-lg);
+  background: var(--foreground);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 0;
+}
+
+/* Item being deleted */
+.deleting {
+  animation: slide-out-collapse 0.35s ease-out forwards;
+  pointer-events: none;
+}
+
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -236,3 +433,4 @@ input[type="number"]::-webkit-outer-spin-button {
 input[type="number"] {
   -moz-appearance: textfield;
 }
+

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { format, startOfWeek } from "date-fns";
 import { Activity, BarChart3, Flame, Trophy } from "lucide-react";
 import {
@@ -26,6 +26,37 @@ const axisProps = {
   tickLine: false,
   axisLine: false,
 } as const;
+
+/* ─── Count-up hook ─── */
+function useCountUp(target: number, duration = 800): number {
+  const [current, setCurrent] = useState(0);
+  const prevTarget = useRef(0);
+
+  useEffect(() => {
+    const start = prevTarget.current;
+    const diff = target - start;
+    if (diff === 0) return;
+
+    const startTime = performance.now();
+
+    function tick(now: number) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // Ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCurrent(Math.round(start + diff * eased));
+      if (progress < 1) {
+        requestAnimationFrame(tick);
+      } else {
+        prevTarget.current = target;
+      }
+    }
+
+    requestAnimationFrame(tick);
+  }, [target, duration]);
+
+  return current;
+}
 
 export function StatsPanel({ sessions }: StatsPanelProps) {
   const [selectedExercise, setSelectedExercise] = useState<string>("");
@@ -116,7 +147,7 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
   if (sessions.length === 0) {
     return (
       <div className="animate-fade-in py-16 text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-border">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-border animate-float">
           <BarChart3 className="h-8 w-8 text-muted-foreground" />
         </div>
         <h3 className="text-base font-medium text-foreground">No data yet</h3>
@@ -133,25 +164,27 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
         <StatCard
           icon={<Activity className="h-4 w-4" />}
           label="Total volume"
-          value={`${Math.round(totals.totalVolume).toLocaleString()} kg`}
+          value={totals.totalVolume}
+          suffix=" kg"
           delay={0}
         />
         <StatCard
           icon={<Flame className="h-4 w-4" />}
           label="Sessions"
-          value={String(totals.sessionCount)}
+          value={totals.sessionCount}
           delay={60}
         />
         <StatCard
           icon={<BarChart3 className="h-4 w-4" />}
           label="Per week"
-          value={`${totals.perWeek}`}
+          value={totals.perWeek}
+          isDecimal
           delay={120}
         />
         <StatCard
           icon={<Trophy className="h-4 w-4" />}
           label="Total sets"
-          value={String(totals.totalSets)}
+          value={totals.totalSets}
           delay={180}
         />
       </div>
@@ -271,23 +304,34 @@ function StatCard({
   icon,
   label,
   value,
+  suffix,
+  isDecimal,
   delay,
 }: {
   icon: React.ReactNode;
   label: string;
-  value: string;
+  value: number;
+  suffix?: string;
+  isDecimal?: boolean;
   delay: number;
 }) {
+  const animatedValue = useCountUp(Math.round(value), 800);
+  const displayValue = isDecimal
+    ? value.toFixed(1)
+    : animatedValue.toLocaleString();
+
   return (
     <div
-      className="animate-slide-up rounded-xl border border-border bg-card p-4 shadow-sm transition-transform hover:-translate-y-0.5"
+      className="animate-slide-up rounded-xl border border-border bg-card p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
       style={{ animationDelay: `${delay}ms` }}
     >
       <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
         {icon}
         {label}
       </p>
-      <p className="mt-1 font-mono text-xl font-semibold text-foreground">{value}</p>
+      <p className="mt-1 font-mono text-xl font-semibold text-foreground">
+        {displayValue}{suffix ?? ""}
+      </p>
     </div>
   );
 }

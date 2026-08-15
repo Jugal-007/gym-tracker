@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Check, Trash2, Plus, Clock, Dumbbell, Trophy, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Trash2, Plus, Clock, Dumbbell, Trophy, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ExerciseNameInput } from "./ExerciseNameInput";
 import {
@@ -34,6 +34,35 @@ function formatDuration(ms: number): string {
     return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
   }
   return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
+/* ─── Animated digit display for the timer ─── */
+function TimerDigits({ value }: { value: string }) {
+  const prevRef = useRef(value);
+  const [animKey, setAnimKey] = useState(0);
+
+  useEffect(() => {
+    if (value !== prevRef.current) {
+      prevRef.current = value;
+      setAnimKey((k) => k + 1);
+    }
+  }, [value]);
+
+  return (
+    <span className="inline-flex overflow-hidden">
+      {value.split("").map((char, i) => (
+        <span
+          key={`${i}-${char}-${animKey}`}
+          className={cn(
+            "inline-block",
+            char !== ":" && "animate-flip-digit"
+          )}
+        >
+          {char}
+        </span>
+      ))}
+    </span>
+  );
 }
 
 export function ActiveSession({
@@ -163,6 +192,8 @@ export function ActiveSession({
     onFinish({ ...session, endedAt: Date.now() });
   }
 
+  const timerStr = formatDuration(elapsed);
+
   return (
     <div className="mx-auto max-w-xl animate-fade-in">
       <div className="sticky top-0 z-10 mb-6 border-b border-border bg-background/95 px-4 py-4 backdrop-blur-sm">
@@ -175,22 +206,22 @@ export function ActiveSession({
               <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 Live session
               </p>
-              <p className="font-mono text-3xl font-semibold tracking-tight text-foreground transition-transform duration-200">
-                {formatDuration(elapsed)}
+              <p className="font-mono text-3xl font-semibold tracking-tight text-foreground">
+                <TimerDigits value={timerStr} />
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={onCancel}
-              className="inline-flex items-center justify-center rounded-lg border border-border bg-background p-2 text-muted-foreground transition-all hover:bg-muted active:scale-[0.96]"
+              className="inline-flex items-center justify-center rounded-lg border border-border bg-background p-2 text-muted-foreground transition-all hover:bg-muted hover:shadow-sm active:scale-[0.96]"
               aria-label="Cancel workout"
             >
               <X className="h-5 w-5" />
             </button>
             <button
               onClick={handleFinish}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-primary-foreground transition-all hover:bg-foreground/90 active:scale-[0.96]"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-primary-foreground transition-all hover:bg-foreground/90 hover:shadow-md active:scale-[0.96]"
             >
               Finish
             </button>
@@ -203,7 +234,7 @@ export function ActiveSession({
           </span>
           <span>{totalVolume.toLocaleString()} kg volume</span>
           {prCount > 0 && (
-            <span className="animate-scale-in inline-flex items-center gap-1.5 rounded-full bg-foreground px-2.5 py-0.5 text-xs font-semibold text-primary-foreground">
+            <span className="animate-bounce-scale-in inline-flex items-center gap-1.5 rounded-full bg-foreground px-2.5 py-0.5 text-xs font-semibold text-primary-foreground animate-glow-ring">
               <Trophy className="h-3.5 w-3.5" />
               {prCount} PR{prCount > 1 ? "s" : ""}
             </span>
@@ -223,7 +254,7 @@ export function ActiveSession({
           <button
             onClick={addExercise}
             disabled={!newExerciseName.trim()}
-            className="inline-flex items-center justify-center rounded-lg bg-foreground p-3 text-primary-foreground transition-all hover:bg-foreground/90 active:scale-[0.96] disabled:opacity-40 disabled:active:scale-100"
+            className="inline-flex items-center justify-center rounded-lg bg-foreground p-3 text-primary-foreground transition-all hover:bg-foreground/90 hover:shadow-md active:scale-[0.96] disabled:opacity-40 disabled:active:scale-100"
             aria-label="Add exercise"
           >
             <Plus className="h-5 w-5" />
@@ -232,7 +263,7 @@ export function ActiveSession({
 
         {session.exercises.length === 0 && (
           <div className="animate-fade-in py-12 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-border">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-border animate-float">
               <Dumbbell className="h-8 w-8 text-muted-foreground" />
             </div>
             <p className="text-muted-foreground">
@@ -285,6 +316,18 @@ function ExerciseCard({
   const [weight, setWeight] = useState(
     exercise.targetWeight ? String(exercise.targetWeight) : ""
   );
+  const [addGlow, setAddGlow] = useState(false);
+
+  const canAdd = !!reps && !!weight;
+
+  // Pulse the add button when both fields are filled
+  useEffect(() => {
+    if (canAdd) {
+      setAddGlow(true);
+      const t = setTimeout(() => setAddGlow(false), 800);
+      return () => clearTimeout(t);
+    }
+  }, [canAdd]);
 
   function handleAddSet() {
     const parsedReps = parseInt(reps, 10);
@@ -303,7 +346,7 @@ function ExerciseCard({
 
   return (
     <div
-      className="animate-slide-up rounded-xl border border-border bg-card p-4 shadow-sm"
+      className="animate-slide-up rounded-xl border border-border bg-card p-4 shadow-sm transition-shadow hover:shadow-md"
       style={{ animationDelay: `${index * 60}ms` }}
     >
       <div className="mb-3 flex items-center justify-between">
@@ -384,7 +427,10 @@ function ExerciseCard({
         <button
           onClick={handleAddSet}
           disabled={!reps || !weight}
-          className="inline-flex items-center justify-center rounded-lg bg-secondary p-2.5 text-secondary-foreground transition-all hover:bg-secondary/80 active:scale-[0.96] disabled:opacity-40 disabled:active:scale-100"
+          className={cn(
+            "inline-flex items-center justify-center rounded-lg bg-secondary p-2.5 text-secondary-foreground transition-all hover:bg-secondary/80 active:scale-[0.96] disabled:opacity-40 disabled:active:scale-100",
+            addGlow && "animate-border-glow"
+          )}
           aria-label="Add set"
         >
           <Plus className="h-5 w-5" />
@@ -402,11 +448,34 @@ interface SetRowProps {
 }
 
 function SetRow({ set, index, onToggle, onDelete }: SetRowProps) {
+  const [justCompleted, setJustCompleted] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const prevCompleted = useRef(set.completed);
+
+  useEffect(() => {
+    if (set.completed && !prevCompleted.current) {
+      setJustCompleted(true);
+      // Haptic feedback on mobile
+      if (navigator.vibrate) navigator.vibrate(30);
+      const t = setTimeout(() => setJustCompleted(false), 400);
+      prevCompleted.current = set.completed;
+      return () => clearTimeout(t);
+    }
+    prevCompleted.current = set.completed;
+  }, [set.completed]);
+
+  function handleDelete() {
+    setDeleting(true);
+    setTimeout(onDelete, 350);
+  }
+
   return (
     <div
       className={cn(
         "flex items-center justify-between rounded-lg border border-border p-3 transition-all duration-200",
-        set.completed && "bg-muted/50",
+        deleting && "deleting",
+        set.completed && !justCompleted && "bg-muted/50",
+        justCompleted && "set-completed-sweep",
         set.pr && "border-foreground shadow-sm"
       )}
     >
@@ -414,14 +483,42 @@ function SetRow({ set, index, onToggle, onDelete }: SetRowProps) {
         <button
           onClick={onToggle}
           className={cn(
-            "flex h-6 w-6 items-center justify-center rounded-full border-2 transition-all duration-200",
+            "relative flex h-6 w-6 items-center justify-center rounded-full border-2 transition-all duration-200",
             set.completed
               ? "border-foreground bg-foreground text-primary-foreground"
-              : "border-border text-transparent hover:border-foreground/50"
+              : "border-border text-transparent hover:border-foreground/50",
+            justCompleted && "check-ripple"
           )}
           aria-label={set.completed ? "Mark incomplete" : "Mark complete"}
         >
-          <Check className="h-3.5 w-3.5" />
+          {set.completed ? (
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 14 14"
+              fill="none"
+              className="relative z-10"
+            >
+              <path
+                d="M3 7.5L6 10.5L11 4"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className={justCompleted ? "check-draw-path" : ""}
+              />
+            </svg>
+          ) : (
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path
+                d="M3 7.5L6 10.5L11 4"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          )}
         </button>
         <div>
           <p className="text-sm font-medium text-foreground">
@@ -432,14 +529,14 @@ function SetRow({ set, index, onToggle, onDelete }: SetRowProps) {
           </p>
         </div>
         {set.pr && (
-          <span className="animate-scale-in inline-flex items-center gap-1 rounded-full bg-foreground px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary-foreground">
+          <span className="animate-bounce-scale-in animate-glow-ring inline-flex items-center gap-1 rounded-full bg-foreground px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary-foreground">
             <Trophy className="h-3 w-3" />
             {PR_LABEL[set.pr as PRKind]}
           </span>
         )}
       </div>
       <button
-        onClick={onDelete}
+        onClick={handleDelete}
         className="inline-flex items-center justify-center rounded-lg p-1.5 text-muted-foreground transition-all hover:bg-destructive/10 hover:text-destructive active:scale-[0.96]"
         aria-label="Delete set"
       >

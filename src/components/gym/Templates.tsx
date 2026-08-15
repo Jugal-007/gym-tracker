@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { LayoutTemplate, Play, Plus, Trash2, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { ExerciseNameInput } from "./ExerciseNameInput";
 import { generateId } from "./storage";
 import { emptyTemplateExercise } from "./templates";
@@ -21,6 +22,7 @@ export function Templates({
   onDelete,
 }: TemplatesProps) {
   const [editing, setEditing] = useState<Template | null>(null);
+  const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
 
   function newTemplate() {
     setEditing({
@@ -29,6 +31,18 @@ export function Templates({
       createdAt: Date.now(),
       exercises: [emptyTemplateExercise()],
     });
+  }
+
+  function handleDelete(id: string) {
+    setDeletingIds((prev) => new Set(prev).add(id));
+    setTimeout(() => {
+      onDelete(id);
+      setDeletingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }, 350);
   }
 
   if (editing) {
@@ -53,7 +67,7 @@ export function Templates({
         </h2>
         <button
           onClick={newTemplate}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-2 text-sm font-medium text-primary-foreground transition-all hover:bg-foreground/90 active:scale-[0.96]"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-2 text-sm font-medium text-primary-foreground transition-all hover:bg-foreground/90 hover:shadow-md active:scale-[0.96]"
         >
           <Plus className="h-4 w-4" />
           New
@@ -62,7 +76,7 @@ export function Templates({
 
       {templates.length === 0 ? (
         <div className="animate-fade-in py-16 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-border">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-border animate-float">
             <LayoutTemplate className="h-8 w-8 text-muted-foreground" />
           </div>
           <h3 className="text-base font-medium text-foreground">No templates yet</h3>
@@ -74,7 +88,10 @@ export function Templates({
         templates.map((template, index) => (
           <div
             key={template.id}
-            className="animate-slide-up rounded-xl border border-border bg-card p-4 shadow-sm transition-all hover:border-foreground/20"
+            className={cn(
+              "animate-slide-up rounded-xl border border-border bg-card p-4 shadow-sm transition-all hover:border-foreground/20 hover:shadow-md",
+              deletingIds.has(template.id) && "deleting"
+            )}
             style={{ animationDelay: `${index * 60}ms` }}
           >
             <div className="flex items-start justify-between gap-3">
@@ -101,13 +118,13 @@ export function Templates({
               <div className="flex flex-col items-end gap-2">
                 <button
                   onClick={() => onStart(template)}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-2 text-sm font-medium text-primary-foreground transition-all hover:bg-foreground/90 active:scale-[0.96]"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-2 text-sm font-medium text-primary-foreground transition-all hover:bg-foreground/90 hover:shadow-md active:scale-[0.96]"
                 >
                   <Play className="h-4 w-4" />
                   Start
                 </button>
                 <button
-                  onClick={() => onDelete(template.id)}
+                  onClick={() => handleDelete(template.id)}
                   className="inline-flex items-center justify-center rounded-lg p-2 text-muted-foreground transition-all hover:bg-destructive/10 hover:text-destructive active:scale-[0.96]"
                   aria-label={`Delete ${template.name}`}
                 >
@@ -242,7 +259,7 @@ function TemplateEditor({
           })
         }
         disabled={!canSave}
-        className="w-full rounded-xl bg-foreground px-6 py-3.5 text-base font-semibold text-primary-foreground transition-all hover:bg-foreground/90 active:scale-[0.98] disabled:opacity-40 disabled:active:scale-100"
+        className="w-full rounded-xl bg-foreground px-6 py-3.5 text-base font-semibold text-primary-foreground transition-all hover:bg-foreground/90 hover:shadow-lg active:scale-[0.98] disabled:opacity-40 disabled:active:scale-100"
       >
         Save template
       </button>
