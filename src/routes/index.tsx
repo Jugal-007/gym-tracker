@@ -25,13 +25,13 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Gym Log — Minimal Workout Tracker" },
+      { title: "LFT — Minimal Workout Tracker" },
       {
         name: "description",
         content:
           "Track your gym sessions with a minimal black-and-white workout logger. Log exercises, sets, reps, and weight live as you train.",
       },
-      { property: "og:title", content: "Gym Log — Minimal Workout Tracker" },
+      { property: "og:title", content: "LFT — Minimal Workout Tracker" },
       {
         property: "og:description",
         content:
@@ -161,8 +161,8 @@ function Index() {
             className="flex items-center gap-2 text-foreground transition-opacity hover:opacity-70"
           >
             <Dumbbell className="h-6 w-6" />
-            <span className="whitespace-nowrap text-lg font-bold tracking-tight">
-              Gym Log
+            <span className="whitespace-nowrap text-lg font-extrabold tracking-wider">
+              LFT
             </span>
           </button>
           <nav className="flex items-center gap-1">

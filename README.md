@@ -1,6 +1,12 @@
-# Gym Log — Minimal Workout Tracker
+# LFT — Minimal Workout Tracker
 
-A minimal, powerful web application designed to track and log gym workout sessions in real time. Log exercises, sets, reps, and weights live while training, set rest timers, save custom workout plans/templates, and analyze workout history and progress stats.
+[![Live Demo](https://img.shields.io/badge/Live_Demo-lft--log.vercel.app-black?style=flat-square&logo=vercel)](https://lft-log.vercel.app)
+
+A minimalist, high-focus web application designed to track and log gym workout sessions in real time. Log exercises, sets, reps, and weights live while training, set rest timers, save custom workout plans/templates, and analyze workout history and progress stats.
+
+**Live URL**: [https://lft-log.vercel.app](https://lft-log.vercel.app)
+
+---
 
 ## Features
 
@@ -9,14 +15,18 @@ A minimal, powerful web application designed to track and log gym workout sessio
 - **Personal Records (PRs)**: Automatically tracks personal bests (highest weight, max volume, total reps).
 - **History & Logs**: Review past workout sessions with exercise breakdowns.
 - **Analytics & Stats**: Visual graphs and stats (using Recharts) to analyze training volume and progress over time.
-- **Minimalist Dark UI**: Built with a clean, responsive black-and-white minimalist design.
+- **Minimalist Dark UI**: Built with a clean, responsive monochrome design.
+
+---
 
 ## Tech Stack
 
-- **Framework**: React 19, Vite, TanStack Router, TanStack Start
+- **Framework**: React 19, Vite, TanStack Router, TanStack Start, Nitro
 - **Styling**: Tailwind CSS, Radix UI Primitives, Lucide React Icons
 - **Data Visualization**: Recharts
 - **Storage**: Local Storage
+
+---
 
 ## Getting Started
 
