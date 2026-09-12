@@ -302,7 +302,7 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
 
       <ChartCard title="Volume per session">
         <ResponsiveContainer width="100%" height={180}>
-          <LineChart data={volumeSeries} margin={{ top: 8, right: 8, bottom: 0, left: -12 }}>
+          <LineChart data={volumeSeries} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
             <CartesianGrid strokeDasharray="2 4" stroke="var(--border)" vertical={false} />
             <XAxis dataKey="label" {...axisProps} />
             <YAxis {...axisProps} width={44} />
@@ -323,7 +323,7 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
       {durationSeries.length > 0 && (
         <ChartCard title="Workout Duration">
           <ResponsiveContainer width="100%" height={160}>
-            <BarChart data={durationSeries} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
+            <BarChart data={durationSeries} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
               <CartesianGrid strokeDasharray="2 4" stroke="var(--border)" vertical={false} />
               <XAxis dataKey="label" {...axisProps} />
               <YAxis allowDecimals={false} {...axisProps} width={38} />
@@ -344,7 +344,7 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
 
       <ChartCard title="Weekly frequency">
         <ResponsiveContainer width="100%" height={160}>
-          <BarChart data={weekSeries} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
+          <BarChart data={weekSeries} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
             <CartesianGrid strokeDasharray="2 4" stroke="var(--border)" vertical={false} />
             <XAxis dataKey="label" {...axisProps} />
             <YAxis allowDecimals={false} {...axisProps} width={34} />
@@ -380,7 +380,7 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
           }
         >
           <ResponsiveContainer width="100%" height={180}>
-            <LineChart data={progressSeries} margin={{ top: 8, right: 8, bottom: 0, left: -12 }}>
+            <LineChart data={progressSeries} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
               <CartesianGrid strokeDasharray="2 4" stroke="var(--border)" vertical={false} />
               <XAxis dataKey="label" {...axisProps} />
               <YAxis {...axisProps} width={44} />
@@ -421,8 +421,8 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
         <ul className="divide-y divide-border">
           {recordList.map((record) => (
             <li key={record.name} className="flex items-center justify-between py-2.5">
-              <span className="text-sm font-medium text-foreground">{record.name}</span>
-              <span className="text-right text-xs text-muted-foreground">
+              <span className="truncate pr-2 text-sm font-medium text-foreground">{record.name}</span>
+              <span className="shrink-0 text-right text-xs text-muted-foreground">
                 <span className="block font-mono text-sm text-foreground">
                   {record.bestWeight} kg × {record.bestWeightReps}
                 </span>
