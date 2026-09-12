@@ -4,16 +4,16 @@ export interface WorkoutSet {
   weight: number;
   completed: boolean;
   /** Marked when this set beat a previous personal record. */
-  pr?: PRKind | null;
+  pr?: PRKind | null | undefined;
 }
 
 export interface Exercise {
   id: string;
   name: string;
   sets: WorkoutSet[];
-  targetSets?: number;
-  targetReps?: number;
-  targetWeight?: number;
+  targetSets?: number | undefined;
+  targetReps?: number | undefined;
+  targetWeight?: number | undefined;
 }
 
 export interface Session {
@@ -21,8 +21,8 @@ export interface Session {
   startedAt: number;
   endedAt: number | null;
   exercises: Exercise[];
-  templateId?: string | null;
-  templateName?: string | null;
+  templateId?: string | null | undefined;
+  templateName?: string | null | undefined;
 }
 
 export type PRKind = "weight" | "e1rm";

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { format, startOfWeek } from "date-fns";
-import { Activity, BarChart3, Flame, Trophy } from "lucide-react";
+import { Activity, BarChart3, Flame, Trophy, Download } from "lucide-react";
 import {
   Bar,
   BarChart,
@@ -12,8 +12,16 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { computeSessionSets, computeSessionVolume } from "./storage";
+import {
+  computeSessionSets,
+  computeSessionVolume,
+  loadWeeklyGoal,
+  saveWeeklyGoal,
+} from "./storage";
 import { buildRecords, estimateOneRepMax, normalizeName } from "./records";
+import { MuscleHeatmap } from "./MuscleHeatmap";
+import { ConsistencyGrid } from "./ConsistencyGrid";
+import { VolumePieChart } from "./VolumePieChart";
 import type { Session } from "./types";
 
 interface StatsPanelProps {
@@ -63,6 +71,13 @@ function useCountUp(target: number, duration = 450): number {
 
 export function StatsPanel({ sessions }: StatsPanelProps) {
   const [selectedExercise, setSelectedExercise] = useState<string>("");
+  const [weeklyGoal, setWeeklyGoal] = useState<number>(loadWeeklyGoal());
+
+  const handleGoalChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const g = parseInt(e.target.value, 10);
+    setWeeklyGoal(g);
+    saveWeeklyGoal(g);
+  };
 
   const records = useMemo(() => buildRecords(sessions), [sessions]);
   const recordList = useMemo(
@@ -83,6 +98,19 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
       })),
     [ordered],
   );
+
+  const durationSeries = useMemo(() => {
+    return ordered
+      .map((session) => {
+        const durationMs = session.endedAt ? session.endedAt - session.startedAt : 0;
+        const durationMins = Math.round(durationMs / 60000);
+        return {
+          label: format(session.startedAt, "MMM d"),
+          duration: durationMins,
+        };
+      })
+      .filter((d) => d.duration > 0);
+  }, [ordered]);
 
   const weekSeries = useMemo(() => {
     const buckets = new Map<number, number>();
@@ -142,6 +170,56 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
     };
   }, [sessions]);
 
+  const streak = useMemo(() => {
+    if (ordered.length === 0) return 0;
+    
+    const weekCounts = new Map<number, number>();
+    for (const session of ordered) {
+      const w = startOfWeek(session.startedAt, { weekStartsOn: 1 }).getTime();
+      weekCounts.set(w, (weekCounts.get(w) || 0) + 1);
+    }
+    
+    const sortedWeeks = Array.from(weekCounts.keys()).sort((a, b) => b - a);
+    const currentWeek = startOfWeek(Date.now(), { weekStartsOn: 1 }).getTime();
+    const ONE_WEEK = 7 * 24 * 60 * 60 * 1000;
+    
+    let currentStreak = 0;
+    let expectedWeek = sortedWeeks[0];
+    
+    if (expectedWeek !== currentWeek && expectedWeek !== currentWeek - ONE_WEEK) {
+      return 0;
+    }
+    
+    let i = 0;
+    const currentWeekCount = weekCounts.get(currentWeek) || 0;
+    
+    if (expectedWeek === currentWeek && currentWeekCount < weeklyGoal) {
+      expectedWeek = currentWeek - ONE_WEEK;
+      if (sortedWeeks[1] !== expectedWeek) {
+        return 0;
+      }
+      i = 1;
+    }
+    
+    while (i < sortedWeeks.length) {
+      const w = sortedWeeks[i];
+      if (w === expectedWeek) {
+        const count = weekCounts.get(w) || 0;
+        if (count >= weeklyGoal) {
+          currentStreak++;
+          expectedWeek -= ONE_WEEK;
+          i++;
+        } else {
+          break;
+        }
+      } else {
+        break;
+      }
+    }
+    
+    return currentStreak;
+  }, [ordered, weeklyGoal]);
+
   if (sessions.length === 0) {
     return (
       <div className="animate-fade-in py-16 text-center">
@@ -157,8 +235,37 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
   }
 
   return (
-    <div className="mx-auto max-w-xl space-y-6 animate-fade-in">
+    <div className="mx-auto max-w-xl space-y-6 animate-fade-in pb-8">
       <div className="grid grid-cols-2 gap-3">
+        {/* Full-width Streak Card */}
+        <div className="col-span-2 rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-3 mb-1.5">
+              <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                <Flame className="h-4 w-4 text-orange-500" />
+                Active Streak
+              </p>
+              <select
+                value={weeklyGoal}
+                onChange={handleGoalChange}
+                className="h-6 rounded border border-border bg-background px-1 text-[10px] text-muted-foreground outline-none transition-all focus:border-foreground"
+              >
+                {[1, 2, 3, 4, 5, 6, 7].map((num) => (
+                  <option key={num} value={num}>
+                    Goal: {num} / wk
+                  </option>
+                ))}
+              </select>
+            </div>
+            <p className="mt-1 text-sm text-muted-foreground">
+              You've hit your goal for <strong className="text-foreground">{streak} consecutive weeks</strong>!
+            </p>
+          </div>
+          <p className="font-mono text-3xl font-bold text-foreground">
+            {streak}<span className="text-xl text-muted-foreground">w</span>
+          </p>
+        </div>
+
         <StatCard
           icon={<Activity className="h-4 w-4" />}
           label="Total volume"
@@ -187,6 +294,12 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
         />
       </div>
 
+      <ConsistencyGrid sessions={sessions} />
+      
+      <MuscleHeatmap sessions={sessions} />
+      
+      <VolumePieChart sessions={sessions} />
+
       <ChartCard title="Volume per session">
         <ResponsiveContainer width="100%" height={180}>
           <LineChart data={volumeSeries} margin={{ top: 8, right: 8, bottom: 0, left: -12 }}>
@@ -206,6 +319,28 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
           </LineChart>
         </ResponsiveContainer>
       </ChartCard>
+
+      {durationSeries.length > 0 && (
+        <ChartCard title="Workout Duration">
+          <ResponsiveContainer width="100%" height={160}>
+            <BarChart data={durationSeries} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
+              <CartesianGrid strokeDasharray="2 4" stroke="var(--border)" vertical={false} />
+              <XAxis dataKey="label" {...axisProps} />
+              <YAxis allowDecimals={false} {...axisProps} width={38} />
+              <Tooltip
+                content={<MonoTooltip suffix=" min" />}
+                cursor={{ fill: "var(--muted)" }}
+              />
+              <Bar
+                dataKey="duration"
+                fill="var(--foreground)"
+                radius={[4, 4, 0, 0]}
+                animationDuration={600}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+      )}
 
       <ChartCard title="Weekly frequency">
         <ResponsiveContainer width="100%" height={160}>
@@ -269,7 +404,8 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
                 stroke="var(--muted-foreground)"
                 strokeDasharray="4 4"
                 strokeWidth={1.5}
-                dot={false}
+                dot={progressSeries.length === 1 ? { r: 2.5, fill: "var(--muted-foreground)", strokeWidth: 0 } : false}
+                activeDot={false}
                 animationDuration={600}
               />
             </LineChart>
@@ -295,6 +431,142 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
             </li>
           ))}
         </ul>
+      </div>
+
+      <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+        <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+          Data Management
+        </h3>
+        <p className="mb-4 text-xs text-muted-foreground">
+          Export your workout history and templates as a JSON file for safekeeping.
+        </p>
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={() => {
+              const sessions = localStorage.getItem("gym-tracker-sessions-v1");
+              const templates = localStorage.getItem("gym-tracker-templates-v1");
+              const data = {
+                sessions: sessions ? JSON.parse(sessions) : [],
+                templates: templates ? JSON.parse(templates) : []
+              };
+              const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `gym-tracker-export-${format(new Date(), "yyyy-MM-dd")}.json`;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+            }}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-muted py-3 text-sm font-semibold text-foreground transition-all hover:bg-muted/80 active:scale-95"
+          >
+            <Download className="h-4 w-4" />
+            Export Data
+          </button>
+          
+          <button
+            onClick={() => {
+              const now = Date.now();
+              const day = 24 * 60 * 60 * 1000;
+              const dummySessions = [
+                {
+                  id: "s1",
+                  startedAt: now - 5 * day,
+                  endedAt: now - 5 * day + 3600000,
+                  exercises: [
+                    {
+                      id: "e1",
+                      name: "Bench Press",
+                      sets: [
+                        { id: "set1", reps: 8, weight: 60, completed: true },
+                        { id: "set2", reps: 8, weight: 60, completed: true },
+                        { id: "set3", reps: 6, weight: 65, completed: true }
+                      ]
+                    },
+                    {
+                      id: "e2",
+                      name: "Incline Dumbbell Press",
+                      sets: [
+                        { id: "set4", reps: 10, weight: 25, completed: true },
+                        { id: "set5", reps: 10, weight: 25, completed: true }
+                      ]
+                    },
+                    {
+                      id: "e3",
+                      name: "Tricep Pushdown",
+                      sets: [
+                        { id: "set6", reps: 12, weight: 20, completed: true },
+                        { id: "set7", reps: 12, weight: 20, completed: true }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  id: "s2",
+                  startedAt: now - 3 * day,
+                  endedAt: now - 3 * day + 3600000,
+                  exercises: [
+                    {
+                      id: "e4",
+                      name: "Squat",
+                      sets: [
+                        { id: "set8", reps: 5, weight: 100, completed: true },
+                        { id: "set9", reps: 5, weight: 100, completed: true },
+                        { id: "set10", reps: 5, weight: 105, completed: true, pr: "weight" }
+                      ]
+                    },
+                    {
+                      id: "e5",
+                      name: "Leg Extension",
+                      sets: [
+                        { id: "set11", reps: 15, weight: 50, completed: true },
+                        { id: "set12", reps: 15, weight: 50, completed: true }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  id: "s3",
+                  startedAt: now - 1 * day,
+                  endedAt: now - 1 * day + 3600000,
+                  exercises: [
+                    {
+                      id: "e6",
+                      name: "Pull Up",
+                      sets: [
+                        { id: "set13", reps: 8, weight: 0, completed: true },
+                        { id: "set14", reps: 8, weight: 0, completed: true }
+                      ]
+                    },
+                    {
+                      id: "e7",
+                      name: "Barbell Row",
+                      sets: [
+                        { id: "set15", reps: 10, weight: 60, completed: true },
+                        { id: "set16", reps: 10, weight: 60, completed: true }
+                      ]
+                    },
+                    {
+                      id: "e8",
+                      name: "Bicep Curl",
+                      sets: [
+                        { id: "set17", reps: 12, weight: 15, completed: true },
+                        { id: "set18", reps: 12, weight: 15, completed: true }
+                      ]
+                    }
+                  ]
+                }
+              ];
+              const existing = JSON.parse(localStorage.getItem("gym-tracker-sessions-v1") || "[]");
+              localStorage.setItem("gym-tracker-sessions-v1", JSON.stringify([...existing, ...dummySessions]));
+              window.location.reload();
+            }}
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-primary/50 text-primary py-3 text-sm font-semibold transition-all hover:bg-primary/10 active:scale-95 mt-2"
+          >
+            Inject Dummy Data (Temp)
+          </button>
+        </div>
       </div>
     </div>
   );

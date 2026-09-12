@@ -1,10 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Trash2, Plus, Clock, Dumbbell, Trophy, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { StepperInput } from "@/components/ui/StepperInput";
+import { SwipeToDelete } from "@/components/ui/SwipeToDelete";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { ExerciseNameInput } from "./ExerciseNameInput";
 import { computeSessionSets, computeSessionVolume, generateId } from "./storage";
 import { PR_LABEL, detectPR, normalizeName } from "./records";
 import type { Exercise, ExerciseRecord, PRKind, Session, WorkoutSet } from "./types";
+import { hapticMedium, hapticSuccess } from "@/utils/haptics";
 
 interface ActiveSessionProps {
   session: Session;
@@ -21,12 +25,13 @@ function DigitSlot({ digit }: { digit: string }) {
   const [animating, setAnimating] = useState(false);
 
   useEffect(() => {
+    let timer: any;
     if (prevRef.current !== digit) {
       prevRef.current = digit;
       setAnimating(true);
-      const timer = setTimeout(() => setAnimating(false), 360);
-      return () => clearTimeout(timer);
+      timer = setTimeout(() => setAnimating(false), 360);
     }
+    return () => clearTimeout(timer);
   }, [digit]);
 
   return (
@@ -67,11 +72,11 @@ export function TimerDisplay({ ms }: { ms: number }) {
           <ColonSeparator />
         </>
       )}
-      <DigitSlot digit={mStr[0]} />
-      <DigitSlot digit={mStr[1]} />
+      <DigitSlot digit={mStr[0]!} />
+      <DigitSlot digit={mStr[1]!} />
       <ColonSeparator />
-      <DigitSlot digit={sStr[0]} />
-      <DigitSlot digit={sStr[1]} />
+      <DigitSlot digit={sStr[0]!} />
+      <DigitSlot digit={sStr[1]!} />
     </span>
   );
 }
@@ -202,7 +207,7 @@ export function ActiveSession({
               <Clock className="h-5 w-5 text-foreground animate-pulse-soft" />
             </div>
             <div>
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 Live session
               </p>
               <TimerDisplay ms={elapsed} />
@@ -211,14 +216,14 @@ export function ActiveSession({
           <div className="flex items-center gap-2">
             <button
               onClick={onCancel}
-              className="inline-flex items-center justify-center rounded-lg border border-border bg-background p-2 text-muted-foreground transition-all hover:bg-muted hover:shadow-sm active:scale-[0.96]"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border/50 bg-background text-muted-foreground transition-all hover:bg-muted active:scale-95"
               aria-label="Cancel workout"
             >
               <X className="h-5 w-5" />
             </button>
             <button
               onClick={handleFinish}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-primary-foreground transition-all hover:bg-foreground/90 hover:shadow-md active:scale-[0.96]"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-foreground px-5 text-sm font-semibold text-background transition-all hover:bg-foreground/90 hover:shadow-md active:scale-95"
             >
               Finish
             </button>
@@ -259,12 +264,12 @@ export function ActiveSession({
         </div>
 
         {session.exercises.length === 0 && (
-          <div className="animate-fade-in py-12 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-border animate-float">
-              <Dumbbell className="h-8 w-8 text-muted-foreground" />
-            </div>
-            <p className="text-muted-foreground">Add your first exercise to start logging sets.</p>
-          </div>
+          <EmptyState
+            icon={<Dumbbell className="h-12 w-12" strokeWidth={1.5} />}
+            title="Empty Workout"
+            description="Add your first exercise above to start logging sets and hitting PRs."
+            className="py-12"
+          />
         )}
 
         <div className="space-y-4">
@@ -313,11 +318,12 @@ function ExerciseCard({
 
   // Pulse the add button when both fields are filled
   useEffect(() => {
+    let t: any;
     if (canAdd) {
       setAddGlow(true);
-      const t = setTimeout(() => setAddGlow(false), 800);
-      return () => clearTimeout(t);
+      t = setTimeout(() => setAddGlow(false), 800);
     }
+    return () => clearTimeout(t);
   }, [canAdd]);
 
   function handleAddSet() {
@@ -336,30 +342,24 @@ function ExerciseCard({
   );
 
   return (
-    <div className="rounded-xl border border-border bg-card p-4 shadow-sm transition-all duration-150 hover:shadow-md">
-      <div className="mb-3 flex items-center justify-between">
+    <SwipeToDelete onDelete={() => onDeleteExercise(exercise.id)} className="rounded-3xl">
+      <div className="rounded-3xl border border-border/40 bg-card p-5 shadow-sm transition-all duration-200">
+        <div className="mb-4 flex items-center justify-between">
         <div>
           <h3 className="font-semibold text-foreground">{exercise.name}</h3>
-          <p className="text-xs text-muted-foreground">
+          <p className="mt-1 text-sm text-muted-foreground">
             {exercise.sets.length} sets · {volume.toLocaleString()} kg
             {exercise.targetSets
               ? ` · target ${exercise.targetSets}×${exercise.targetReps ?? 0} @ ${exercise.targetWeight ?? 0} kg`
               : ""}
           </p>
           {record && record.bestWeight > 0 && (
-            <p className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground">
+            <p className="mt-1.5 inline-flex items-center gap-1 text-sm font-medium text-muted-foreground">
               <Trophy className="h-3 w-3" />
               PR {record.bestWeight} kg × {record.bestWeightReps}
             </p>
           )}
         </div>
-        <button
-          onClick={() => onDeleteExercise(exercise.id)}
-          className="inline-flex items-center justify-center rounded-lg p-2 text-muted-foreground transition-all hover:bg-destructive/10 hover:text-destructive active:scale-[0.96]"
-          aria-label={`Delete ${exercise.name}`}
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
       </div>
 
       {exercise.sets.length > 0 && (
@@ -378,43 +378,30 @@ function ExerciseCard({
 
       <div className="flex items-end gap-2">
         <div className="flex-1">
-          <label className="mb-1 block text-xs font-medium text-muted-foreground">Reps</label>
-          <input
-            type="number"
-            inputMode="numeric"
-            min={1}
+          <StepperInput
+            label="Reps"
             value={reps}
-            onChange={(e) => setReps(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleAddSet();
-            }}
-            placeholder="0"
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition-all focus:border-foreground focus:ring-2 focus:ring-foreground/10"
+            onChange={setReps}
+            onEnter={handleAddSet}
+            min={1}
+            step={1}
           />
         </div>
         <div className="flex-1">
-          <label className="mb-1 block text-xs font-medium text-muted-foreground">
-            Weight (kg)
-          </label>
-          <input
-            type="number"
-            inputMode="decimal"
-            min={0}
-            step={0.5}
+          <StepperInput
+            label="Weight (kg)"
             value={weight}
-            onChange={(e) => setWeight(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleAddSet();
-            }}
-            placeholder="0"
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition-all focus:border-foreground focus:ring-2 focus:ring-foreground/10"
+            onChange={setWeight}
+            onEnter={handleAddSet}
+            min={0}
+            step={2.5}
           />
         </div>
         <button
           onClick={handleAddSet}
           disabled={!reps || !weight}
           className={cn(
-            "inline-flex items-center justify-center rounded-lg bg-secondary p-2.5 text-secondary-foreground transition-all hover:bg-secondary/80 active:scale-[0.96] disabled:opacity-40 disabled:active:scale-100",
+            "inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-foreground text-background transition-all hover:bg-foreground/90 active:scale-95 disabled:opacity-40 disabled:active:scale-100",
             addGlow && "animate-border-glow",
           )}
           aria-label="Add set"
@@ -423,6 +410,7 @@ function ExerciseCard({
         </button>
       </div>
     </div>
+    </SwipeToDelete>
   );
 }
 
@@ -439,16 +427,19 @@ function SetRow({ set, index, onToggle, onDelete }: SetRowProps) {
   const prevCompleted = useRef(set.completed);
 
   useEffect(() => {
+    let t: any;
     if (set.completed && !prevCompleted.current) {
       setJustCompleted(true);
-      // Haptic feedback on mobile
-      if (navigator.vibrate) navigator.vibrate(30);
-      const t = setTimeout(() => setJustCompleted(false), 400);
-      prevCompleted.current = set.completed;
-      return () => clearTimeout(t);
+      if (set.pr) {
+        hapticSuccess();
+      } else {
+        hapticMedium();
+      }
+      t = setTimeout(() => setJustCompleted(false), 400);
     }
     prevCompleted.current = set.completed;
-  }, [set.completed]);
+    return () => clearTimeout(t);
+  }, [set.completed, set.pr]);
 
   function handleDelete() {
     setDeleting(true);
@@ -456,13 +447,14 @@ function SetRow({ set, index, onToggle, onDelete }: SetRowProps) {
   }
 
   return (
-    <div
-      className={cn(
-        "flex items-center justify-between rounded-lg border border-border p-3 transition-all duration-200",
+    <SwipeToDelete onDelete={onDelete} className="rounded-2xl">
+      <div
+        className={cn(
+        "flex items-center justify-between rounded-2xl border border-border/40 p-3.5 transition-all duration-200",
         deleting && "deleting",
-        set.completed && !justCompleted && "bg-muted/50",
+        set.completed && !justCompleted && "bg-muted/30 border-transparent",
         justCompleted && "set-completed-sweep",
-        set.pr && "border-foreground shadow-sm",
+        set.pr && "border-foreground/50 shadow-sm bg-foreground/5",
       )}
     >
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1">
@@ -502,7 +494,7 @@ function SetRow({ set, index, onToggle, onDelete }: SetRowProps) {
         </button>
         <div>
           <p className="text-sm font-medium text-foreground">Set {index + 1}</p>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             {set.reps} reps × {set.weight} kg
           </p>
         </div>
@@ -513,13 +505,7 @@ function SetRow({ set, index, onToggle, onDelete }: SetRowProps) {
           </span>
         )}
       </div>
-      <button
-        onClick={handleDelete}
-        className="inline-flex items-center justify-center rounded-lg p-1.5 text-muted-foreground transition-all hover:bg-destructive/10 hover:text-destructive active:scale-[0.96]"
-        aria-label="Delete set"
-      >
-        <Trash2 className="h-4 w-4" />
-      </button>
     </div>
+    </SwipeToDelete>
   );
 }

@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import { ChevronDown, Trash2, Calendar, LayoutTemplate, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { computeSessionSets, computeSessionVolume } from "./storage";
+import { EmptyState } from "@/components/ui/EmptyState";
 import type { Session } from "./types";
 
 interface SessionHistoryProps {
@@ -40,15 +41,11 @@ export function SessionHistory({ sessions, onDelete, onSaveTemplate }: SessionHi
 
   if (sessions.length === 0) {
     return (
-      <div className="animate-fade-in py-16 text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-border animate-float">
-          <Calendar className="h-8 w-8 text-muted-foreground" />
-        </div>
-        <h3 className="text-base font-medium text-foreground">No workouts yet</h3>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Finish your first session to see it here.
-        </p>
-      </div>
+      <EmptyState
+        icon={<Calendar className="h-12 w-12" strokeWidth={1.5} />}
+        title="No workouts yet"
+        description="Your completed training sessions will appear here. Finish your first workout to get started."
+      />
     );
   }
 
@@ -74,7 +71,7 @@ export function SessionHistory({ sessions, onDelete, onSaveTemplate }: SessionHi
           <div
             key={session.id}
             className={cn(
-              "overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-all hover:border-foreground/20 hover:shadow-md",
+              "overflow-hidden rounded-2xl border border-border/40 bg-card shadow-sm transition-all hover:border-foreground/20 hover:shadow-md",
               isDeleting && "deleting",
             )}
           >
@@ -162,7 +159,7 @@ export function SessionHistory({ sessions, onDelete, onSaveTemplate }: SessionHi
                       {onSaveTemplate && (
                         <button
                           onClick={() => onSaveTemplate(session)}
-                          className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium text-muted-foreground transition-all hover:bg-muted hover:text-foreground active:scale-[0.96]"
+                          className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-semibold text-muted-foreground transition-all hover:bg-muted hover:text-foreground active:scale-95"
                         >
                           <LayoutTemplate className="h-3.5 w-3.5" />
                           Save as template
@@ -170,7 +167,7 @@ export function SessionHistory({ sessions, onDelete, onSaveTemplate }: SessionHi
                       )}
                       <button
                         onClick={() => handleDelete(session.id)}
-                        className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium text-destructive transition-all hover:bg-destructive/10 active:scale-[0.96]"
+                        className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-semibold text-destructive transition-all hover:bg-destructive/10 active:scale-95"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                         Delete

@@ -59,6 +59,33 @@ export function saveSessions(sessions: Session[]): void {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
 }
 
+const ACTIVE_SESSION_KEY = "gym-tracker-active-session-v1";
+
+export function loadActiveSession(): Session | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(ACTIVE_SESSION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    const result = SessionSchema.safeParse(parsed);
+    if (result.success) {
+      return result.data;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveActiveSession(session: Session | null): void {
+  if (typeof window === "undefined") return;
+  if (!session) {
+    window.localStorage.removeItem(ACTIVE_SESSION_KEY);
+  } else {
+    window.localStorage.setItem(ACTIVE_SESSION_KEY, JSON.stringify(session));
+  }
+}
+
 export function getExerciseNames(sessions: Session[]): string[] {
   const names = new Set<string>();
   for (const session of sessions) {
@@ -86,4 +113,23 @@ export function computeSessionSets(session: Session): number {
 
 export function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+const WEEKLY_GOAL_KEY = "gym-tracker-weekly-goal-v1";
+
+export function loadWeeklyGoal(): number {
+  if (typeof window === "undefined") return 4;
+  try {
+    const raw = window.localStorage.getItem(WEEKLY_GOAL_KEY);
+    if (!raw) return 4;
+    const parsed = parseInt(raw, 10);
+    return isNaN(parsed) ? 4 : parsed;
+  } catch {
+    return 4;
+  }
+}
+
+export function saveWeeklyGoal(goal: number): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(WEEKLY_GOAL_KEY, goal.toString());
 }

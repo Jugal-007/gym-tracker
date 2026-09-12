@@ -4,6 +4,9 @@ import { cn } from "@/lib/utils";
 import { ExerciseNameInput } from "./ExerciseNameInput";
 import { generateId } from "./storage";
 import { emptyTemplateExercise } from "./templates";
+import { StepperInput } from "@/components/ui/StepperInput";
+import { SwipeToDelete } from "@/components/ui/SwipeToDelete";
+import { EmptyState } from "@/components/ui/EmptyState";
 import type { Template, TemplateExercise } from "./types";
 
 interface TemplatesProps {
@@ -61,7 +64,7 @@ export function Templates({ templates, exerciseNames, onStart, onSave, onDelete 
         </h2>
         <button
           onClick={newTemplate}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-2 text-sm font-medium text-primary-foreground transition-all hover:bg-foreground/90 hover:shadow-md active:scale-[0.96]"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-border/60 bg-transparent px-3.5 py-2 text-sm font-semibold text-foreground transition-all hover:bg-muted active:scale-95"
         >
           <Plus className="h-4 w-4" />
           New
@@ -69,28 +72,28 @@ export function Templates({ templates, exerciseNames, onStart, onSave, onDelete 
       </div>
 
       {templates.length === 0 ? (
-        <div className="animate-fade-in py-16 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-border animate-float">
-            <LayoutTemplate className="h-8 w-8 text-muted-foreground" />
-          </div>
-          <h3 className="text-base font-medium text-foreground">No templates yet</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Save your usual routine and start it in one tap.
-          </p>
-        </div>
+        <EmptyState
+          icon={<LayoutTemplate className="h-12 w-12" strokeWidth={1.5} />}
+          title="No templates yet"
+          description="Save your usual routine and start it in one tap."
+        />
       ) : (
         templates.map((template) => (
-          <div
+            <SwipeToDelete
             key={template.id}
-            className={cn(
-              "rounded-xl border border-border bg-card p-4 shadow-sm transition-all hover:border-foreground/20 hover:shadow-md",
-              deletingIds.has(template.id) && "deleting",
-            )}
+            onDelete={() => handleDelete(template.id)}
+            className="rounded-2xl"
           >
+            <div
+              className={cn(
+                "rounded-2xl border border-border/40 bg-card p-4 shadow-sm transition-all hover:border-foreground/20 hover:shadow-md",
+                deletingIds.has(template.id) && "deleting",
+              )}
+            >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <h3 className="font-semibold text-foreground">{template.name}</h3>
-                <p className="mt-1 text-xs text-muted-foreground">
+                <p className="mt-1.5 text-sm text-muted-foreground">
                   {template.exercises.length} exercises ·{" "}
                   {template.exercises.reduce((s, e) => s + e.targetSets, 0)} target sets
                 </p>
@@ -98,31 +101,16 @@ export function Templates({ templates, exerciseNames, onStart, onSave, onDelete 
                   {template.exercises.map((exercise) => (
                     <li key={exercise.id} className="flex items-center justify-between text-sm">
                       <span className="text-foreground">{exercise.name}</span>
-                      <span className="font-mono text-xs text-muted-foreground">
-                        {exercise.targetSets}×{exercise.targetReps} @ {exercise.targetWeight} kg
+                      <span className="font-mono text-sm text-muted-foreground">
+                        {exercise.targetSets} × {exercise.targetReps}
                       </span>
                     </li>
                   ))}
                 </ul>
               </div>
-              <div className="flex flex-col items-end gap-2">
-                <button
-                  onClick={() => onStart(template)}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-foreground px-3 py-2 text-sm font-medium text-primary-foreground transition-all hover:bg-foreground/90 hover:shadow-md active:scale-[0.96]"
-                >
-                  <Play className="h-4 w-4" />
-                  Start
-                </button>
-                <button
-                  onClick={() => handleDelete(template.id)}
-                  className="inline-flex items-center justify-center rounded-lg p-2 text-muted-foreground transition-all hover:bg-destructive/10 hover:text-destructive active:scale-[0.96]"
-                  aria-label={`Delete ${template.name}`}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
             </div>
-          </div>
+            </div>
+          </SwipeToDelete>
         ))
       )}
     </div>
@@ -166,7 +154,7 @@ function TemplateEditor({ template, exerciseNames, onCancel, onSave }: TemplateE
       </div>
 
       <div>
-        <label className="mb-1 block text-xs font-medium text-muted-foreground">
+        <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted-foreground">
           Template name
         </label>
         <input
@@ -177,9 +165,14 @@ function TemplateEditor({ template, exerciseNames, onCancel, onSave }: TemplateE
         />
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-4">
         {exercises.map((exercise) => (
-          <div key={exercise.id} className="rounded-xl border border-border bg-card p-4 shadow-sm">
+          <SwipeToDelete
+            key={exercise.id}
+            onDelete={() => setExercises((prev) => prev.filter((e) => e.id !== exercise.id))}
+            className="rounded-2xl"
+          >
+            <div className="rounded-2xl border border-border/40 bg-card p-5 shadow-sm">
             <div className="mb-3 flex items-end gap-2">
               <ExerciseNameInput
                 suggestions={exerciseNames}
@@ -188,41 +181,33 @@ function TemplateEditor({ template, exerciseNames, onCancel, onSave }: TemplateE
                 onSubmit={() => {}}
                 placeholder="Exercise name..."
               />
-              <button
-                onClick={() => setExercises((prev) => prev.filter((e) => e.id !== exercise.id))}
-                className="inline-flex items-center justify-center rounded-lg p-2.5 text-muted-foreground transition-all hover:bg-destructive/10 hover:text-destructive active:scale-[0.96]"
-                aria-label="Remove exercise"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
             </div>
-            <div className="grid grid-cols-3 gap-2">
-              <NumberField
+            <div className="grid grid-cols-2 gap-2">
+              <StepperInput
                 label="Sets"
-                value={exercise.targetSets}
-                onChange={(v) => update(exercise.id, { targetSets: v })}
+                value={String(exercise.targetSets)}
+                onChange={(v) => update(exercise.id, { targetSets: Number(v) || 0 })}
+                min={1}
+                step={1}
               />
-              <NumberField
+              <StepperInput
                 label="Reps"
-                value={exercise.targetReps}
-                onChange={(v) => update(exercise.id, { targetReps: v })}
-              />
-              <NumberField
-                label="Weight (kg)"
-                value={exercise.targetWeight}
-                step={0.5}
-                onChange={(v) => update(exercise.id, { targetWeight: v })}
+                value={String(exercise.targetReps)}
+                onChange={(v) => update(exercise.id, { targetReps: Number(v) || 0 })}
+                min={1}
+                step={1}
               />
             </div>
-          </div>
+            </div>
+          </SwipeToDelete>
         ))}
       </div>
 
       <button
         onClick={() => setExercises((prev) => [...prev, emptyTemplateExercise()])}
-        className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-border py-3 text-sm font-medium text-muted-foreground transition-all hover:border-foreground/40 hover:text-foreground active:scale-[0.99]"
+        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-border/50 py-4 text-sm font-semibold text-muted-foreground transition-all hover:border-foreground/40 hover:text-foreground active:scale-95"
       >
-        <Plus className="h-4 w-4" />
+        <Plus className="h-5 w-5" />
         Add exercise
       </button>
 
@@ -235,7 +220,7 @@ function TemplateEditor({ template, exerciseNames, onCancel, onSave }: TemplateE
           })
         }
         disabled={!canSave}
-        className="w-full rounded-xl bg-foreground px-6 py-3.5 text-base font-semibold text-primary-foreground transition-all hover:bg-foreground/90 hover:shadow-lg active:scale-[0.98] disabled:opacity-40 disabled:active:scale-100"
+        className="w-full rounded-2xl bg-foreground px-6 py-4 text-base font-bold text-background transition-all hover:bg-foreground/90 hover:shadow-lg active:scale-95 disabled:opacity-40 disabled:active:scale-100"
       >
         Save template
       </button>
@@ -243,28 +228,3 @@ function TemplateEditor({ template, exerciseNames, onCancel, onSave }: TemplateE
   );
 }
 
-function NumberField({
-  label,
-  value,
-  step,
-  onChange,
-}: {
-  label: string;
-  value: number;
-  step?: number;
-  onChange: (value: number) => void;
-}) {
-  return (
-    <div>
-      <label className="mb-1 block text-xs font-medium text-muted-foreground">{label}</label>
-      <input
-        type="number"
-        min={0}
-        step={step ?? 1}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value) || 0)}
-        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition-all focus:border-foreground focus:ring-2 focus:ring-foreground/10"
-      />
-    </div>
-  );
-}
