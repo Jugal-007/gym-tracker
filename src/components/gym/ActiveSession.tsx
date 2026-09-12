@@ -376,37 +376,39 @@ function ExerciseCard({
         </div>
       )}
 
-      <div className="flex items-end gap-2">
-        <div className="flex-1">
-          <StepperInput
-            label="Reps"
-            value={reps}
-            onChange={setReps}
-            onEnter={handleAddSet}
-            min={1}
-            step={1}
-          />
-        </div>
-        <div className="flex-1">
-          <StepperInput
-            label="Weight (kg)"
-            value={weight}
-            onChange={setWeight}
-            onEnter={handleAddSet}
-            min={0}
-            step={2.5}
-          />
+      <div className="flex flex-col gap-3">
+        <div className="flex items-end gap-2">
+          <div className="flex-1">
+            <StepperInput
+              label="Reps"
+              value={reps}
+              onChange={setReps}
+              onEnter={handleAddSet}
+              min={1}
+              step={1}
+            />
+          </div>
+          <div className="flex-1">
+            <StepperInput
+              label="Weight (kg)"
+              value={weight}
+              onChange={setWeight}
+              onEnter={handleAddSet}
+              min={0}
+              step={2.5}
+            />
+          </div>
         </div>
         <button
           onClick={handleAddSet}
-          disabled={!reps || !weight}
+          disabled={!canAdd}
           className={cn(
-            "inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-foreground text-background transition-all hover:bg-foreground/90 active:scale-95 disabled:opacity-40 disabled:active:scale-100",
-            addGlow && "animate-border-glow",
+            "flex h-11 w-full shrink-0 items-center justify-center rounded-xl bg-foreground text-primary-foreground font-semibold transition-all duration-300 disabled:opacity-40",
+            addGlow ? "animate-pulse-soft shadow-[0_0_15px_rgba(255,255,255,0.25)]" : "hover:bg-foreground/90 hover:-translate-y-0.5 hover:shadow-md active:scale-95"
           )}
-          aria-label="Add set"
         >
-          <Plus className="h-5 w-5" />
+          <Plus className="h-5 w-5 mr-2" />
+          Add Set
         </button>
       </div>
     </div>

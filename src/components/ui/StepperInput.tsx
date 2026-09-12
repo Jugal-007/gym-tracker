@@ -77,7 +77,7 @@ export function StepperInput({
 
   return (
     <div className={cn("flex flex-col", className)}>
-      <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted-foreground">
+      <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted-foreground truncate">
         {label}
       </label>
       <div className="flex items-center justify-between overflow-hidden rounded-xl border border-border/50 bg-background/50 focus-within:border-foreground/40 focus-within:ring-4 focus-within:ring-foreground/5 transition-all">
@@ -91,7 +91,7 @@ export function StepperInput({
           onPointerUp={stopAuto}
           onPointerLeave={stopAuto}
           onPointerCancel={stopAuto}
-          className="flex h-11 w-10 shrink-0 items-center justify-center text-muted-foreground hover:bg-muted/50 hover:text-foreground active:scale-90 transition-all focus:outline-none select-none"
+          className="flex h-11 w-9 sm:w-10 shrink-0 items-center justify-center text-muted-foreground hover:bg-muted/50 hover:text-foreground active:scale-90 transition-all focus:outline-none select-none"
         >
           <Minus className="h-5 w-5" />
         </button>
@@ -127,7 +127,7 @@ export function StepperInput({
           onPointerUp={stopAuto}
           onPointerLeave={stopAuto}
           onPointerCancel={stopAuto}
-          className="flex h-11 w-10 shrink-0 items-center justify-center text-muted-foreground hover:bg-muted/50 hover:text-foreground active:scale-90 transition-all focus:outline-none select-none"
+          className="flex h-11 w-9 sm:w-10 shrink-0 items-center justify-center text-muted-foreground hover:bg-muted/50 hover:text-foreground active:scale-90 transition-all focus:outline-none select-none"
         >
           <Plus className="h-5 w-5" />
         </button>
