@@ -70,8 +70,22 @@ function useCountUp(target: number, duration = 450): number {
 }
 
 export function StatsPanel({ sessions }: StatsPanelProps) {
+  const [activeRoutine, setActiveRoutine] = useState<string>("all");
   const [selectedExercise, setSelectedExercise] = useState<string>("");
   const [weeklyGoal, setWeeklyGoal] = useState<number>(loadWeeklyGoal());
+
+  const routines = useMemo(() => {
+    const names = new Set<string>();
+    for (const s of sessions) {
+      if (s.templateName) names.add(s.templateName);
+    }
+    return Array.from(names).sort();
+  }, [sessions]);
+
+  const filteredSessions = useMemo(() => {
+    if (activeRoutine === "all") return sessions;
+    return sessions.filter((s) => s.templateName === activeRoutine);
+  }, [sessions, activeRoutine]);
 
   const handleGoalChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const g = parseInt(e.target.value, 10);
@@ -79,15 +93,15 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
     saveWeeklyGoal(g);
   };
 
-  const records = useMemo(() => buildRecords(sessions), [sessions]);
+  const records = useMemo(() => buildRecords(filteredSessions), [filteredSessions]);
   const recordList = useMemo(
     () => Object.values(records).sort((a, b) => b.bestE1rm - a.bestE1rm),
     [records],
   );
 
   const ordered = useMemo(
-    () => [...sessions].sort((a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime()),
-    [sessions],
+    () => [...filteredSessions].sort((a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime()),
+    [filteredSessions],
   );
 
   const volumeSeries = useMemo(
@@ -158,19 +172,19 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
   }, [ordered, activeExercise]);
 
   const totals = useMemo(() => {
-    const totalVolume = sessions.reduce((s, x) => s + computeSessionVolume(x), 0);
-    const totalSets = sessions.reduce((s, x) => s + computeSessionSets(x), 0);
+    const totalVolume = filteredSessions.reduce((s, x) => s + computeSessionVolume(x), 0);
+    const totalSets = filteredSessions.reduce((s, x) => s + computeSessionSets(x), 0);
     const weeks = new Set(
-      sessions.map((s) => startOfWeek(new Date(s.startedAt), { weekStartsOn: 1 }).getTime()),
+      filteredSessions.map((s) => startOfWeek(new Date(s.startedAt), { weekStartsOn: 1 }).getTime()),
     );
-    const perWeek = weeks.size ? sessions.length / weeks.size : 0;
+    const perWeek = weeks.size ? filteredSessions.length / weeks.size : 0;
     return {
       totalVolume,
       totalSets,
-      sessionCount: sessions.length,
+      sessionCount: filteredSessions.length,
       perWeek: Math.round(perWeek * 10) / 10,
     };
-  }, [sessions]);
+  }, [filteredSessions]);
 
   const streak = useMemo(() => {
     if (ordered.length === 0) return 0;
@@ -238,8 +252,37 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
 
   return (
     <div className="mx-auto max-w-xl space-y-6 animate-fade-in pb-8">
+      {routines.length > 0 && (
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
+          <button
+            onClick={() => setActiveRoutine("all")}
+            className={`shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition-all duration-300 ${
+              activeRoutine === "all"
+                ? "bg-foreground text-background shadow-md"
+                : "bg-muted text-muted-foreground hover:bg-muted/80"
+            }`}
+          >
+            All Workouts
+          </button>
+          {routines.map((r) => (
+            <button
+              key={r}
+              onClick={() => setActiveRoutine(r)}
+              className={`shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition-all duration-300 ${
+                activeRoutine === r
+                  ? "bg-foreground text-background shadow-md"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+              }`}
+            >
+              {r}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-3">
-        {/* Full-width Streak Card */}
+        {/* Full-width Streak Card (Only visible when viewing 'all' workouts) */}
+        {activeRoutine === "all" && (
         <div className="col-span-2 rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md flex items-center justify-between">
           <div>
             <div className="flex items-center gap-3 mb-1.5">
@@ -267,6 +310,7 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
             {streak}<span className="text-xl text-muted-foreground">w</span>
           </p>
         </div>
+        )}
 
         <StatCard
           icon={<Activity className="h-4 w-4" />}
@@ -296,11 +340,11 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
         />
       </div>
 
-      <ConsistencyGrid sessions={sessions} />
+      <ConsistencyGrid sessions={filteredSessions} />
       
-      <MuscleHeatmap sessions={sessions} />
+      <MuscleHeatmap sessions={filteredSessions} />
       
-      <VolumePieChart sessions={sessions} />
+      <VolumePieChart sessions={filteredSessions} />
 
       <ChartCard title="Volume per session">
         <ResponsiveContainer width="100%" height={180}>
