@@ -81,7 +81,7 @@ export function SessionHistory({ sessions, onDelete, onSaveTemplate }: SessionHi
             >
               <div>
                 <p className="flex items-center gap-2 font-medium text-foreground">
-                  {format(session.startedAt, "EEEE, MMM d")}
+                  {format(new Date(session.startedAt), "EEEE, MMM d")}
                   {prs > 0 && (
                     <span className="inline-flex items-center gap-1 rounded-full bg-foreground px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary-foreground">
                       <Trophy className="h-3 w-3" />
@@ -93,7 +93,7 @@ export function SessionHistory({ sessions, onDelete, onSaveTemplate }: SessionHi
                   <p className="text-xs text-muted-foreground">{session.templateName}</p>
                 )}
                 <p className="text-xs text-muted-foreground">
-                  {format(session.startedAt, "h:mm a")} ·{" "}
+                  {format(new Date(session.startedAt), "h:mm a")} ·{" "}
                   {duration > 0 ? formatDuration(duration) : "0s"}
                 </p>
               </div>

@@ -86,14 +86,14 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
   );
 
   const ordered = useMemo(
-    () => [...sessions].sort((a, b) => a.startedAt - b.startedAt),
+    () => [...sessions].sort((a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime()),
     [sessions],
   );
 
   const volumeSeries = useMemo(
     () =>
       ordered.map((session) => ({
-        label: format(session.startedAt, "MMM d"),
+        label: format(new Date(session.startedAt), "MMM d"),
         volume: computeSessionVolume(session),
       })),
     [ordered],
@@ -102,10 +102,12 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
   const durationSeries = useMemo(() => {
     return ordered
       .map((session) => {
-        const durationMs = session.endedAt ? session.endedAt - session.startedAt : 0;
+        const end = session.endedAt ? new Date(session.endedAt).getTime() : 0;
+        const start = new Date(session.startedAt).getTime();
+        const durationMs = end ? end - start : 0;
         const durationMins = Math.round(durationMs / 60000);
         return {
-          label: format(session.startedAt, "MMM d"),
+          label: format(start, "MMM d"),
           duration: durationMins,
         };
       })
@@ -115,7 +117,7 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
   const weekSeries = useMemo(() => {
     const buckets = new Map<number, number>();
     for (const session of ordered) {
-      const week = startOfWeek(session.startedAt, { weekStartsOn: 1 }).getTime();
+      const week = startOfWeek(new Date(session.startedAt), { weekStartsOn: 1 }).getTime();
       buckets.set(week, (buckets.get(week) ?? 0) + 1);
     }
     return Array.from(buckets.entries())
@@ -145,7 +147,7 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
         }
         if (best > 0) {
           points.push({
-            label: format(session.startedAt, "MMM d"),
+            label: format(new Date(session.startedAt), "MMM d"),
             e1rm: Math.round(best * 10) / 10,
             topWeight,
           });
@@ -159,7 +161,7 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
     const totalVolume = sessions.reduce((s, x) => s + computeSessionVolume(x), 0);
     const totalSets = sessions.reduce((s, x) => s + computeSessionSets(x), 0);
     const weeks = new Set(
-      sessions.map((s) => startOfWeek(s.startedAt, { weekStartsOn: 1 }).getTime()),
+      sessions.map((s) => startOfWeek(new Date(s.startedAt), { weekStartsOn: 1 }).getTime()),
     );
     const perWeek = weeks.size ? sessions.length / weeks.size : 0;
     return {
@@ -175,7 +177,7 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
     
     const weekCounts = new Map<number, number>();
     for (const session of ordered) {
-      const w = startOfWeek(session.startedAt, { weekStartsOn: 1 }).getTime();
+      const w = startOfWeek(new Date(session.startedAt), { weekStartsOn: 1 }).getTime();
       weekCounts.set(w, (weekCounts.get(w) || 0) + 1);
     }
     
