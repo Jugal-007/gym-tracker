@@ -317,7 +317,7 @@ export function ActiveSession({
                   <X className="h-5 w-5" />
                 </button>
               </AlertDialogTrigger>
-              <AlertDialogContent className="rounded-3xl border-border bg-card sm:rounded-3xl">
+              <AlertDialogContent className="rounded-3xl border-border/20 sm:rounded-3xl">
                 <AlertDialogHeader>
                   <AlertDialogTitle className="text-foreground">Cancel session?</AlertDialogTitle>
                   <AlertDialogDescription className="text-muted-foreground">
