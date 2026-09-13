@@ -255,8 +255,8 @@ function Index() {
       </main>
 
       {/* Mobile Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 block border-t border-border/40 bg-card/70 pb-safe pt-2 backdrop-blur-xl sm:hidden">
-        <div className="mx-auto max-w-xl px-4 pb-2">
+      <div className="fixed bottom-6 left-4 right-4 z-50 block sm:hidden">
+        <div className="mx-auto max-w-md rounded-[2rem] border border-black/10 dark:border-white/10 bg-white/60 dark:bg-black/60 p-2 backdrop-blur-[25px] shadow-[0_8px_32px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
           <TabNav view={view} setView={setView} isMobile={true} hasActiveSession={activeSession !== null} />
         </div>
       </div>
