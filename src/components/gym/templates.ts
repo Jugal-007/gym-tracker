@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { generateId } from "./storage";
 import type { Session, Template, TemplateExercise } from "./types";
+import { syncUp } from "@/lib/sync";
 
 const TEMPLATES_KEY = "gym-tracker-templates-v1";
 
@@ -17,6 +18,7 @@ const TemplateSchema = z.object({
   name: z.string(),
   exercises: z.array(TemplateExerciseSchema),
   createdAt: z.number(),
+  updatedAt: z.number().optional(),
 });
 
 const TemplatesListSchema = z.array(TemplateSchema);
@@ -46,6 +48,7 @@ export function loadTemplates(): Template[] {
 export function saveTemplates(templates: Template[]): void {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(TEMPLATES_KEY, JSON.stringify(templates));
+  syncUp().catch(console.error);
 }
 
 export function emptyTemplateExercise(): TemplateExercise {

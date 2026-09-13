@@ -105,6 +105,7 @@ function RootShell({ children }: { children: ReactNode }) {
 }
 
 import { ThemeProvider } from "next-themes";
+import { AuthProvider } from "@/components/auth/AuthProvider";
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
@@ -112,8 +113,10 @@ function RootComponent() {
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
       <QueryClientProvider client={queryClient}>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
+        <AuthProvider>
+          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+          <Outlet />
+        </AuthProvider>
       </QueryClientProvider>
     </ThemeProvider>
   );

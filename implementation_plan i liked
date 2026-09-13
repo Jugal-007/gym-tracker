@@ -1,0 +1,176 @@
+# LFT — Full App Improvement Plan
+*Based on: live codebase audit + SRS review — Sep 13, 2026*
+
+---
+
+## Overview
+
+The app is in a solid, polished state for a v1. The core loop (start → log → finish → stats) works well. What follows is a prioritized list of everything missing, broken, or worth improving — ranked from **critical** to **nice-to-have**, with exact file references.
+
+---
+
+## 🔴 Critical / Broken
+
+### 1. Data is Ephemeral — One Browser Clear = Everything Gone
+**SRS Reference:** Phase 1 — Cloud Persistence  
+**Problem:** All data lives in `localStorage`. If user clears storage, switches browser, or reinstalls, everything is wiped with no warning.  
+**Impact:** High — trust-breaking, data loss  
+**Files:** [`storage.ts`](file:///d:/projects/Gym%20Tracker/src/components/gym/storage.ts)  
+**Fix options (pick one):**
+- Short-term: Add a **JSON export/import button** in a Settings screen (SRS Phase 3). This alone dramatically reduces risk.
+- Long-term: Supabase/Firebase sync (SRS Phase 1 full cloud backend).
+
+---
+
+### 2. No PWA / "Add to Home Screen" Support
+**SRS Reference:** Phase 4 — PWA  
+**Problem:** The entire premise of the app is "feels native". Without a PWA manifest + service worker, it opens in the browser with address bar visible, destroying the illusion on iOS/Android.  
+**Impact:** High — first-impression killer on mobile  
+**Files:** `index.html`, `vite.config.ts`  
+**Fix:** Add `manifest.json` with `display: standalone`, icons, and a basic service worker (or use `vite-plugin-pwa`).
+
+---
+
+### 3. No Confirmation Before Cancelling an Active Session
+**Problem:** The X button cancels the entire workout with no confirm dialog. One misclick = all sets lost.  
+**Impact:** High — catastrophic UX failure  
+**Files:** [`ActiveSession.tsx`](file:///d:/projects/Gym%20Tracker/src/components/gym/ActiveSession.tsx) line ~240  
+**Fix:** Add an `alert-dialog` (already installed via Radix) confirmation: *"Cancel workout? All logged sets will be lost."*
+
+---
+
+## 🟠 High Priority / Missing Core Features
+
+### 4. No Rest Timer
+**SRS Reference:** Phase 2 — Rest Timers  
+**Problem:** After logging a set, users mentally count rest time. A rest timer is the #1 feature request for any gym app and would dramatically increase daily utility.  
+**Files:** [`ActiveSession.tsx`](file:///d:/projects/Gym%20Tracker/src/components/gym/ActiveSession.tsx), new `RestTimer.tsx`  
+**Spec:**
+- Auto-starts when a set is marked complete (configurable 60s/90s/120s/custom)
+- Shows countdown in the FloatingTimer pill when app is minimized
+- Haptic + sound alert when done
+- Dismissible with a tap
+
+---
+
+### 5. Templates Missing a "Start" Button on the Card
+**Problem:** In [`Templates.tsx`](file:///d:/projects/Gym%20Tracker/src/components/gym/Templates.tsx), there is an `onStart` prop passed in, but no Start button is rendered on the template card itself. Users have to swipe, which is not discoverable.  
+**Fix:** Add a prominent "▶ Start" button to each template card.
+
+---
+
+### 6. Active Session — "Finish Exercise" Moves Items But Doesn't Guide Next Steps
+**Problem:** When you finish an exercise, it visually dims and sinks, but there is no indication of what to do next. No "Next Exercise" affordance. Users feel lost.  
+**Fix:** After marking exercise complete, show a subtle animated nudge: *"↓ Next up: [next exercise name]"* or just a smooth scroll to next uncompleted exercise.
+
+---
+
+### 7. StatsPanel — `selectedExercise` Defaults to Empty String
+**Problem:** In [`StatsPanel.tsx`](file:///d:/projects/Gym%20Tracker/src/components/gym/StatsPanel.tsx) line 74, `selectedExercise` starts as `""` meaning no exercise is selected. The exercise progress chart renders nothing until user manually picks one. Most users won't know to do this.  
+**Fix:** Default `selectedExercise` to the user's most frequently logged exercise (most sets across all sessions).
+
+---
+
+### 8. MuscleHeatmap — Keyword Matching is Too Naive
+**Problem:** In [`MuscleHeatmap.tsx`](file:///d:/projects/Gym%20Tracker/src/components/gym/MuscleHeatmap.tsx), line 17 has a bug — `&&` operator binds tighter than `||`, so `"extension" && name.includes("leg")` evaluates incorrectly. "Leg Extension" correctly maps but "Tricep Extension" also maps to "Legs" due to the operator precedence issue.  
+**Fix:** Wrap compound conditions in parentheses. Expand the keyword dictionary.
+
+---
+
+## 🟡 Medium Priority / UX Polish
+
+### 9. No Inline Set Editing
+**Problem:** If you log the wrong weight or reps, you cannot fix it. You have to delete the set and re-add it, losing PR context.  
+**Files:** [`ActiveSession.tsx`](file:///d:/projects/Gym%20Tracker/src/components/gym/ActiveSession.tsx) — `SetRow` component  
+**Fix:** Long-press a set row to enter an inline edit mode.
+
+---
+
+### 10. History — Expand/Collapse Uses Manual CSS Grid Trick, Not Accessible
+**Problem:** [`SessionHistory.tsx`](file:///d:/projects/Gym%20Tracker/src/components/gym/SessionHistory.tsx) line 120–124 uses `grid-rows-[0fr]` for collapse. While visually functional, it has no `aria-expanded` attribute, making it inaccessible to screen readers.  
+**Fix:** Add `aria-expanded`, `aria-controls`, and `id` to the button/panel pair.
+
+---
+
+### 11. Landing Page — Templates Not Shown Prominently
+**Problem:** On the landing screen, templates are shown in a secondary list below recent sessions. Since templates are the fastest way to start a workout, they should be the hero element.  
+**Fix:** Promote templates to a horizontal scroll strip at the top of the landing page (like iOS Shortcuts widgets).
+
+---
+
+### 12. Content Scrolls Behind the Floating Nav Pill
+**Problem:** With `pb-20` on the root container, some content at the bottom is just barely cut off. The bottom nav pill has changed height since the padding was set. This is especially bad on iPhones with bottom home indicators.  
+**Files:** [`index.tsx`](file:///d:/projects/Gym%20Tracker/src/routes/index.tsx) line 156  
+**Fix:** Update `pb-20` to `pb-32` and ensure `env(safe-area-inset-bottom)` padding is applied to the nav pill.
+
+---
+
+### 13. Theme Toggle Flicker on First Load
+**Problem:** `next-themes` has a FOUC (Flash Of Unstyled Content) problem on first paint — the page briefly shows light mode before dark mode kicks in. This is a known issue needing a theme script injected in `<head>` before React hydrates.  
+**Files:** `index.html`
+
+---
+
+### 14. Exercise Name Input — No Keyboard "Done" Button on Mobile
+**Problem:** On iOS, the keyboard shows a return key but no "Done" button. After typing an exercise name, users expect to tap "Done" to submit rather than tapping the `+` button with a thumb.  
+**Files:** [`ExerciseNameInput.tsx`](file:///d:/projects/Gym%20Tracker/src/components/gym/ExerciseNameInput.tsx)  
+**Fix:** Add `enterKeyHint="done"` and `inputMode="search"` to the input.
+
+---
+
+## 🟢 Nice-to-Have / SRS Roadmap
+
+### 15. 1RM Estimation Chart (SRS Phase 3)
+**Status:** `StatsPanel.tsx` imports `estimateOneRepMax` from `records.ts` but there's no chart rendering it over time for a selected exercise. The scaffold is there — it just needs the chart wired up.
+
+---
+
+### 16. Consistency Grid — GitHub Contribution Style (SRS Phase 3)
+**Status:** `ConsistencyGrid.tsx` exists but appears to be a basic implementation. The SRS calls for a full calendar-year heatmap grid. This could be significantly enhanced.
+
+---
+
+### 17. Data Export — CSV / JSON (SRS Phase 3)
+**Status:** `StatsPanel.tsx` imports `Download` from lucide but no export functionality is implemented. This directly addresses the data loss risk in point #1.
+
+---
+
+### 18. Supersets / Paired Exercises (SRS Phase 2)
+**Status:** Not started. Would require `Exercise` type to support a `pairedWith?: string` field.
+
+---
+
+### 19. RPE Logging (SRS Phase 2)
+**Status:** Not started. The `WorkoutSet` type in `types.ts` would need a `rpe?: number` field.
+
+---
+
+### 20. Apple Health / Google Fit Integration (SRS Phase 4)
+**Status:** Not started. Requires native app wrapper (Capacitor/PWA) to access Health APIs.
+
+---
+
+## Summary Table
+
+| # | Issue | Priority | Effort |
+|---|-------|----------|--------|
+| 1 | Data export / cloud persistence | 🔴 Critical | M-XL |
+| 2 | PWA manifest + service worker | 🔴 Critical | S |
+| 3 | Cancel session confirmation | 🔴 Critical | XS |
+| 4 | Rest timer | 🟠 High | L |
+| 5 | Template Start button | 🟠 High | XS |
+| 6 | Post-exercise "next step" nudge | 🟠 High | S |
+| 7 | Smart exercise default in stats | 🟠 High | XS |
+| 8 | MuscleHeatmap keyword bug | 🟠 High | XS |
+| 9 | Inline set editing | 🟡 Medium | M |
+| 10 | History accordion accessibility | 🟡 Medium | XS |
+| 11 | Landing template prominence | 🟡 Medium | S |
+| 12 | Scroll behind nav pill | 🟡 Medium | XS |
+| 13 | Theme toggle FOUC | 🟡 Medium | S |
+| 14 | Mobile keyboard enterKeyHint | 🟡 Medium | XS |
+| 15 | 1RM chart | 🟢 Nice | M |
+| 16 | Consistency grid upgrade | 🟢 Nice | M |
+| 17 | Data export button | 🟢 Nice | S |
+| 18 | Supersets | 🟢 Nice | XL |
+| 19 | RPE logging | 🟢 Nice | M |
+| 20 | Health app integration | 🟢 Nice | XL |

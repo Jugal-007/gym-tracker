@@ -1,13 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Activity, BarChart3, Clock, Dumbbell, History, LayoutTemplate, Moon, Play, Plus, Sun, Trophy, Timer } from "lucide-react";
+import { Activity, BarChart3, Clock, Dumbbell, History, LayoutTemplate, Moon, Play, Plus, Sun, Trophy, Timer, User as UserIcon, LogOut } from "lucide-react";
 import { ActiveSession, TimerDisplay } from "@/components/gym/ActiveSession";
 import { ExerciseNameInput } from "@/components/gym/ExerciseNameInput";
 import { SessionHistory } from "@/components/gym/SessionHistory";
 import { StatsPanel } from "@/components/gym/StatsPanel";
-import { Templates } from "@/components/gym/Templates.tsx";
+import { Templates } from "@/components/gym/Templates";
+import { AuthOverlay } from "@/components/auth/AuthOverlay";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { buildRecords } from "@/components/gym/records";
+import { syncDown } from "@/lib/sync";
 import {
   loadTemplates,
   saveTemplates,
@@ -49,17 +52,34 @@ function Index() {
   const [activeSession, setActiveSession] = useState<Session | null>(null);
   const [view, setView] = useState<View>("landing");
   const [newExerciseName, setNewExerciseName] = useState("");
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
   const { theme, setTheme } = useTheme();
+  const { user, signOut } = useAuth();
 
   useEffect(() => {
-    setSessions(loadSessions());
-    setTemplates(loadTemplates());
-    const savedActive = loadActiveSession();
-    if (savedActive) {
-      setActiveSession(savedActive);
+    const handleSync = () => {
+      setSessions(loadSessions());
+      setTemplates(loadTemplates());
+    };
+
+    handleSync();
+    
+    // Also load active session (which shouldn't be overwritten by cloud, but good to ensure consistency)
+    const active = loadActiveSession();
+    if (active) {
+      setActiveSession(active);
       setView("active");
     }
+
+    window.addEventListener("gym-sync-complete", handleSync);
+    return () => window.removeEventListener("gym-sync-complete", handleSync);
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      syncDown().catch(console.error);
+    }
+  }, [user]);
 
   useEffect(() => {
     saveSessions(sessions);
@@ -183,23 +203,33 @@ function Index() {
             <div className="hidden sm:block">
               <TabNav view={view} setView={setView} hasActiveSession={activeSession !== null} />
             </div>
-            <motion.button
-              whileTap={{ scale: 0.85 }}
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="relative flex h-10 w-10 items-center justify-center rounded-full bg-muted/40 text-muted-foreground transition-colors hover:text-foreground focus:outline-none sm:bg-transparent"
-            >
-              <AnimatePresence mode="popLayout" initial={false}>
-                <motion.div
-                  key={theme === "dark" ? "dark" : "light"}
-                  initial={{ opacity: 0, rotate: -90, scale: 0.5 }}
-                  animate={{ opacity: 1, rotate: 0, scale: 1 }}
-                  exit={{ opacity: 0, rotate: 90, scale: 0.5 }}
-                  transition={{ duration: 0.2, type: "spring", bounce: 0.3 }}
-                >
-                  {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-                </motion.div>
-              </AnimatePresence>
-            </motion.button>
+            <div className="flex items-center gap-2">
+              <motion.button
+                whileTap={{ scale: 0.85 }}
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className="relative flex h-10 w-10 items-center justify-center rounded-full bg-muted/40 text-muted-foreground transition-colors hover:text-foreground focus:outline-none sm:bg-transparent"
+              >
+                <AnimatePresence mode="popLayout" initial={false}>
+                  <motion.div
+                    key={theme === "dark" ? "dark" : "light"}
+                    initial={{ opacity: 0, rotate: -90, scale: 0.5 }}
+                    animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                    exit={{ opacity: 0, rotate: 90, scale: 0.5 }}
+                    transition={{ duration: 0.2, type: "spring", bounce: 0.3 }}
+                  >
+                    {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                  </motion.div>
+                </AnimatePresence>
+              </motion.button>
+              
+              <motion.button
+                whileTap={{ scale: 0.85 }}
+                onClick={() => (user ? signOut() : setIsAuthOpen(true))}
+                className="relative flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary/20 focus:outline-none"
+              >
+                {user ? <LogOut className="h-5 w-5" /> : <UserIcon className="h-5 w-5" />}
+              </motion.button>
+            </div>
           </div>
         </div>
       </header>
@@ -257,6 +287,9 @@ function Index() {
           </motion.div>
         </AnimatePresence>
       </main>
+
+      {/* Global Auth Overlay */}
+      <AuthOverlay isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
 
       {/* Mobile Bottom Navigation */}
       <div className="fixed bottom-6 left-4 right-4 z-50 block sm:hidden">

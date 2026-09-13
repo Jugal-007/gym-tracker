@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { Exercise, Session } from "./types";
+import { syncUp } from "@/lib/sync";
 
 const STORAGE_KEY = "gym-tracker-sessions-v1";
 
@@ -27,6 +28,7 @@ const SessionSchema = z.object({
   exercises: z.array(ExerciseSchema),
   templateId: z.string().nullable().optional(),
   templateName: z.string().nullable().optional(),
+  updatedAt: z.number().optional(),
 });
 
 const SessionsListSchema = z.array(SessionSchema);
@@ -57,6 +59,7 @@ export function loadSessions(): Session[] {
 export function saveSessions(sessions: Session[]): void {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
+  syncUp().catch(console.error);
 }
 
 const ACTIVE_SESSION_KEY = "gym-tracker-active-session-v1";
