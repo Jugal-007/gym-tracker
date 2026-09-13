@@ -22,10 +22,11 @@ import { buildRecords, estimateOneRepMax, normalizeName } from "./records";
 import { MuscleHeatmap } from "./MuscleHeatmap";
 import { ConsistencyGrid } from "./ConsistencyGrid";
 import { VolumePieChart } from "./VolumePieChart";
-import type { Session } from "./types";
+import type { Session, Template } from "./types";
 
 interface StatsPanelProps {
   sessions: Session[];
+  templates?: Template[];
 }
 
 const axisProps = {
@@ -69,7 +70,7 @@ function useCountUp(target: number, duration = 450): number {
   return current;
 }
 
-export function StatsPanel({ sessions }: StatsPanelProps) {
+export function StatsPanel({ sessions, templates = [] }: StatsPanelProps) {
   const [activeRoutine, setActiveRoutine] = useState<string>("all");
   const [selectedExercise, setSelectedExercise] = useState<string>("");
   const [weeklyGoal, setWeeklyGoal] = useState<number>(loadWeeklyGoal());
@@ -443,13 +444,20 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
           value={totals.totalSets}
           delay={120}
         />
+        <StatCard
+          icon={<Activity className="h-4 w-4" />}
+          label="Total volume"
+          value={totals.totalVolume}
+          suffix=" kg"
+          delay={180}
+        />
       </div>
 
       <ConsistencyGrid sessions={filteredSessions} />
       
       <MuscleHeatmap sessions={filteredSessions} />
       
-      <VolumePieChart sessions={filteredSessions} />
+      <VolumePieChart sessions={filteredSessions} templates={templates} />
 
       <ChartCard title="Volume per session">
         <ResponsiveContainer width="100%" height={180}>

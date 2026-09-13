@@ -230,7 +230,7 @@ function Index() {
                 onSaveTemplate={saveSessionAsTemplate}
               />
             ) : view === "stats" ? (
-              <StatsPanel sessions={sessions} />
+              <StatsPanel sessions={sessions} templates={templates} />
             ) : view === "templates" ? (
               <Templates
                 templates={templates}
@@ -389,55 +389,67 @@ function LandingView({
         </button>
       </div>
 
-      {templates.length > 0 && (
-        <div className="mb-6">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground/80">
-              Your Routines
-            </h2>
-            <button 
-              onClick={onManageTemplates}
-              className="text-xs font-semibold text-primary/80 hover:text-primary transition-colors"
+      {templates.length > 0 ? (
+        <>
+          {/* Routines are the PRIMARY CTA when they exist */}
+          <div>
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground/80">
+                Your Routines
+              </h2>
+              <button
+                onClick={onManageTemplates}
+                className="text-xs font-semibold text-primary/80 hover:text-primary transition-colors"
+              >
+                All &rarr;
+              </button>
+            </div>
+            <div className="-mx-4 px-4 overflow-x-auto hide-scrollbar">
+              <div className="flex gap-4 pb-4 w-max snap-x snap-mandatory">
+                {templates.map(template => (
+                   <button
+                     key={template.id}
+                     onClick={() => onStartTemplate(template)}
+                     className="relative flex h-[120px] w-56 shrink-0 snap-start flex-col justify-between overflow-hidden rounded-[1.5rem] border border-border bg-card/80 p-4 text-left shadow-sm backdrop-blur-[12px] transition-all hover:border-foreground/30 hover:-translate-y-1 hover:shadow-md active:scale-[0.97]"
+                   >
+                      <div>
+                        <span className="mb-1 block text-base font-bold leading-tight text-foreground line-clamp-1">{template.name}</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                          {template.exercises.length} Exercises
+                        </span>
+                      </div>
+                      <div className="flex w-full items-end justify-between gap-3">
+                        <p className="flex-1 text-xs font-medium text-muted-foreground/70 line-clamp-1">
+                          {template.exercises.map(e => e.name).join(", ")}
+                        </p>
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-foreground text-background shadow-sm">
+                          <Play className="ml-0.5 h-3.5 w-3.5" fill="currentColor" />
+                        </div>
+                      </div>
+                   </button>
+                ))}
+              </div>
+            </div>
+            {/* Demoted secondary action */}
+            <button
+              onClick={onStart}
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border border-border/60 py-3 text-sm font-semibold text-muted-foreground transition-all hover:bg-muted hover:text-foreground active:scale-[0.98]"
             >
-              All &rarr;
+              <Dumbbell className="h-4 w-4" />
+              Start empty workout instead
             </button>
           </div>
-          <div className="-mx-4 px-4 overflow-x-auto hide-scrollbar">
-            <div className="flex gap-4 pb-4 w-max snap-x snap-mandatory">
-              {templates.map(template => (
-                 <button
-                   key={template.id}
-                   onClick={() => onStartTemplate(template)}
-                   className="relative flex h-[120px] w-56 shrink-0 snap-start flex-col justify-between overflow-hidden rounded-[1.5rem] border border-border bg-card/80 p-4 text-left shadow-sm backdrop-blur-[12px] transition-all hover:border-foreground/30 hover:-translate-y-1 hover:shadow-md active:scale-[0.97]"
-                 >
-                    <div>
-                      <span className="mb-1 block text-base font-bold leading-tight text-foreground line-clamp-1">{template.name}</span>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                        {template.exercises.length} Exercises
-                      </span>
-                    </div>
-                    <div className="flex w-full items-end justify-between gap-3">
-                      <p className="flex-1 text-xs font-medium text-muted-foreground/70 line-clamp-1">
-                        {template.exercises.map(e => e.name).join(", ")}
-                      </p>
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-foreground text-background shadow-sm transition-transform group-hover:scale-110">
-                        <Play className="ml-0.5 h-3.5 w-3.5" fill="currentColor" />
-                      </div>
-                    </div>
-                 </button>
-              ))}
-            </div>
-          </div>
-        </div>
+        </>
+      ) : (
+        /* No routines yet — big primary CTA */
+        <button
+          onClick={onStart}
+          className="flex w-full items-center justify-center gap-3 rounded-3xl bg-foreground px-6 py-5 text-lg font-bold text-background transition-all hover:bg-foreground/90 hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98]"
+        >
+          <Dumbbell className="h-6 w-6" />
+          Start Empty Workout
+        </button>
       )}
-
-      <button
-        onClick={onStart}
-        className="flex w-full items-center justify-center gap-3 rounded-3xl bg-foreground px-6 py-5 text-lg font-bold text-background transition-all hover:bg-foreground/90 hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98]"
-      >
-        <Dumbbell className="h-6 w-6" />
-        Start Empty Workout
-      </button>
 
       {recentSessions.length > 0 && (
         <div>
