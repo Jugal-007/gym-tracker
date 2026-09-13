@@ -216,7 +216,7 @@ export function ActiveSession({
 
   return (
     <div className="mx-auto max-w-xl animate-fade-in">
-      <div className="sticky top-0 z-30 mb-6 rounded-b-2xl border-b border-border/40 bg-card/60 px-4 py-4 backdrop-blur-2xl shadow-sm">
+      <div className="sticky top-[88px] z-30 mb-8 rounded-[2rem] border border-black/5 bg-background/80 px-5 py-4 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.06)] dark:border-white/10 dark:bg-card/60 dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full border border-border/50 bg-background/50 shadow-inner">
