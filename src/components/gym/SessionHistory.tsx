@@ -71,7 +71,8 @@ export function SessionHistory({ sessions, onDelete, onSaveTemplate }: SessionHi
           <div
             key={session.id}
             className={cn(
-              "overflow-hidden rounded-2xl border border-border/40 bg-card shadow-sm transition-all hover:border-foreground/20 hover:shadow-md",
+              "glass overflow-hidden rounded-2xl transition-all duration-300 hover:border-foreground/20 hover:-translate-y-0.5",
+              prs > 0 && "border-primary/30 shadow-[0_0_15px_rgba(var(--color-primary),0.05)]",
               isDeleting && "deleting",
             )}
           >
@@ -80,10 +81,10 @@ export function SessionHistory({ sessions, onDelete, onSaveTemplate }: SessionHi
               className="flex w-full items-center justify-between px-4 py-4 text-left"
             >
               <div>
-                <p className="flex items-center gap-2 font-medium text-foreground">
+                <p className="flex items-center gap-2 font-bold tracking-tight text-foreground">
                   {format(new Date(session.startedAt), "EEEE, MMM d")}
                   {prs > 0 && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-foreground px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary-foreground">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-primary-foreground shadow-[0_0_10px_rgba(var(--color-primary),0.4)]">
                       <Trophy className="h-3 w-3" />
                       {prs} PR
                     </span>
@@ -99,7 +100,7 @@ export function SessionHistory({ sessions, onDelete, onSaveTemplate }: SessionHi
               </div>
               <div className="flex items-center gap-3">
                 <div className="text-right">
-                  <p className="text-sm font-medium text-foreground">
+                  <p className="text-sm font-black tracking-tighter text-foreground">
                     {volume.toLocaleString()} kg
                   </p>
                   <p className="text-xs text-muted-foreground">

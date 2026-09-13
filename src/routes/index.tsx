@@ -153,8 +153,15 @@ function Index() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20 sm:pb-6">
-      <header className="sticky top-0 z-20 border-b border-border/40 bg-background/80 px-4 py-4 backdrop-blur-xl">
+    <div className="relative min-h-screen bg-background pb-20 sm:pb-6 overflow-hidden">
+      {/* Subtle monochrome ambient background for glassmorphism */}
+      <div className="pointer-events-none fixed inset-0 z-0 flex items-center justify-center opacity-40 dark:opacity-20">
+        <div className="absolute top-[-10%] left-[-10%] h-[50vh] w-[50vw] rounded-full bg-foreground/5 blur-[100px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] h-[50vh] w-[50vw] rounded-full bg-foreground/10 blur-[120px]" />
+      </div>
+
+      <div className="relative z-10">
+        <header className="sticky top-0 z-20 border-b border-border/40 bg-card/60 px-4 py-4 backdrop-blur-xl">
         <div className="mx-auto flex max-w-xl items-center justify-between">
           <button
             onClick={() => setView("landing")}
@@ -243,10 +250,11 @@ function Index() {
       </main>
 
       {/* Mobile Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 block border-t border-border/40 bg-background/80 pb-safe pt-2 backdrop-blur-xl sm:hidden">
+      <div className="fixed bottom-0 left-0 right-0 z-50 block border-t border-border/40 bg-card/70 pb-safe pt-2 backdrop-blur-xl sm:hidden">
         <div className="mx-auto max-w-xl px-4 pb-2">
           <TabNav view={view} setView={setView} isMobile={true} hasActiveSession={activeSession !== null} />
         </div>
+      </div>
       </div>
     </div>
   );

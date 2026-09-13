@@ -249,6 +249,15 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
   const isGoalMet = currentWeekCount >= weeklyGoal;
   const progressPercent = Math.min(100, Math.round((currentWeekCount / weeklyGoal) * 100));
 
+  // RPG Leveling Logic based on Volume
+  const { totalVolume } = totals;
+  const currentLevel = Math.floor(Math.sqrt(totalVolume / 2000)) + 1;
+  const xpFloor = Math.pow(currentLevel - 1, 2) * 2000;
+  const xpNext = Math.pow(currentLevel, 2) * 2000;
+  const xpIntoLevel = totalVolume - xpFloor;
+  const xpNeeded = xpNext - xpFloor;
+  const levelProgress = totalVolume > 0 ? (xpIntoLevel / xpNeeded) * 100 : 0;
+
   if (sessions.length === 0) {
     return (
       <div className="animate-fade-in py-16 text-center">
@@ -339,19 +348,19 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
               <div className="mt-5 pt-4 border-t border-border/50">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">This Week</span>
-                  <span className={`text-xs font-bold ${isGoalMet ? "text-green-500" : "text-foreground"}`}>
+                  <span className={`text-xs font-bold ${isGoalMet ? "text-primary" : "text-foreground"}`}>
                     {currentWeekCount} / {weeklyGoal} workouts
                   </span>
                 </div>
-                <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted/50 border border-border/50 shadow-inner">
+                <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted/30 border border-border/50 shadow-inner">
                   <div 
-                    className={`h-full rounded-full transition-all duration-1000 ease-out ${isGoalMet ? "bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.4)]" : "bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.4)]"}`}
+                    className={`h-full rounded-full transition-all duration-1000 ease-out ${isGoalMet ? "bg-primary" : "bg-foreground/50"}`}
                     style={{ width: `${progressPercent}%` }}
                   />
                 </div>
                 <p className="mt-2 text-[11px] font-medium text-muted-foreground">
                   {isGoalMet 
-                    ? "🎉 Weekly goal crushed! You're on fire!" 
+                    ? "Weekly goal crushed. Keep it up." 
                     : `${weeklyGoal - currentWeekCount} more workout${(weeklyGoal - currentWeekCount) > 1 ? 's' : ''} to ${streak > 0 ? 'extend your streak' : 'start your streak'}.`}
                 </p>
               </div>
@@ -359,31 +368,61 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
           </div>
         )}
 
-        <StatCard
-          icon={<Activity className="h-4 w-4" />}
-          label="Total volume"
-          value={totals.totalVolume}
-          suffix=" kg"
-          delay={0}
-        />
+        {/* RPG Level Card */}
+        <div className="col-span-2 glass overflow-hidden rounded-xl p-5 transition-all duration-300 hover:-translate-y-0.5">
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                <Activity className="h-4 w-4" />
+                Lifter Level
+              </p>
+              <p className="text-sm font-medium text-foreground mt-1">
+                Total Volume: <strong className="font-mono">{totalVolume.toLocaleString()}</strong> kg
+              </p>
+            </div>
+            <div className="flex items-baseline gap-1 bg-foreground text-background px-3 py-1 rounded-lg">
+              <span className="text-xs font-bold uppercase tracking-widest">Lvl</span>
+              <span className="text-2xl font-black tracking-tighter">{currentLevel}</span>
+            </div>
+          </div>
+          
+          <div className="mt-2">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Level Progress</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-foreground font-mono">
+                {xpIntoLevel.toLocaleString()} / {xpNeeded.toLocaleString()} XP
+              </span>
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-muted/40 border border-border/50 shadow-inner">
+              <div 
+                className="h-full bg-foreground rounded-full transition-all duration-1000 ease-out"
+                style={{ width: `${levelProgress}%` }}
+              />
+            </div>
+            <p className="mt-2 text-[10px] uppercase tracking-widest text-muted-foreground text-right">
+              Next level at {xpNext.toLocaleString()} kg
+            </p>
+          </div>
+        </div>
+
         <StatCard
           icon={<Flame className="h-4 w-4" />}
           label="Sessions"
           value={totals.sessionCount}
-          delay={60}
+          delay={0}
         />
         <StatCard
           icon={<BarChart3 className="h-4 w-4" />}
           label="Per week"
           value={totals.perWeek}
           isDecimal
-          delay={120}
+          delay={60}
         />
         <StatCard
           icon={<Trophy className="h-4 w-4" />}
           label="Total sets"
           value={totals.totalSets}
-          delay={180}
+          delay={120}
         />
       </div>
 
@@ -683,12 +722,12 @@ function StatCard({
   const displayValue = isDecimal ? value.toFixed(1) : animatedValue.toLocaleString();
 
   return (
-    <div className="rounded-xl border border-border bg-card p-4 shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
-      <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+    <div className="glass rounded-xl p-4 transition-all duration-300 hover:-translate-y-0.5">
+      <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-muted-foreground">
         {icon}
         {label}
       </p>
-      <p className="mt-1 font-mono text-xl font-semibold text-foreground">
+      <p className="mt-2 font-mono text-xl font-bold tracking-tight text-foreground">
         {displayValue}
         {suffix ?? ""}
       </p>
@@ -706,9 +745,9 @@ function ChartCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="animate-slide-up rounded-xl border border-border bg-card p-4 shadow-sm">
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+    <div className="animate-slide-up glass rounded-xl p-4">
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
           {title}
         </h3>
         {action}

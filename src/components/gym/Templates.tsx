@@ -86,7 +86,7 @@ export function Templates({ templates, exerciseNames, onStart, onSave, onDelete 
           >
             <div
               className={cn(
-                "rounded-2xl border border-border/40 bg-card p-4 shadow-sm transition-all hover:border-foreground/20 hover:shadow-md",
+                "glass rounded-2xl p-4 transition-all hover:border-foreground/20 hover:shadow-md",
                 deletingIds.has(template.id) && "deleting",
               )}
             >
@@ -172,7 +172,7 @@ function TemplateEditor({ template, exerciseNames, onCancel, onSave }: TemplateE
             onDelete={() => setExercises((prev) => prev.filter((e) => e.id !== exercise.id))}
             className="rounded-2xl"
           >
-            <div className="rounded-2xl border border-border/40 bg-card p-5 shadow-sm">
+            <div className="glass rounded-2xl p-5 transition-all duration-300">
             <div className="mb-3 flex items-end gap-2">
               <ExerciseNameInput
                 suggestions={exerciseNames}

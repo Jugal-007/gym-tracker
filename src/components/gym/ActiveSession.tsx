@@ -101,6 +101,12 @@ export function ActiveSession({
 
   const totalVolume = useMemo(() => computeSessionVolume(session), [session]);
   const totalSets = useMemo(() => computeSessionSets(session), [session]);
+  const completedSets = useMemo(
+    () => session.exercises.reduce((sum, ex) => sum + ex.sets.filter((s) => s.completed).length, 0),
+    [session]
+  );
+  const progressPercent = totalSets > 0 ? (completedSets / totalSets) * 100 : 0;
+  
   const prCount = useMemo(
     () => session.exercises.reduce((sum, ex) => sum + ex.sets.filter((set) => set.pr).length, 0),
     [session],
@@ -200,23 +206,34 @@ export function ActiveSession({
 
   return (
     <div className="mx-auto max-w-xl animate-fade-in">
-      <div className="sticky top-0 z-10 mb-6 border-b border-border bg-background/95 px-4 py-4 backdrop-blur-sm">
+      <div className="sticky top-0 z-30 mb-6 rounded-b-2xl border-b border-border/40 bg-card/60 px-4 py-4 backdrop-blur-2xl shadow-sm">
+        
+        {/* Progress Bar (Absolute top) */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-muted/30">
+          <div 
+            className="h-full bg-foreground transition-all duration-700 ease-out" 
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
+
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-border">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-border/50 bg-background/50 shadow-inner">
               <Clock className="h-5 w-5 text-foreground animate-pulse-soft" />
             </div>
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                 Live session
               </p>
-              <TimerDisplay ms={elapsed} />
+              <div className="drop-shadow-sm">
+                <TimerDisplay ms={elapsed} />
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={onCancel}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border/50 bg-background text-muted-foreground transition-all hover:bg-muted active:scale-95"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border/50 bg-background/50 text-muted-foreground transition-all hover:bg-muted active:scale-95"
               aria-label="Cancel workout"
             >
               <X className="h-5 w-5" />
@@ -229,15 +246,15 @@ export function ActiveSession({
             </button>
           </div>
         </div>
-        <div className="mt-3 flex items-center gap-4 text-sm text-muted-foreground">
+        <div className="mt-4 flex items-center gap-4 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
           <span className="flex items-center gap-1.5">
-            <Dumbbell className="h-4 w-4" />
-            {totalSets} sets
+            <Dumbbell className="h-3.5 w-3.5" />
+            {completedSets}/{totalSets} sets
           </span>
-          <span>{totalVolume.toLocaleString()} kg volume</span>
+          <span>{totalVolume.toLocaleString()} kg vol</span>
           {prCount > 0 && (
-            <span className="animate-bounce-scale-in inline-flex items-center gap-1.5 rounded-full bg-foreground px-2.5 py-0.5 text-xs font-semibold text-primary-foreground animate-glow-ring">
-              <Trophy className="h-3.5 w-3.5" />
+            <span className="animate-bounce-scale-in inline-flex items-center gap-1.5 rounded-full bg-foreground/10 px-2 py-0.5 text-[10px] font-bold text-foreground">
+              <Trophy className="h-3 w-3" />
               {prCount} PR{prCount > 1 ? "s" : ""}
             </span>
           )}
@@ -343,7 +360,7 @@ function ExerciseCard({
 
   return (
     <SwipeToDelete onDelete={() => onDeleteExercise(exercise.id)} className="rounded-3xl">
-      <div className="rounded-3xl border border-border/40 bg-card p-5 shadow-sm transition-all duration-200">
+      <div className="glass rounded-3xl p-5 transition-all duration-300">
         <div className="mb-4 flex items-center justify-between">
         <div>
           <h3 className="font-semibold text-foreground">{exercise.name}</h3>
@@ -452,11 +469,11 @@ function SetRow({ set, index, onToggle, onDelete }: SetRowProps) {
     <SwipeToDelete onDelete={onDelete} className="rounded-2xl">
       <div
         className={cn(
-        "flex items-center justify-between rounded-2xl border border-border/40 p-3.5 transition-all duration-200",
+        "flex items-center justify-between rounded-2xl border border-border/40 p-3.5 transition-all duration-300",
         deleting && "deleting",
-        set.completed && !justCompleted && "bg-muted/30 border-transparent",
-        justCompleted && "set-completed-sweep",
-        set.pr && "border-foreground/50 shadow-sm bg-foreground/5",
+        set.completed && !justCompleted && "bg-muted/10 border-transparent opacity-60 scale-[0.98]",
+        justCompleted && "set-completed-sweep scale-[0.98]",
+        set.pr && !set.completed && "border-foreground/30 shadow-sm bg-foreground/5",
       )}
     >
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1">
