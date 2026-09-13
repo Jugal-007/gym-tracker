@@ -279,7 +279,7 @@ function TabNav({ view, setView, isMobile = false, hasActiveSession = false }: {
     {
       key: (hasActiveSession ? "active" : "landing") as View,
       label: hasActiveSession ? "Active" : "Start",
-      icon: hasActiveSession ? <Play className="h-5 w-5" fill="currentColor" /> : undefined,
+      icon: hasActiveSession ? <Play className="h-5 w-5" fill="currentColor" /> : <Dumbbell className="h-5 w-5" />,
     },
     ...TAB_ITEMS.slice(1)
   ];
@@ -294,8 +294,8 @@ function TabNav({ view, setView, isMobile = false, hasActiveSession = false }: {
             key={tab.key}
             onClick={() => setView(tab.key)}
             className={cn(
-              "relative z-10 flex flex-col items-center justify-center gap-1 transition-colors duration-200 active:scale-95",
-              isMobile ? "w-16 h-12" : "px-3 py-1.5 rounded-full flex-row gap-2",
+              "relative z-10 flex flex-col items-center justify-center transition-colors duration-200 active:scale-95",
+              isMobile ? "w-16 h-14 gap-1" : "px-4 py-2 rounded-full flex-row gap-2",
               isActive 
                 ? (isSpecialActive ? "text-white" : "text-primary-foreground")
                 : (isSpecialActive 
@@ -306,21 +306,19 @@ function TabNav({ view, setView, isMobile = false, hasActiveSession = false }: {
             {isActive && (
               <motion.div
                 layoutId={isMobile ? "active-tab-mobile" : "active-tab-desktop"}
-                className={cn("absolute z-[-1]", isMobile ? "inset-0 rounded-xl" : "inset-0 rounded-full")}
+                className={cn("absolute z-[-1]", isMobile ? "inset-0 rounded-2xl" : "inset-0 rounded-full")}
                 animate={{
                   backgroundColor: isSpecialActive ? "#3b82f6" : "var(--color-foreground)"
                 }}
                 transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
               />
             )}
-            {tab.icon && (
-              <span className={cn(isActive && (isSpecialActive ? "text-white" : "text-background"))}>
-                {tab.icon}
-              </span>
-            )}
+            <span className={cn(isActive && (isSpecialActive ? "text-white" : "text-background"))}>
+              {tab.icon}
+            </span>
             <span className={cn(
               isActive && (isSpecialActive ? "text-white" : "text-background"),
-              isMobile ? (tab.icon ? "text-[10px] font-medium" : "text-sm font-semibold") : (tab.icon ? "hidden lg:inline text-sm font-medium" : "text-sm font-medium")
+              isMobile ? "text-[10px] font-medium tracking-wide" : "text-sm font-medium"
             )}>
               {tab.label}
             </span>
