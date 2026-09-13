@@ -431,7 +431,7 @@ function ExerciseCard({
 
       <div 
         className={cn(
-          "grid transition-[grid-template-rows,opacity] duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
+          "grid transition-opacity duration-[400ms]",
           exercise.completed ? "grid-rows-[0fr] opacity-0" : "grid-rows-[1fr] opacity-100"
         )}
       >
