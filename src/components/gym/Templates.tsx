@@ -7,6 +7,17 @@ import { emptyTemplateExercise } from "./templates";
 import { StepperInput } from "@/components/ui/StepperInput";
 import { SwipeToDelete } from "@/components/ui/SwipeToDelete";
 import { EmptyState } from "@/components/ui/EmptyState";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import type { Template, TemplateExercise } from "./types";
 
 interface TemplatesProps {
@@ -98,13 +109,43 @@ export function Templates({ templates, exerciseNames, onStart, onSave, onDelete 
                   {template.exercises.reduce((s, e) => s + e.targetSets, 0)} target sets
                 </p>
               </div>
-              <button
-                onClick={() => onStart(template)}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition-all hover:bg-primary/20 active:scale-95"
-              >
-                <Play className="h-3.5 w-3.5 fill-primary" />
-                Start
-              </button>
+              <div className="flex shrink-0 items-center gap-2">
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <button
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-destructive/10 text-destructive transition-all hover:bg-destructive/20 active:scale-95"
+                      aria-label="Delete routine"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="rounded-3xl border-border/20 bg-card backdrop-blur-[25px] sm:rounded-3xl">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="text-foreground">Delete routine?</AlertDialogTitle>
+                      <AlertDialogDescription className="text-muted-foreground">
+                        Are you sure you want to delete "{template.name}"? This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="mt-4 gap-2 sm:gap-0">
+                      <AlertDialogCancel className="rounded-xl border-border/50 text-foreground">Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => handleDelete(template.id)}
+                        className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+
+                <button
+                  onClick={() => onStart(template)}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition-all hover:bg-primary/20 active:scale-95"
+                >
+                  <Play className="h-3.5 w-3.5 fill-primary" />
+                  Start
+                </button>
+              </div>
             </div>
             <ul className="mt-3 space-y-1">
               {template.exercises.map((exercise) => (
