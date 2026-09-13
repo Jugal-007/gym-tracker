@@ -9,6 +9,7 @@ import { computeSessionSets, computeSessionVolume, generateId } from "./storage"
 import { PR_LABEL, detectPR, normalizeName } from "./records";
 import type { Exercise, ExerciseRecord, PRKind, Session, WorkoutSet } from "./types";
 import { hapticMedium, hapticSuccess, hapticLight } from "@/utils/haptics";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface ActiveSessionProps {
   session: Session;
@@ -299,25 +300,41 @@ export function ActiveSession({
         )}
 
         <div className="space-y-4">
-          {[...session.exercises]
-            .sort((a, b) => {
-              if (a.completed && !b.completed) return 1;
-              if (!a.completed && b.completed) return -1;
-              return 0;
-            })
-            .map((exercise, index) => (
-              <ExerciseCard
-                key={exercise.id}
-                exercise={exercise}
-                index={index}
-                record={records[normalizeName(exercise.name)]}
-                onAddSet={addSet}
-                onToggleSet={toggleSet}
-                onDeleteSet={deleteSet}
-                onDeleteExercise={deleteExercise}
-                onToggleComplete={() => toggleExerciseComplete(exercise.id)}
-              />
-            ))}
+          <AnimatePresence mode="popLayout">
+            {[...session.exercises]
+              .sort((a, b) => {
+                if (a.completed && !b.completed) return 1;
+                if (!a.completed && b.completed) return -1;
+                return 0;
+              })
+              .map((exercise, index) => (
+                <motion.div
+                  key={exercise.id}
+                  layout="position"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95, height: 0 }}
+                  transition={{ 
+                    type: "spring", 
+                    stiffness: 400, 
+                    damping: 30, 
+                    mass: 0.8 
+                  }}
+                  className="will-change-transform"
+                >
+                  <ExerciseCard
+                    exercise={exercise}
+                    index={index}
+                    record={records[normalizeName(exercise.name)]}
+                    onAddSet={addSet}
+                    onToggleSet={toggleSet}
+                    onDeleteSet={deleteSet}
+                    onDeleteExercise={deleteExercise}
+                    onToggleComplete={() => toggleExerciseComplete(exercise.id)}
+                  />
+                </motion.div>
+              ))}
+          </AnimatePresence>
         </div>
       </div>
     </div>
