@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { format, startOfWeek } from "date-fns";
-import { Activity, BarChart3, Flame, Trophy, Download } from "lucide-react";
+import { Activity, BarChart3, Flame, Trophy, Download, Upload } from "lucide-react";
 import {
   Bar,
   BarChart,
@@ -144,7 +144,26 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
   }, [ordered]);
 
   const exerciseOptions = useMemo(() => recordList.map((record) => record.name), [recordList]);
-  const activeExercise = selectedExercise || exerciseOptions[0] || "";
+  
+  const mostFrequentExercise = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const s of filteredSessions) {
+      for (const e of s.exercises) {
+        counts.set(e.name, (counts.get(e.name) || 0) + e.sets.length);
+      }
+    }
+    let max = 0;
+    let mostFrequent = "";
+    for (const [name, count] of counts.entries()) {
+      if (count > max) {
+        max = count;
+        mostFrequent = name;
+      }
+    }
+    return mostFrequent;
+  }, [filteredSessions]);
+
+  const activeExercise = selectedExercise || mostFrequentExercise || exerciseOptions[0] || "";
 
   const progressSeries = useMemo(() => {
     if (!activeExercise) return [];
@@ -599,104 +618,35 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
           
           <button
             onClick={() => {
-              const now = Date.now();
-              const day = 24 * 60 * 60 * 1000;
-              const dummySessions = [
-                {
-                  id: "s1",
-                  startedAt: now - 5 * day,
-                  endedAt: now - 5 * day + 3600000,
-                  exercises: [
-                    {
-                      id: "e1",
-                      name: "Bench Press",
-                      sets: [
-                        { id: "set1", reps: 8, weight: 60, completed: true },
-                        { id: "set2", reps: 8, weight: 60, completed: true },
-                        { id: "set3", reps: 6, weight: 65, completed: true }
-                      ]
-                    },
-                    {
-                      id: "e2",
-                      name: "Incline Dumbbell Press",
-                      sets: [
-                        { id: "set4", reps: 10, weight: 25, completed: true },
-                        { id: "set5", reps: 10, weight: 25, completed: true }
-                      ]
-                    },
-                    {
-                      id: "e3",
-                      name: "Tricep Pushdown",
-                      sets: [
-                        { id: "set6", reps: 12, weight: 20, completed: true },
-                        { id: "set7", reps: 12, weight: 20, completed: true }
-                      ]
+              const input = document.createElement("input");
+              input.type = "file";
+              input.accept = "application/json";
+              input.onchange = (e) => {
+                const file = (e.target as HTMLInputElement).files?.[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                  try {
+                    const data = JSON.parse(e.target?.result as string);
+                    if (data.sessions && Array.isArray(data.sessions)) {
+                      localStorage.setItem("gym-tracker-sessions-v1", JSON.stringify(data.sessions));
                     }
-                  ]
-                },
-                {
-                  id: "s2",
-                  startedAt: now - 3 * day,
-                  endedAt: now - 3 * day + 3600000,
-                  exercises: [
-                    {
-                      id: "e4",
-                      name: "Squat",
-                      sets: [
-                        { id: "set8", reps: 5, weight: 100, completed: true },
-                        { id: "set9", reps: 5, weight: 100, completed: true },
-                        { id: "set10", reps: 5, weight: 105, completed: true, pr: "weight" }
-                      ]
-                    },
-                    {
-                      id: "e5",
-                      name: "Leg Extension",
-                      sets: [
-                        { id: "set11", reps: 15, weight: 50, completed: true },
-                        { id: "set12", reps: 15, weight: 50, completed: true }
-                      ]
+                    if (data.templates && Array.isArray(data.templates)) {
+                      localStorage.setItem("gym-tracker-templates-v1", JSON.stringify(data.templates));
                     }
-                  ]
-                },
-                {
-                  id: "s3",
-                  startedAt: now - 1 * day,
-                  endedAt: now - 1 * day + 3600000,
-                  exercises: [
-                    {
-                      id: "e6",
-                      name: "Pull Up",
-                      sets: [
-                        { id: "set13", reps: 8, weight: 0, completed: true },
-                        { id: "set14", reps: 8, weight: 0, completed: true }
-                      ]
-                    },
-                    {
-                      id: "e7",
-                      name: "Barbell Row",
-                      sets: [
-                        { id: "set15", reps: 10, weight: 60, completed: true },
-                        { id: "set16", reps: 10, weight: 60, completed: true }
-                      ]
-                    },
-                    {
-                      id: "e8",
-                      name: "Bicep Curl",
-                      sets: [
-                        { id: "set17", reps: 12, weight: 15, completed: true },
-                        { id: "set18", reps: 12, weight: 15, completed: true }
-                      ]
-                    }
-                  ]
-                }
-              ];
-              const existing = JSON.parse(localStorage.getItem("gym-tracker-sessions-v1") || "[]");
-              localStorage.setItem("gym-tracker-sessions-v1", JSON.stringify([...existing, ...dummySessions]));
-              window.location.reload();
+                    window.location.reload();
+                  } catch (err) {
+                    alert("Invalid backup file");
+                  }
+                };
+                reader.readAsText(file);
+              };
+              input.click();
             }}
             className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-primary/50 text-primary py-3 text-sm font-semibold transition-all hover:bg-primary/10 active:scale-95 mt-2"
           >
-            Inject Dummy Data (Temp)
+            <Upload className="h-4 w-4" />
+            Import Data
           </button>
         </div>
       </div>

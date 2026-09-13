@@ -60,7 +60,7 @@ export function Templates({ templates, exerciseNames, onStart, onSave, onDelete 
     <div className="mx-auto max-w-xl space-y-3 animate-fade-in">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-          Templates ({templates.length})
+          Routines ({templates.length})
         </h2>
         <button
           onClick={newTemplate}
@@ -74,7 +74,7 @@ export function Templates({ templates, exerciseNames, onStart, onSave, onDelete 
       {templates.length === 0 ? (
         <EmptyState
           icon={<LayoutTemplate className="h-12 w-12" strokeWidth={1.5} />}
-          title="No templates yet"
+          title="No routines yet"
           description="Save your usual routine and start it in one tap."
         />
       ) : (
@@ -91,24 +91,31 @@ export function Templates({ templates, exerciseNames, onStart, onSave, onDelete 
               )}
             >
             <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <h3 className="font-semibold text-foreground">{template.name}</h3>
                 <p className="mt-1.5 text-sm text-muted-foreground">
                   {template.exercises.length} exercises ·{" "}
                   {template.exercises.reduce((s, e) => s + e.targetSets, 0)} target sets
                 </p>
-                <ul className="mt-3 space-y-1">
-                  {template.exercises.map((exercise) => (
-                    <li key={exercise.id} className="flex flex-row items-baseline justify-between gap-4 text-sm">
-                      <span className="truncate flex-1 text-left text-foreground">{exercise.name}</span>
-                      <span className="whitespace-nowrap font-mono text-sm text-muted-foreground">
-                        {exercise.targetSets} × {exercise.targetReps}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
               </div>
+              <button
+                onClick={() => onStart(template)}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition-all hover:bg-primary/20 active:scale-95"
+              >
+                <Play className="h-3.5 w-3.5 fill-primary" />
+                Start
+              </button>
             </div>
+            <ul className="mt-3 space-y-1">
+              {template.exercises.map((exercise) => (
+                <li key={exercise.id} className="flex flex-row items-center justify-between gap-3 text-sm py-1">
+                  <span className="truncate flex-1 text-left font-medium text-foreground pr-2">{exercise.name}</span>
+                  <span className="whitespace-nowrap rounded-md bg-muted/60 px-2.5 py-1 font-mono text-xs font-bold tracking-widest text-muted-foreground shadow-sm">
+                    {exercise.targetSets} × {exercise.targetReps}
+                  </span>
+                </li>
+              ))}
+            </ul>
             </div>
           </SwipeToDelete>
         ))
@@ -142,7 +149,7 @@ function TemplateEditor({ template, exerciseNames, onCancel, onSave }: TemplateE
     <div className="mx-auto max-w-xl space-y-4 animate-fade-in">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-          Edit template
+          Edit routine
         </h2>
         <button
           onClick={onCancel}
@@ -155,7 +162,7 @@ function TemplateEditor({ template, exerciseNames, onCancel, onSave }: TemplateE
 
       <div>
         <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          Template name
+          Routine name
         </label>
         <input
           value={name}
@@ -222,7 +229,7 @@ function TemplateEditor({ template, exerciseNames, onCancel, onSave }: TemplateE
         disabled={!canSave}
         className="w-full rounded-2xl bg-foreground px-6 py-4 text-base font-bold text-background transition-all hover:bg-foreground/90 hover:shadow-lg active:scale-95 disabled:opacity-40 disabled:active:scale-100"
       >
-        Save template
+        Save routine
       </button>
     </div>
   );

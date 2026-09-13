@@ -24,6 +24,7 @@ export interface Session {
   exercises: Exercise[];
   templateId?: string | null | undefined;
   templateName?: string | null | undefined;
+  restTimerEndsAt?: number | null | undefined;
 }
 
 export type PRKind = "weight" | "e1rm";

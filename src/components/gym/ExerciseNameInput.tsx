@@ -80,6 +80,8 @@ export function ExerciseNameInput({
                   placeholder="Search exercises..."
                   className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted-foreground text-base"
                   autoFocus
+                  enterKeyHint="done"
+                  inputMode="search"
                 />
               </div>
 

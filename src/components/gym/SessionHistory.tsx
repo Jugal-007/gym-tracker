@@ -79,6 +79,8 @@ export function SessionHistory({ sessions, onDelete, onSaveTemplate }: SessionHi
             <button
               onClick={() => setExpanded((prev) => ({ ...prev, [session.id]: !isExpanded }))}
               className="flex w-full items-center justify-between px-4 py-4 text-left"
+              aria-expanded={isExpanded}
+              aria-controls={`session-panel-${session.id}`}
             >
               <div>
                 <p className="flex items-center gap-2 font-bold tracking-tight text-foreground">
@@ -118,6 +120,7 @@ export function SessionHistory({ sessions, onDelete, onSaveTemplate }: SessionHi
             </button>
 
             <div
+              id={`session-panel-${session.id}`}
               className={cn(
                 "grid transition-all duration-350 ease-[cubic-bezier(0.4,0,0.2,1)]",
                 isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
@@ -163,7 +166,7 @@ export function SessionHistory({ sessions, onDelete, onSaveTemplate }: SessionHi
                           className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-semibold text-muted-foreground transition-all hover:bg-muted hover:text-foreground active:scale-95"
                         >
                           <LayoutTemplate className="h-3.5 w-3.5" />
-                          Save as template
+                          Save as routine
                         </button>
                       )}
                       <button

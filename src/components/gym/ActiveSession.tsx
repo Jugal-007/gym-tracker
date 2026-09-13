@@ -1,9 +1,20 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Trash2, Plus, Clock, Dumbbell, Trophy, X } from "lucide-react";
+import { Trash2, Plus, Clock, Dumbbell, Trophy, X, Timer } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StepperInput } from "@/components/ui/StepperInput";
 import { SwipeToDelete } from "@/components/ui/SwipeToDelete";
 import { EmptyState } from "@/components/ui/EmptyState";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { ExerciseNameInput } from "./ExerciseNameInput";
 import { computeSessionSets, computeSessionVolume, generateId } from "./storage";
 import { PR_LABEL, detectPR, normalizeName } from "./records";
@@ -170,15 +181,38 @@ export function ActiveSession({
   }
 
   function toggleSet(exerciseId: string, setId: string) {
+    let newlyCompleted = false;
+    const nextSession = {
+      ...session,
+      exercises: session.exercises.map((ex) =>
+        ex.id === exerciseId
+          ? {
+              ...ex,
+              sets: ex.sets.map((set) => {
+                if (set.id === setId) {
+                  if (!set.completed) newlyCompleted = true;
+                  return { ...set, completed: !set.completed };
+                }
+                return set;
+              }),
+            }
+          : ex,
+      ),
+    };
+    if (newlyCompleted) {
+      nextSession.restTimerEndsAt = Date.now() + 90 * 1000;
+    }
+    onUpdate(nextSession);
+  }
+
+  function editSet(exerciseId: string, setId: string, reps: number, weight: number) {
     onUpdate({
       ...session,
       exercises: session.exercises.map((ex) =>
         ex.id === exerciseId
           ? {
               ...ex,
-              sets: ex.sets.map((set) =>
-                set.id === setId ? { ...set, completed: !set.completed } : set,
-              ),
+              sets: ex.sets.map((set) => (set.id === setId ? { ...set, reps, weight } : set)),
             }
           : ex,
       ),
@@ -216,6 +250,12 @@ export function ActiveSession({
 
   return (
     <div className="mx-auto max-w-xl animate-fade-in">
+      {session.restTimerEndsAt && session.restTimerEndsAt > Date.now() && (
+        <RestTimerOverlay
+          endsAt={session.restTimerEndsAt}
+          onDismiss={() => onUpdate({ ...session, restTimerEndsAt: null })}
+        />
+      )}
       <div className="sticky top-[88px] z-30 mb-8 rounded-[2rem] border border-black/5 bg-background/80 px-5 py-4 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.06)] dark:border-white/10 dark:bg-card/60 dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -232,16 +272,34 @@ export function ActiveSession({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                hapticLight();
-                onCancel();
-              }}
-              className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-border/50 bg-background/50 text-muted-foreground transition-all hover:bg-muted active:scale-95 active:opacity-70"
-              aria-label="Cancel workout"
-            >
-              <X className="h-5 w-5" />
-            </button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <button
+                  onClick={() => hapticLight()}
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-border/50 bg-background/50 text-muted-foreground transition-all hover:bg-muted active:scale-95 active:opacity-70"
+                  aria-label="Cancel workout"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="rounded-3xl border-border bg-card sm:rounded-3xl">
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="text-foreground">Cancel session?</AlertDialogTitle>
+                  <AlertDialogDescription className="text-muted-foreground">
+                    Are you sure you want to cancel? All logged sets and progress in this session will be lost. This cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel className="rounded-xl border-border bg-transparent hover:bg-muted">Keep training</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={onCancel}
+                    className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Discard session
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
             <button
               onClick={() => {
                 hapticMedium();
@@ -313,9 +371,11 @@ export function ActiveSession({
               >
                 <ExerciseCard
                   exercise={exercise}
-                  index={index}
+                  index={session.exercises.findIndex(e => e.id === exercise.id)}
+                  nextExerciseName={session.exercises[session.exercises.findIndex(e => e.id === exercise.id) + 1]?.name}
                   record={records[normalizeName(exercise.name)]}
                   onAddSet={addSet}
+                  onEditSet={editSet}
                   onToggleSet={toggleSet}
                   onDeleteSet={deleteSet}
                   onDeleteExercise={deleteExercise}
@@ -338,9 +398,11 @@ export function ActiveSession({
               >
                 <ExerciseCard
                   exercise={exercise}
-                  index={index}
+                  index={session.exercises.findIndex(e => e.id === exercise.id)}
+                  nextExerciseName={session.exercises[session.exercises.findIndex(e => e.id === exercise.id) + 1]?.name}
                   record={records[normalizeName(exercise.name)]}
                   onAddSet={addSet}
+                  onEditSet={editSet}
                   onToggleSet={toggleSet}
                   onDeleteSet={deleteSet}
                   onDeleteExercise={deleteExercise}
@@ -358,8 +420,10 @@ export function ActiveSession({
 interface ExerciseCardProps {
   exercise: Exercise;
   index: number;
+  nextExerciseName?: string;
   record: ExerciseRecord | undefined;
   onAddSet: (exerciseId: string, reps: number, weight: number) => void;
+  onEditSet: (exerciseId: string, setId: string, reps: number, weight: number) => void;
   onToggleSet: (exerciseId: string, setId: string) => void;
   onDeleteSet: (exerciseId: string, setId: string) => void;
   onDeleteExercise: (exerciseId: string) => void;
@@ -369,8 +433,10 @@ interface ExerciseCardProps {
 function ExerciseCard({
   exercise,
   index,
+  nextExerciseName,
   record,
   onAddSet,
+  onEditSet,
   onToggleSet,
   onDeleteSet,
   onDeleteExercise,
@@ -438,6 +504,7 @@ function ExerciseCard({
               index={setIndex}
               onToggle={() => onToggleSet(exercise.id, set.id)}
               onDelete={() => onDeleteSet(exercise.id, set.id)}
+              onEdit={(reps, weight) => onEditSet(exercise.id, set.id, reps, weight)}
             />
           ))}
         </div>
@@ -495,6 +562,14 @@ function ExerciseCard({
       >
         {exercise.completed ? "Undo Finish" : "Finish Exercise"}
       </button>
+
+      {exercise.completed && nextExerciseName && (
+        <div className="mt-4 flex items-center justify-center animate-fade-in">
+          <p className="text-sm font-medium text-primary">
+            ↓ Next up: {nextExerciseName}
+          </p>
+        </div>
+      )}
     </div>
     </SwipeToDelete>
   );
@@ -505,11 +580,15 @@ interface SetRowProps {
   index: number;
   onToggle: () => void;
   onDelete: () => void;
+  onEdit: (reps: number, weight: number) => void;
 }
 
-function SetRow({ set, index, onToggle, onDelete }: SetRowProps) {
+function SetRow({ set, index, onToggle, onDelete, onEdit }: SetRowProps) {
   const [justCompleted, setJustCompleted] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editReps, setEditReps] = useState(String(set.reps));
+  const [editWeight, setEditWeight] = useState(String(set.weight));
   const prevCompleted = useRef(set.completed);
 
   useEffect(() => {
@@ -530,6 +609,33 @@ function SetRow({ set, index, onToggle, onDelete }: SetRowProps) {
   function handleDelete() {
     setDeleting(true);
     setTimeout(onDelete, 350);
+  }
+
+  function handleSaveEdit() {
+    const r = parseInt(editReps, 10);
+    const w = parseFloat(editWeight);
+    if (!isNaN(r) && !isNaN(w) && r > 0 && w >= 0) {
+      onEdit(r, w);
+      setIsEditing(false);
+    }
+  }
+
+  if (isEditing) {
+    return (
+      <div className="flex items-center justify-between rounded-2xl border border-primary/40 p-3.5 bg-card shadow-sm animate-fade-in">
+        <div className="flex gap-2 flex-1 items-center flex-wrap">
+           <span className="text-sm font-medium mr-1">Set {index+1}</span>
+           <input type="number" value={editReps} onChange={e => setEditReps(e.target.value)} className="w-14 rounded bg-muted px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-primary/20" inputMode="decimal" enterKeyHint="done" />
+           <span className="text-muted-foreground text-sm">reps ×</span>
+           <input type="number" value={editWeight} onChange={e => setEditWeight(e.target.value)} className="w-16 rounded bg-muted px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-primary/20" inputMode="decimal" enterKeyHint="done" />
+           <span className="text-muted-foreground text-sm">kg</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setIsEditing(false)} className="p-2 text-muted-foreground hover:bg-muted rounded-lg active:scale-95"><X className="h-4 w-4" /></button>
+          <button onClick={handleSaveEdit} className="px-3 py-1.5 bg-primary text-primary-foreground text-xs font-bold rounded-lg hover:opacity-90 active:scale-95">Save</button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -578,7 +684,11 @@ function SetRow({ set, index, onToggle, onDelete }: SetRowProps) {
             </svg>
           )}
         </button>
-        <div>
+        <div 
+          onClick={() => !set.completed && setIsEditing(true)} 
+          className={cn("flex-1", !set.completed && "cursor-pointer hover:opacity-80 transition-opacity")}
+          title={!set.completed ? "Tap to edit" : undefined}
+        >
           <p className="text-sm font-medium text-foreground">Set {index + 1}</p>
           <p className="text-sm text-muted-foreground">
             {set.reps} reps × {set.weight} kg
@@ -593,5 +703,43 @@ function SetRow({ set, index, onToggle, onDelete }: SetRowProps) {
       </div>
     </div>
     </SwipeToDelete>
+  );
+}
+function RestTimerOverlay({ endsAt, onDismiss }: { endsAt: number; onDismiss: () => void }) {
+  const [now, setNow] = useState(Date.now());
+  const [played, setPlayed] = useState(false);
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const remaining = Math.max(0, Math.ceil((endsAt - now) / 1000));
+  
+  useEffect(() => {
+    if (remaining === 0 && !played) {
+      setPlayed(true);
+      hapticMedium();
+    }
+  }, [remaining, played]);
+
+  if (remaining <= 0 && played) {
+    // Optionally auto-dismiss, but leaving it until dismissed is safer.
+  }
+
+  return (
+    <button 
+      onClick={onDismiss}
+      className="fixed bottom-32 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 rounded-full bg-primary text-primary-foreground px-6 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.2)] transition-all active:scale-95 animate-slide-up"
+    >
+      <Timer className="h-5 w-5 animate-pulse" />
+      <div className="flex flex-col items-start leading-none">
+        <span className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-1">Resting</span>
+        <span className="font-mono text-xl font-bold">
+          {Math.floor(remaining / 60)}:{(remaining % 60).toString().padStart(2, "0")}
+        </span>
+      </div>
+      <X className="h-4 w-4 ml-2 opacity-60" />
+    </button>
   );
 }

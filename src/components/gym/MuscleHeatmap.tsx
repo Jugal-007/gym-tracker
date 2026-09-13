@@ -14,7 +14,7 @@ function determineMuscleGroup(exerciseName: string): string {
   const name = normalizeName(exerciseName);
   
   // Legs
-  if (name.includes("squat") || name.includes("leg press") || name.includes("lunge") || name.includes("deadlift") || name.includes("rdl") || name.includes("calf") || name.includes("extension") && name.includes("leg")) return "Legs";
+  if (name.includes("squat") || name.includes("leg press") || name.includes("lunge") || name.includes("deadlift") || name.includes("rdl") || name.includes("calf") || (name.includes("extension") && name.includes("leg"))) return "Legs";
   
   // Back
   if (name.includes("row") || name.includes("pull") || name.includes("lat") || name.includes("chin") || name.includes("shrug")) return "Back";
@@ -30,7 +30,7 @@ function determineMuscleGroup(exerciseName: string): string {
   if (name.includes("curl") || name.includes("tricep") || name.includes("pushdown") || name.includes("skullcrusher") || name.includes("dip") || name.includes("extension")) return "Arms";
   
   // Core
-  if (name.includes("crunch") || name.includes("plank") || name.includes("situp") || name.includes("ab") || name.includes("raise") && name.includes("leg")) return "Core";
+  if (name.includes("crunch") || name.includes("plank") || name.includes("situp") || name.includes("ab") || (name.includes("raise") && name.includes("leg"))) return "Core";
   
   return "Other";
 }

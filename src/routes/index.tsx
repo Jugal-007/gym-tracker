@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { BarChart3, Dumbbell, History, LayoutTemplate, Play, Plus, Moon, Sun } from "lucide-react";
+import { Activity, BarChart3, Clock, Dumbbell, History, LayoutTemplate, Moon, Play, Plus, Sun, Trophy, Timer } from "lucide-react";
 import { ActiveSession, TimerDisplay } from "@/components/gym/ActiveSession";
 import { ExerciseNameInput } from "@/components/gym/ExerciseNameInput";
 import { SessionHistory } from "@/components/gym/SessionHistory";
@@ -153,7 +153,7 @@ function Index() {
   }
 
   return (
-    <div className="relative min-h-screen bg-background pb-20 sm:pb-6 overflow-hidden">
+    <div className="relative min-h-screen bg-background pb-32 sm:pb-6 overflow-hidden">
       {/* Subtle monochrome ambient background for glassmorphism */}
       <div className="pointer-events-none fixed inset-0 z-0 flex items-center justify-center opacity-70 dark:opacity-40">
         <div className="absolute top-[-10%] left-[-10%] h-[50vh] w-[50vw] rounded-full bg-foreground/10 blur-[100px]" />
@@ -161,7 +161,11 @@ function Index() {
       </div>
 
       {activeSession && view !== "active" && (
-        <FloatingTimer session={activeSession} onClick={() => setView("active")} />
+        <FloatingTimer
+          session={activeSession}
+          onClick={() => setView("active")}
+          onClearRestTimer={() => updateActiveSession({ ...activeSession, restTimerEndsAt: null })}
+        />
       )}
 
       <div className="relative z-10">
@@ -269,7 +273,7 @@ function Index() {
 
 const TAB_ITEMS: { key: View; label: string; icon: React.ReactNode }[] = [
   { key: "landing", label: "Start", icon: undefined },
-  { key: "templates", label: "Plans", icon: <LayoutTemplate className="h-5 w-5" /> },
+  { key: "templates", label: "Routines", icon: <LayoutTemplate className="h-5 w-5" /> },
   { key: "stats", label: "Stats", icon: <BarChart3 className="h-5 w-5" /> },
   { key: "history", label: "History", icon: <History className="h-5 w-5" /> },
 ];
@@ -385,90 +389,55 @@ function LandingView({
         </button>
       </div>
 
-      {templates.length > 0 ? (
-        <div className="space-y-3">
-          <button
-            onClick={() => onStartTemplate(templates[0]!)}
-            className="flex w-full items-center justify-between gap-3 rounded-3xl bg-foreground px-6 py-5 text-lg font-bold text-background transition-all hover:bg-foreground/90 hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98]"
-          >
-            <div className="flex flex-col items-start text-left">
-               <span className="text-xs font-bold uppercase tracking-widest opacity-60">Quick Start</span>
-               <span className="text-xl">{templates[0]!.name}</span>
-            </div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-background/20 text-background backdrop-blur-md">
-              <Play className="h-6 w-6 ml-1" fill="currentColor" />
-            </div>
-          </button>
-          <button
-            onClick={onStart}
-            className="flex w-full items-center justify-center gap-3 rounded-2xl border-2 border-border/40 bg-card px-6 py-4 text-base font-semibold text-foreground transition-all hover:bg-muted/50 hover:-translate-y-0.5 active:scale-[0.98]"
-          >
-            <Dumbbell className="h-5 w-5" />
-            Start Empty Workout
-          </button>
-        </div>
-      ) : (
-        <button
-          onClick={onStart}
-          className="flex w-full items-center justify-center gap-3 rounded-3xl bg-foreground px-6 py-5 text-lg font-bold text-background transition-all hover:bg-foreground/90 hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98]"
-        >
-          <Dumbbell className="h-6 w-6" />
-          Start Empty Workout
-        </button>
-      )}
-
-      {templates.length === 0 && (
-        <EmptyState
-          icon={<LayoutTemplate className="h-12 w-12" strokeWidth={1.5} />}
-          title="No routines yet"
-          description="Create a template for your regular workouts to start training with a single tap."
-          className="py-8"
-          action={
-            <button
-              onClick={onManageTemplates}
-              className="inline-flex items-center gap-2 rounded-2xl border-2 border-border/50 bg-card px-5 py-3 text-sm font-bold text-foreground transition-all hover:bg-muted active:scale-95 shadow-sm"
-            >
-              <Plus className="h-4 w-4" />
-              Build a routine
-            </button>
-          }
-        />
-      )}
-
-      {templates.length > 1 && (
-        <div>
-          <div className="mb-4 flex items-center justify-between">
+      {templates.length > 0 && (
+        <div className="mb-6">
+          <div className="mb-3 flex items-center justify-between">
             <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground/80">
-              More Templates
+              Your Routines
             </h2>
-            <button
+            <button 
               onClick={onManageTemplates}
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground active:scale-95"
+              className="text-xs font-semibold text-primary/80 hover:text-primary transition-colors"
             >
-              Manage All
+              All &rarr;
             </button>
           </div>
-          <div className="space-y-3">
-            {templates.slice(1, 4).map((template) => (
-              <button
-                key={template.id}
-                onClick={() => onStartTemplate(template)}
-                className="group flex w-full items-center justify-between rounded-2xl border border-border/40 bg-card p-4 text-left transition-all hover:border-foreground/20 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98]"
-              >
-                <div>
-                  <span className="block text-base font-semibold text-foreground group-hover:text-primary">{template.name}</span>
-                  <span className="text-sm text-muted-foreground font-medium">
-                    {template.exercises.length} exercises
-                  </span>
-                </div>
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted/50 transition-colors group-hover:bg-foreground group-hover:text-background">
-                  <Play className="h-4 w-4" />
-                </div>
-              </button>
-            ))}
+          <div className="-mx-4 px-4 overflow-x-auto hide-scrollbar">
+            <div className="flex gap-4 pb-4 w-max snap-x snap-mandatory">
+              {templates.map(template => (
+                 <button
+                   key={template.id}
+                   onClick={() => onStartTemplate(template)}
+                   className="relative flex h-[120px] w-56 shrink-0 snap-start flex-col justify-between overflow-hidden rounded-[1.5rem] border border-border bg-card/80 p-4 text-left shadow-sm backdrop-blur-[12px] transition-all hover:border-foreground/30 hover:-translate-y-1 hover:shadow-md active:scale-[0.97]"
+                 >
+                    <div>
+                      <span className="mb-1 block text-base font-bold leading-tight text-foreground line-clamp-1">{template.name}</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                        {template.exercises.length} Exercises
+                      </span>
+                    </div>
+                    <div className="flex w-full items-end justify-between gap-3">
+                      <p className="flex-1 text-xs font-medium text-muted-foreground/70 line-clamp-1">
+                        {template.exercises.map(e => e.name).join(", ")}
+                      </p>
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-foreground text-background shadow-sm transition-transform group-hover:scale-110">
+                        <Play className="ml-0.5 h-3.5 w-3.5" fill="currentColor" />
+                      </div>
+                    </div>
+                 </button>
+              ))}
+            </div>
           </div>
         </div>
       )}
+
+      <button
+        onClick={onStart}
+        className="flex w-full items-center justify-center gap-3 rounded-3xl bg-foreground px-6 py-5 text-lg font-bold text-background transition-all hover:bg-foreground/90 hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98]"
+      >
+        <Dumbbell className="h-6 w-6" />
+        Start Empty Workout
+      </button>
 
       {recentSessions.length > 0 && (
         <div>
@@ -486,15 +455,42 @@ function LandingView({
   );
 }
 
-function FloatingTimer({ session, onClick }: { session: Session; onClick: () => void }) {
-  const [elapsed, setElapsed] = useState(() => Date.now() - session.startedAt);
+function FloatingTimer({ session, onClick, onClearRestTimer }: { session: Session; onClick: () => void; onClearRestTimer: () => void }) {
+  const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setElapsed(Date.now() - session.startedAt);
+      setNow(Date.now());
     }, 1000);
     return () => clearInterval(interval);
-  }, [session.startedAt]);
+  }, []);
+
+  const elapsed = now - session.startedAt;
+  const isResting = session.restTimerEndsAt && session.restTimerEndsAt > now;
+
+  if (isResting) {
+    const remaining = Math.max(0, Math.ceil((session.restTimerEndsAt! - now) / 1000));
+    return (
+      <div className="fixed bottom-24 right-4 z-50 sm:bottom-6 sm:right-6">
+        <button
+          onClick={onClick}
+          className="flex items-center gap-3 rounded-[2rem] border border-primary/20 bg-primary/10 backdrop-blur-[25px] px-5 py-3 shadow-lg transition-all hover:scale-105 hover:shadow-xl active:scale-95"
+        >
+          <div className="flex items-center justify-center">
+            <Timer className="h-4 w-4 text-primary animate-pulse" />
+          </div>
+          <div className="flex flex-col items-start leading-none">
+            <span className="text-[9px] font-bold uppercase tracking-widest text-primary mb-1">
+              Resting
+            </span>
+            <div className="scale-75 origin-left -mt-1 font-mono font-bold text-primary">
+              {Math.floor(remaining / 60)}:{(remaining % 60).toString().padStart(2, "0")}
+            </div>
+          </div>
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed bottom-24 right-4 z-50 sm:bottom-6 sm:right-6">
