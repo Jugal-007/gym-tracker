@@ -5,7 +5,7 @@ import { ActiveSession, TimerDisplay } from "@/components/gym/ActiveSession";
 import { ExerciseNameInput } from "@/components/gym/ExerciseNameInput";
 import { SessionHistory } from "@/components/gym/SessionHistory";
 import { StatsPanel } from "@/components/gym/StatsPanel";
-import { Templates } from "@/components/gym/Templates";
+import { Templates } from "@/components/gym/Templates.tsx";
 import { AuthOverlay } from "@/components/auth/AuthOverlay";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { EmptyState } from "@/components/ui/EmptyState";

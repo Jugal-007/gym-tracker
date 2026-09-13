@@ -455,7 +455,7 @@ export function ActiveSession({
 interface ExerciseCardProps {
   exercise: Exercise;
   index: number;
-  nextExerciseName?: string;
+  nextExerciseName?: string | undefined;
   record: ExerciseRecord | undefined;
   onAddSet: (exerciseId: string, reps: number, weight: number) => void;
   onEditSet: (exerciseId: string, setId: string, reps: number, weight: number) => void;
