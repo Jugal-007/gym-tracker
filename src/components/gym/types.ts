@@ -14,6 +14,7 @@ export interface Exercise {
   targetSets?: number | undefined;
   targetReps?: number | undefined;
   targetWeight?: number | undefined;
+  completed?: boolean;
 }
 
 export interface Session {

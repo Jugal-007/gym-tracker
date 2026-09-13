@@ -9,6 +9,7 @@ import { computeSessionSets, computeSessionVolume, generateId } from "./storage"
 import { PR_LABEL, detectPR, normalizeName } from "./records";
 import type { Exercise, ExerciseRecord, PRKind, Session, WorkoutSet } from "./types";
 import { hapticMedium, hapticSuccess } from "@/utils/haptics";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface ActiveSessionProps {
   session: Session;
@@ -200,6 +201,15 @@ export function ActiveSession({
     });
   }
 
+  function toggleExerciseComplete(exerciseId: string) {
+    onUpdate({
+      ...session,
+      exercises: session.exercises.map((ex) =>
+        ex.id === exerciseId ? { ...ex, completed: !ex.completed } : ex,
+      ),
+    });
+  }
+
   function handleFinish() {
     onFinish({ ...session, endedAt: Date.now() });
   }
@@ -290,18 +300,36 @@ export function ActiveSession({
         )}
 
         <div className="space-y-4">
-          {session.exercises.map((exercise, index) => (
-            <ExerciseCard
-              key={exercise.id}
-              exercise={exercise}
-              index={index}
-              record={records[normalizeName(exercise.name)]}
-              onAddSet={addSet}
-              onToggleSet={toggleSet}
-              onDeleteSet={deleteSet}
-              onDeleteExercise={deleteExercise}
-            />
-          ))}
+          <AnimatePresence>
+            {[...session.exercises]
+              .sort((a, b) => {
+                if (a.completed && !b.completed) return 1;
+                if (!a.completed && b.completed) return -1;
+                return 0;
+              })
+              .map((exercise, index) => (
+                <motion.div
+                  key={exercise.id}
+                  layout
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95, height: 0 }}
+                  transition={{ type: "spring", bounce: 0.3, duration: 0.6 }}
+                  style={{ originY: 0 }}
+                >
+                  <ExerciseCard
+                    exercise={exercise}
+                    index={index}
+                    record={records[normalizeName(exercise.name)]}
+                    onAddSet={addSet}
+                    onToggleSet={toggleSet}
+                    onDeleteSet={deleteSet}
+                    onDeleteExercise={deleteExercise}
+                    onToggleComplete={() => toggleExerciseComplete(exercise.id)}
+                  />
+                </motion.div>
+              ))}
+          </AnimatePresence>
         </div>
       </div>
     </div>
@@ -316,6 +344,7 @@ interface ExerciseCardProps {
   onToggleSet: (exerciseId: string, setId: string) => void;
   onDeleteSet: (exerciseId: string, setId: string) => void;
   onDeleteExercise: (exerciseId: string) => void;
+  onToggleComplete: () => void;
 }
 
 function ExerciseCard({
@@ -326,6 +355,7 @@ function ExerciseCard({
   onToggleSet,
   onDeleteSet,
   onDeleteExercise,
+  onToggleComplete,
 }: ExerciseCardProps) {
   const [reps, setReps] = useState(exercise.targetReps ? String(exercise.targetReps) : "");
   const [weight, setWeight] = useState(exercise.targetWeight ? String(exercise.targetWeight) : "");
@@ -360,10 +390,10 @@ function ExerciseCard({
 
   return (
     <SwipeToDelete onDelete={() => onDeleteExercise(exercise.id)} className="rounded-3xl">
-      <div className="glass rounded-3xl p-5 transition-all duration-300">
+      <div className={cn("glass rounded-3xl p-5 transition-all duration-500", exercise.completed && "opacity-50 grayscale hover:grayscale-0 hover:opacity-100")}>
         <div className="mb-4 flex items-center justify-between">
         <div>
-          <h3 className="font-semibold text-foreground">{exercise.name}</h3>
+          <h3 className={cn("font-semibold text-foreground transition-all", exercise.completed && "line-through opacity-70")}>{exercise.name}</h3>
           <p className="mt-1 text-sm text-muted-foreground">
             {exercise.sets.length} sets · {volume.toLocaleString()} kg
             {exercise.targetSets
@@ -393,41 +423,55 @@ function ExerciseCard({
         </div>
       )}
 
-      <div className="flex flex-col gap-3">
-        <div className="flex items-end gap-2">
-          <div className="flex-1">
-            <StepperInput
-              label="Reps"
-              value={reps}
-              onChange={setReps}
-              onEnter={handleAddSet}
-              min={1}
-              step={1}
-            />
+      {!exercise.completed && (
+        <div className="flex flex-col gap-3">
+          <div className="flex items-end gap-2">
+            <div className="flex-1">
+              <StepperInput
+                label="Reps"
+                value={reps}
+                onChange={setReps}
+                onEnter={handleAddSet}
+                min={1}
+                step={1}
+              />
+            </div>
+            <div className="flex-1">
+              <StepperInput
+                label="Weight (kg)"
+                value={weight}
+                onChange={setWeight}
+                onEnter={handleAddSet}
+                min={0}
+                step={2.5}
+              />
+            </div>
           </div>
-          <div className="flex-1">
-            <StepperInput
-              label="Weight (kg)"
-              value={weight}
-              onChange={setWeight}
-              onEnter={handleAddSet}
-              min={0}
-              step={2.5}
-            />
-          </div>
+          <button
+            onClick={handleAddSet}
+            disabled={!canAdd}
+            className={cn(
+              "flex h-11 w-full shrink-0 items-center justify-center rounded-xl bg-foreground text-primary-foreground font-semibold transition-all duration-300 disabled:opacity-40",
+              addGlow ? "animate-pulse-soft shadow-[0_0_15px_rgba(255,255,255,0.25)]" : "hover:bg-foreground/90 hover:-translate-y-0.5 hover:shadow-md active:scale-95"
+            )}
+          >
+            <Plus className="h-5 w-5 mr-2" />
+            Add Set
+          </button>
         </div>
-        <button
-          onClick={handleAddSet}
-          disabled={!canAdd}
-          className={cn(
-            "flex h-11 w-full shrink-0 items-center justify-center rounded-xl bg-foreground text-primary-foreground font-semibold transition-all duration-300 disabled:opacity-40",
-            addGlow ? "animate-pulse-soft shadow-[0_0_15px_rgba(255,255,255,0.25)]" : "hover:bg-foreground/90 hover:-translate-y-0.5 hover:shadow-md active:scale-95"
-          )}
-        >
-          <Plus className="h-5 w-5 mr-2" />
-          Add Set
-        </button>
-      </div>
+      )}
+      
+      <button
+        onClick={onToggleComplete}
+        className={cn(
+          "mt-4 w-full rounded-xl py-3 text-sm font-bold transition-all duration-300 active:scale-95",
+          exercise.completed 
+            ? "bg-transparent border border-border/50 text-muted-foreground hover:bg-muted" 
+            : "bg-primary/10 text-primary hover:bg-primary/20"
+        )}
+      >
+        {exercise.completed ? "Undo Finish" : "Finish Exercise"}
+      </button>
     </div>
     </SwipeToDelete>
   );

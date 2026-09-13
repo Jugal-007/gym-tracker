@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { BarChart3, Dumbbell, History, LayoutTemplate, Play, Plus, Moon, Sun } from "lucide-react";
-import { ActiveSession } from "@/components/gym/ActiveSession";
+import { ActiveSession, TimerDisplay } from "@/components/gym/ActiveSession";
 import { ExerciseNameInput } from "@/components/gym/ExerciseNameInput";
 import { SessionHistory } from "@/components/gym/SessionHistory";
 import { StatsPanel } from "@/components/gym/StatsPanel";
@@ -159,6 +159,10 @@ function Index() {
         <div className="absolute top-[-10%] left-[-10%] h-[50vh] w-[50vw] rounded-full bg-foreground/10 blur-[100px]" />
         <div className="absolute bottom-[-10%] right-[-10%] h-[50vh] w-[50vw] rounded-full bg-foreground/20 blur-[120px]" />
       </div>
+
+      {activeSession && view !== "active" && (
+        <FloatingTimer session={activeSession} onClick={() => setView("active")} />
+      )}
 
       <div className="relative z-10">
         <header className="sticky top-0 z-20 border-b border-border/40 bg-card/60 px-4 py-4 backdrop-blur-xl">
@@ -479,6 +483,38 @@ function LandingView({
           />
         </div>
       )}
+    </div>
+  );
+}
+
+function FloatingTimer({ session, onClick }: { session: Session; onClick: () => void }) {
+  const [elapsed, setElapsed] = useState(() => Date.now() - session.startedAt);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setElapsed(Date.now() - session.startedAt);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [session.startedAt]);
+
+  return (
+    <div className="fixed bottom-24 right-4 z-50 sm:bottom-6 sm:right-6">
+      <button
+        onClick={onClick}
+        className="glass flex items-center gap-3 rounded-full px-5 py-3 shadow-lg transition-all hover:scale-105 hover:shadow-xl active:scale-95"
+      >
+        <div className="flex items-center justify-center">
+          <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]" />
+        </div>
+        <div className="flex flex-col items-start leading-none">
+          <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground mb-1">
+            Workout Active
+          </span>
+          <div className="scale-75 origin-left -mt-1">
+            <TimerDisplay ms={elapsed} />
+          </div>
+        </div>
+      </button>
     </div>
   );
 }
