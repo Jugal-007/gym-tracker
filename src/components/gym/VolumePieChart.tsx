@@ -77,6 +77,7 @@ export function VolumePieChart({ sessions }: VolumePieChartProps) {
                 paddingAngle={3}
                 dataKey="value"
                 stroke="none"
+                style={{ outline: "none" }}
               >
                 {data.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

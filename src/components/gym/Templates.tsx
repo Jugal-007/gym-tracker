@@ -99,9 +99,9 @@ export function Templates({ templates, exerciseNames, onStart, onSave, onDelete 
                 </p>
                 <ul className="mt-3 space-y-1">
                   {template.exercises.map((exercise) => (
-                    <li key={exercise.id} className="flex items-center justify-between text-sm">
-                      <span className="text-foreground">{exercise.name}</span>
-                      <span className="font-mono text-sm text-muted-foreground">
+                    <li key={exercise.id} className="flex flex-row items-baseline justify-between gap-4 text-sm">
+                      <span className="truncate flex-1 text-left text-foreground">{exercise.name}</span>
+                      <span className="whitespace-nowrap font-mono text-sm text-muted-foreground">
                         {exercise.targetSets} × {exercise.targetReps}
                       </span>
                     </li>
