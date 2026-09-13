@@ -104,6 +104,7 @@ export function ActiveSession({
 }: ActiveSessionProps) {
   const [elapsed, setElapsed] = useState(() => Date.now() - session.startedAt);
   const [newExerciseName, setNewExerciseName] = useState("");
+  const [nextExercisePopUp, setNextExercisePopUp] = useState<string | null>(null);
   const isPresent = useIsPresent();
 
   useEffect(() => {
@@ -238,8 +239,18 @@ export function ActiveSession({
   }
 
   function toggleExerciseComplete(exerciseId: string) {
-    const ex = session.exercises.find(e => e.id === exerciseId);
+    const currentIndex = session.exercises.findIndex(e => e.id === exerciseId);
+    const ex = session.exercises[currentIndex];
     const isCompleting = ex ? !ex.completed : false;
+
+    if (isCompleting) {
+      const nextEx = session.exercises.slice(currentIndex + 1).find(e => !e.completed);
+      if (nextEx) {
+        setNextExercisePopUp(nextEx.name);
+        setTimeout(() => setNextExercisePopUp(null), 3500);
+      }
+    }
+
     onUpdate({
       ...session,
       // Give a longer rest between exercises (2 min)
@@ -256,6 +267,20 @@ export function ActiveSession({
 
   return (
     <div className="mx-auto max-w-xl animate-fade-in">
+      <AnimatePresence>
+        {nextExercisePopUp && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            className="fixed top-28 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2 rounded-full bg-foreground/90 backdrop-blur-md px-5 py-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
+          >
+            <span className="text-sm font-bold tracking-wide text-background">
+              Next: <span className="text-primary">{nextExercisePopUp}</span>
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {isPresent && session.restTimerEndsAt && session.restTimerEndsAt > Date.now() &&
         createPortal(
@@ -372,10 +397,12 @@ export function ActiveSession({
             {session.exercises.filter(ex => !ex.completed).map((exercise) => (
               <motion.div
                 key={`uncompleted-${exercise.id}`}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
+                layout="position"
+                initial={{ opacity: 0, y: 15, filter: "blur(4px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                exit={{ opacity: 0, scale: 0.95, filter: "blur(4px)" }}
                 transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+                className="will-change-transform"
               >
                 <ExerciseCard
                   exercise={exercise}
@@ -397,10 +424,12 @@ export function ActiveSession({
             {session.exercises.filter(ex => ex.completed).map((exercise) => (
               <motion.div
                 key={`completed-${exercise.id}`}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
+                layout="position"
+                initial={{ opacity: 0, y: -15, filter: "blur(4px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                exit={{ opacity: 0, scale: 0.95, filter: "blur(4px)" }}
                 transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+                className="will-change-transform"
               >
                 <ExerciseCard
                   exercise={exercise}
@@ -568,14 +597,6 @@ function ExerciseCard({
       >
         {exercise.completed ? "Undo Finish" : "Finish Exercise"}
       </button>
-
-      {exercise.completed && nextExerciseName && (
-        <div className="mt-4 flex items-center justify-center animate-fade-in">
-          <p className="text-sm font-medium text-primary">
-            ↓ Next up: {nextExerciseName}
-          </p>
-        </div>
-      )}
     </div>
     </SwipeToDelete>
   );
