@@ -91,7 +91,7 @@ export function StepperInput({
           onPointerUp={stopAuto}
           onPointerLeave={stopAuto}
           onPointerCancel={stopAuto}
-          className="flex h-11 w-9 sm:w-10 shrink-0 items-center justify-center text-muted-foreground hover:bg-muted/50 hover:text-foreground active:scale-90 transition-all focus:outline-none select-none"
+          className="flex h-12 w-12 sm:w-14 shrink-0 items-center justify-center text-muted-foreground hover:bg-muted/80 hover:text-foreground active:bg-muted active:scale-95 active:opacity-70 transition-all duration-200 focus:outline-none select-none"
         >
           <Minus className="h-5 w-5" />
         </button>
@@ -114,7 +114,7 @@ export function StepperInput({
             }
           }}
           placeholder={placeholder}
-          className="w-full min-w-0 flex-1 bg-transparent px-0 py-3 text-center text-[15px] font-bold text-foreground outline-none tabular-nums"
+          className="w-full min-w-0 flex-1 bg-transparent px-0 py-3 text-center text-[16px] font-bold text-foreground outline-none tabular-nums"
           style={{ MozAppearance: "textfield" }}
         />
         <button
@@ -127,7 +127,7 @@ export function StepperInput({
           onPointerUp={stopAuto}
           onPointerLeave={stopAuto}
           onPointerCancel={stopAuto}
-          className="flex h-11 w-9 sm:w-10 shrink-0 items-center justify-center text-muted-foreground hover:bg-muted/50 hover:text-foreground active:scale-90 transition-all focus:outline-none select-none"
+          className="flex h-12 w-12 sm:w-14 shrink-0 items-center justify-center text-muted-foreground hover:bg-muted/80 hover:text-foreground active:bg-muted active:scale-95 active:opacity-70 transition-all duration-200 focus:outline-none select-none"
         >
           <Plus className="h-5 w-5" />
         </button>

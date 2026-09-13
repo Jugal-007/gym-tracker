@@ -8,8 +8,7 @@ import { ExerciseNameInput } from "./ExerciseNameInput";
 import { computeSessionSets, computeSessionVolume, generateId } from "./storage";
 import { PR_LABEL, detectPR, normalizeName } from "./records";
 import type { Exercise, ExerciseRecord, PRKind, Session, WorkoutSet } from "./types";
-import { hapticMedium, hapticSuccess } from "@/utils/haptics";
-import { motion, AnimatePresence } from "framer-motion";
+import { hapticMedium, hapticSuccess, hapticLight } from "@/utils/haptics";
 
 interface ActiveSessionProps {
   session: Session;
@@ -217,15 +216,6 @@ export function ActiveSession({
   return (
     <div className="mx-auto max-w-xl animate-fade-in">
       <div className="sticky top-0 z-30 mb-6 rounded-b-2xl border-b border-border/40 bg-card/60 px-4 py-4 backdrop-blur-2xl shadow-sm">
-        
-        {/* Progress Bar (Absolute top) */}
-        <div className="absolute top-0 left-0 right-0 h-1 bg-muted/30">
-          <div 
-            className="h-full bg-foreground transition-all duration-700 ease-out" 
-            style={{ width: `${progressPercent}%` }}
-          />
-        </div>
-
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full border border-border/50 bg-background/50 shadow-inner">
@@ -242,15 +232,21 @@ export function ActiveSession({
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={onCancel}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border/50 bg-background/50 text-muted-foreground transition-all hover:bg-muted active:scale-95"
+              onClick={() => {
+                hapticLight();
+                onCancel();
+              }}
+              className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-border/50 bg-background/50 text-muted-foreground transition-all hover:bg-muted active:scale-95 active:opacity-70"
               aria-label="Cancel workout"
             >
               <X className="h-5 w-5" />
             </button>
             <button
-              onClick={handleFinish}
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-foreground px-5 text-sm font-semibold text-background transition-all hover:bg-foreground/90 hover:shadow-md active:scale-95"
+              onClick={() => {
+                hapticMedium();
+                handleFinish();
+              }}
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-foreground px-6 text-sm font-bold text-background transition-all hover:bg-foreground/90 hover:shadow-md active:scale-95 active:opacity-80"
             >
               Finish
             </button>
@@ -281,12 +277,15 @@ export function ActiveSession({
             placeholder="Add an exercise..."
           />
           <button
-            onClick={addExercise}
+            onClick={() => {
+              hapticLight();
+              addExercise();
+            }}
             disabled={!newExerciseName.trim()}
-            className="inline-flex items-center justify-center rounded-lg bg-foreground p-3 text-primary-foreground transition-all hover:bg-foreground/90 hover:shadow-md active:scale-[0.96] disabled:opacity-40 disabled:active:scale-100"
+            className="inline-flex items-center justify-center rounded-xl bg-foreground p-3 text-primary-foreground transition-all hover:bg-foreground/90 hover:shadow-md active:scale-95 active:opacity-80 disabled:opacity-40 disabled:active:scale-100"
             aria-label="Add exercise"
           >
-            <Plus className="h-5 w-5" />
+            <Plus className="h-6 w-6" />
           </button>
         </div>
 
@@ -300,36 +299,25 @@ export function ActiveSession({
         )}
 
         <div className="space-y-4">
-          <AnimatePresence>
-            {[...session.exercises]
-              .sort((a, b) => {
-                if (a.completed && !b.completed) return 1;
-                if (!a.completed && b.completed) return -1;
-                return 0;
-              })
-              .map((exercise, index) => (
-                <motion.div
-                  key={exercise.id}
-                  layout
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95, height: 0 }}
-                  transition={{ type: "spring", bounce: 0.3, duration: 0.6 }}
-                  style={{ originY: 0 }}
-                >
-                  <ExerciseCard
-                    exercise={exercise}
-                    index={index}
-                    record={records[normalizeName(exercise.name)]}
-                    onAddSet={addSet}
-                    onToggleSet={toggleSet}
-                    onDeleteSet={deleteSet}
-                    onDeleteExercise={deleteExercise}
-                    onToggleComplete={() => toggleExerciseComplete(exercise.id)}
-                  />
-                </motion.div>
-              ))}
-          </AnimatePresence>
+          {[...session.exercises]
+            .sort((a, b) => {
+              if (a.completed && !b.completed) return 1;
+              if (!a.completed && b.completed) return -1;
+              return 0;
+            })
+            .map((exercise, index) => (
+              <ExerciseCard
+                key={exercise.id}
+                exercise={exercise}
+                index={index}
+                record={records[normalizeName(exercise.name)]}
+                onAddSet={addSet}
+                onToggleSet={toggleSet}
+                onDeleteSet={deleteSet}
+                onDeleteExercise={deleteExercise}
+                onToggleComplete={() => toggleExerciseComplete(exercise.id)}
+              />
+            ))}
         </div>
       </div>
     </div>
@@ -377,6 +365,7 @@ function ExerciseCard({
     const parsedReps = parseInt(reps, 10);
     const parsedWeight = parseFloat(weight);
     if (parsedReps > 0 && parsedWeight >= 0) {
+      hapticMedium();
       onAddSet(exercise.id, parsedReps, parsedWeight);
       setReps("");
       setWeight("");
@@ -448,25 +437,28 @@ function ExerciseCard({
             </div>
           </div>
           <button
-            onClick={handleAddSet}
-            disabled={!canAdd}
-            className={cn(
-              "flex h-11 w-full shrink-0 items-center justify-center rounded-xl bg-foreground text-primary-foreground font-semibold transition-all duration-300 disabled:opacity-40",
-              addGlow ? "animate-pulse-soft shadow-[0_0_15px_rgba(255,255,255,0.25)]" : "hover:bg-foreground/90 hover:-translate-y-0.5 hover:shadow-md active:scale-95"
-            )}
-          >
-            <Plus className="h-5 w-5 mr-2" />
-            Add Set
-          </button>
-        </div>
+          onClick={handleAddSet}
+          disabled={!canAdd}
+          className={cn(
+            "mt-2 flex h-[52px] w-full shrink-0 items-center justify-center rounded-xl bg-foreground text-background text-[15px] font-bold transition-all duration-200 disabled:opacity-40 disabled:active:scale-100",
+            addGlow ? "shadow-[0_0_15px_rgba(255,255,255,0.25)]" : "hover:bg-foreground/90 active:scale-[0.98] active:opacity-80"
+          )}
+        >
+          <Plus className="h-5 w-5 mr-2" />
+          Add Set
+        </button>
+      </div>
       )}
       
       <button
-        onClick={onToggleComplete}
+        onClick={() => {
+          hapticLight();
+          onToggleComplete();
+        }}
         className={cn(
-          "mt-4 w-full rounded-xl py-3 text-sm font-bold transition-all duration-300 active:scale-95",
+          "mt-4 w-full rounded-xl py-3.5 text-[15px] font-bold transition-all duration-200 active:scale-[0.98] active:opacity-70",
           exercise.completed 
-            ? "bg-transparent border border-border/50 text-muted-foreground hover:bg-muted" 
+            ? "bg-transparent border-2 border-border/50 text-muted-foreground hover:bg-muted" 
             : "bg-primary/10 text-primary hover:bg-primary/20"
         )}
       >
