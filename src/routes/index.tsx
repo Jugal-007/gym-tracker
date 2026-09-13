@@ -201,13 +201,14 @@ function Index() {
       </header>
 
       <main className="px-4 py-6">
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={view}
-            initial={{ opacity: 0, y: 8, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.98 }}
-            transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
+            initial={{ opacity: 0, y: 15, filter: "blur(4px)" }}
+            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+            exit={{ opacity: 0, y: -15, filter: "blur(4px)" }}
+            transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+            className="will-change-transform"
           >
             {view === "active" && activeSession ? (
               <ActiveSession

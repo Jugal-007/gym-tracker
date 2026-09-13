@@ -313,12 +313,11 @@ export function ActiveSession({
                   layout="position"
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95, height: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ 
                     type: "spring", 
-                    stiffness: 400, 
-                    damping: 30, 
-                    mass: 0.8 
+                    bounce: 0,
+                    duration: 0.4
                   }}
                   className="will-change-transform"
                 >
@@ -429,43 +428,51 @@ function ExerciseCard({
         </div>
       )}
 
-      {!exercise.completed && (
-        <div className="flex flex-col gap-3">
-          <div className="flex items-end gap-2">
-            <div className="flex-1">
-              <StepperInput
-                label="Reps"
-                value={reps}
-                onChange={setReps}
-                onEnter={handleAddSet}
-                min={1}
-                step={1}
-              />
+      <AnimatePresence initial={false}>
+        {!exercise.completed && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+            className="flex flex-col gap-3 overflow-hidden"
+          >
+            <div className="flex items-end gap-2">
+              <div className="flex-1">
+                <StepperInput
+                  label="Reps"
+                  value={reps}
+                  onChange={setReps}
+                  onEnter={handleAddSet}
+                  min={1}
+                  step={1}
+                />
+              </div>
+              <div className="flex-1">
+                <StepperInput
+                  label="Weight (kg)"
+                  value={weight}
+                  onChange={setWeight}
+                  onEnter={handleAddSet}
+                  min={0}
+                  step={2.5}
+                />
+              </div>
             </div>
-            <div className="flex-1">
-              <StepperInput
-                label="Weight (kg)"
-                value={weight}
-                onChange={setWeight}
-                onEnter={handleAddSet}
-                min={0}
-                step={2.5}
-              />
-            </div>
-          </div>
-          <button
-          onClick={handleAddSet}
-          disabled={!canAdd}
-          className={cn(
-            "mt-2 flex h-[52px] w-full shrink-0 items-center justify-center rounded-xl bg-foreground text-background text-[15px] font-bold transition-all duration-200 disabled:opacity-40 disabled:active:scale-100",
-            addGlow ? "shadow-[0_0_15px_rgba(255,255,255,0.25)]" : "hover:bg-foreground/90 active:scale-[0.98] active:opacity-80"
-          )}
-        >
-          <Plus className="h-5 w-5 mr-2" />
-          Add Set
-        </button>
-      </div>
-      )}
+            <button
+            onClick={handleAddSet}
+            disabled={!canAdd}
+            className={cn(
+              "mt-2 flex h-[52px] w-full shrink-0 items-center justify-center rounded-xl bg-foreground text-background text-[15px] font-bold transition-all duration-200 disabled:opacity-40 disabled:active:scale-100",
+              addGlow ? "shadow-[0_0_15px_rgba(255,255,255,0.25)]" : "hover:bg-foreground/90 active:scale-[0.98] active:opacity-80"
+            )}
+          >
+            <Plus className="h-5 w-5 mr-2" />
+            Add Set
+          </button>
+        </motion.div>
+        )}
+      </AnimatePresence>
       
       <button
         onClick={() => {
