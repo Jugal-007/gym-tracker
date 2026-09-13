@@ -21,7 +21,7 @@ import { computeSessionSets, computeSessionVolume, generateId } from "./storage"
 import { PR_LABEL, detectPR, normalizeName } from "./records";
 import type { Exercise, ExerciseRecord, PRKind, Session, WorkoutSet } from "./types";
 import { hapticMedium, hapticSuccess, hapticLight } from "@/utils/haptics";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useIsPresent } from "framer-motion";
 
 interface ActiveSessionProps {
   session: Session;
@@ -104,6 +104,7 @@ export function ActiveSession({
 }: ActiveSessionProps) {
   const [elapsed, setElapsed] = useState(() => Date.now() - session.startedAt);
   const [newExerciseName, setNewExerciseName] = useState("");
+  const isPresent = useIsPresent();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -256,7 +257,7 @@ export function ActiveSession({
   return (
     <div className="mx-auto max-w-xl animate-fade-in">
 
-      {session.restTimerEndsAt && session.restTimerEndsAt > Date.now() &&
+      {isPresent && session.restTimerEndsAt && session.restTimerEndsAt > Date.now() &&
         createPortal(
           <RestTimerOverlay
             endsAt={session.restTimerEndsAt}
