@@ -236,6 +236,19 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
     return currentStreak;
   }, [ordered, weeklyGoal]);
 
+  const currentWeek = startOfWeek(Date.now(), { weekStartsOn: 1 }).getTime();
+  const currentWeekCount = useMemo(() => {
+    let count = 0;
+    for (const session of ordered) {
+      const w = startOfWeek(new Date(session.startedAt), { weekStartsOn: 1 }).getTime();
+      if (w === currentWeek) count++;
+    }
+    return count;
+  }, [ordered, currentWeek]);
+
+  const isGoalMet = currentWeekCount >= weeklyGoal;
+  const progressPercent = Math.min(100, Math.round((currentWeekCount / weeklyGoal) * 100));
+
   if (sessions.length === 0) {
     return (
       <div className="animate-fade-in py-16 text-center">
@@ -283,33 +296,67 @@ export function StatsPanel({ sessions }: StatsPanelProps) {
       <div className="grid grid-cols-2 gap-3">
         {/* Full-width Streak Card (Only visible when viewing 'all' workouts) */}
         {activeRoutine === "all" && (
-        <div className="col-span-2 rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-3 mb-1.5">
-              <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                <Flame className="h-4 w-4 text-orange-500" />
-                Active Streak
-              </p>
-              <select
-                value={weeklyGoal}
-                onChange={handleGoalChange}
-                className="h-6 rounded border border-border bg-background px-1 text-[10px] text-muted-foreground outline-none transition-all focus:border-foreground"
-              >
-                {[1, 2, 3, 4, 5, 6, 7].map((num) => (
-                  <option key={num} value={num}>
-                    Goal: {num} / wk
-                  </option>
-                ))}
-              </select>
+          <div className={`col-span-2 relative overflow-hidden rounded-xl border p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md ${streak > 0 ? "border-orange-500/30 bg-gradient-to-br from-orange-500/5 to-red-600/5" : "border-border bg-card"}`}>
+            
+            {/* Background Glow */}
+            {streak > 0 && (
+              <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-orange-500/10 blur-3xl pointer-events-none" />
+            )}
+            
+            <div className="relative z-10">
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="flex items-center gap-3 mb-1.5">
+                    <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      <Flame className={`h-4 w-4 ${streak > 0 ? "text-orange-500 animate-pulse drop-shadow-[0_0_8px_rgba(249,115,22,0.5)]" : "text-muted-foreground"}`} />
+                      Active Streak
+                    </p>
+                    <select
+                      value={weeklyGoal}
+                      onChange={handleGoalChange}
+                      className="h-6 rounded border border-border bg-background px-1 text-[10px] text-muted-foreground outline-none transition-all focus:border-foreground"
+                    >
+                      {[1, 2, 3, 4, 5, 6, 7].map((num) => (
+                        <option key={num} value={num}>
+                          Goal: {num} / wk
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <p className="text-sm font-medium text-foreground">
+                    {streak > 0 
+                      ? <span>You've hit your goal for <strong className="text-orange-500">{streak} consecutive weeks</strong>!</span> 
+                      : "Start your streak this week!"}
+                  </p>
+                </div>
+                <div className="flex items-baseline gap-1">
+                  <span className={`text-4xl font-black tracking-tighter ${streak > 0 ? "text-orange-500 drop-shadow-sm" : "text-muted-foreground"}`}>{streak}</span>
+                  <span className="text-xs font-bold text-muted-foreground uppercase">wks</span>
+                </div>
+              </div>
+
+              {/* Current Week Progress */}
+              <div className="mt-5 pt-4 border-t border-border/50">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">This Week</span>
+                  <span className={`text-xs font-bold ${isGoalMet ? "text-green-500" : "text-foreground"}`}>
+                    {currentWeekCount} / {weeklyGoal} workouts
+                  </span>
+                </div>
+                <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted/50 border border-border/50 shadow-inner">
+                  <div 
+                    className={`h-full rounded-full transition-all duration-1000 ease-out ${isGoalMet ? "bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.4)]" : "bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.4)]"}`}
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                </div>
+                <p className="mt-2 text-[11px] font-medium text-muted-foreground">
+                  {isGoalMet 
+                    ? "🎉 Weekly goal crushed! You're on fire!" 
+                    : `${weeklyGoal - currentWeekCount} more workout${(weeklyGoal - currentWeekCount) > 1 ? 's' : ''} to ${streak > 0 ? 'extend your streak' : 'start your streak'}.`}
+                </p>
+              </div>
             </div>
-            <p className="mt-1 text-sm text-muted-foreground">
-              You've hit your goal for <strong className="text-foreground">{streak} consecutive weeks</strong>!
-            </p>
           </div>
-          <p className="font-mono text-3xl font-bold text-foreground">
-            {streak}<span className="text-xl text-muted-foreground">w</span>
-          </p>
-        </div>
         )}
 
         <StatCard
