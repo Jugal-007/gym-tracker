@@ -276,7 +276,7 @@ export function ActiveSession({
             className="fixed top-28 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2 rounded-full bg-foreground/90 backdrop-blur-md px-5 py-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
           >
             <span className="text-sm font-bold tracking-wide text-background">
-              Next: <span className="text-primary">{nextExercisePopUp}</span>
+              <span className="opacity-70 font-medium">Next:</span> {nextExercisePopUp}
             </span>
           </motion.div>
         )}
