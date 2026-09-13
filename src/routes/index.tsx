@@ -155,9 +155,9 @@ function Index() {
   return (
     <div className="relative min-h-screen bg-background pb-20 sm:pb-6 overflow-hidden">
       {/* Subtle monochrome ambient background for glassmorphism */}
-      <div className="pointer-events-none fixed inset-0 z-0 flex items-center justify-center opacity-40 dark:opacity-20">
-        <div className="absolute top-[-10%] left-[-10%] h-[50vh] w-[50vw] rounded-full bg-foreground/5 blur-[100px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] h-[50vh] w-[50vw] rounded-full bg-foreground/10 blur-[120px]" />
+      <div className="pointer-events-none fixed inset-0 z-0 flex items-center justify-center opacity-70 dark:opacity-40">
+        <div className="absolute top-[-10%] left-[-10%] h-[50vh] w-[50vw] rounded-full bg-foreground/10 blur-[100px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] h-[50vh] w-[50vw] rounded-full bg-foreground/20 blur-[120px]" />
       </div>
 
       <div className="relative z-10">

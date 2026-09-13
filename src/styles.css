@@ -169,10 +169,16 @@
 }
 
 /* Glassmorphism utilities */
-@layer utilities {
-  .glass {
-    @apply bg-card backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_24px_-8px_rgba(0,0,0,0.5)];
-  }
+@utility glass {
+  background-color: var(--color-card);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 24px -8px rgba(0, 0, 0, 0.1);
+}
+.dark .glass {
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 24px -8px rgba(0, 0, 0, 0.5);
 }
 
 /* ─── Custom keyframes ─── */
