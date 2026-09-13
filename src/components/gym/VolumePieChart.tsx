@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import type { Session } from "./types";
-import { computeVolume } from "./storage";
 import { normalizeName } from "./records";
 
 interface VolumePieChartProps {
@@ -17,7 +16,7 @@ export function VolumePieChart({ sessions }: VolumePieChartProps) {
     for (const session of sessions) {
       for (const exercise of session.exercises) {
         const key = normalizeName(exercise.name);
-        const volume = computeVolume(exercise);
+        const volume = exercise.sets.reduce((sum, set) => (set.completed ? sum + set.weight * set.reps : sum), 0);
         
         if (volume > 0) {
           volumes.set(key, (volumes.get(key) || 0) + volume);
@@ -87,6 +86,7 @@ export function VolumePieChart({ sessions }: VolumePieChartProps) {
                 content={({ active, payload }) => {
                   if (!active || !payload?.length) return null;
                   const data = payload[0];
+                  if (!data) return null;
                   return (
                     <div className="rounded-lg border border-border bg-popover px-3 py-2 text-xs shadow-md">
                       <p className="font-medium text-foreground">{data.name}</p>

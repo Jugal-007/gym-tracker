@@ -51,7 +51,7 @@ export function MuscleHeatmap({ sessions }: MuscleHeatmapProps) {
 
     return MUSCLE_GROUPS.map(group => ({
       subject: group,
-      sets: tally[group],
+      sets: tally[group] || 0,
     }));
   }, [sessions]);
 
@@ -92,11 +92,13 @@ export function MuscleHeatmap({ sessions }: MuscleHeatmapProps) {
             <Tooltip
               content={({ active, payload }) => {
                 if (!active || !payload?.length) return null;
+                const p = payload[0];
+                if (!p) return null;
                 return (
                   <div className="rounded-lg border border-border bg-popover px-3 py-2 text-xs shadow-md">
-                    <p className="font-medium text-foreground">{payload[0].payload.subject}</p>
+                    <p className="font-medium text-foreground">{p.payload.subject}</p>
                     <p className="font-mono text-muted-foreground">
-                      {payload[0].value} sets
+                      {p.value} sets
                     </p>
                   </div>
                 );
