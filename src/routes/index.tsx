@@ -502,7 +502,7 @@ function FloatingTimer({ session, onClick }: { session: Session; onClick: () => 
     <div className="fixed bottom-24 right-4 z-50 sm:bottom-6 sm:right-6">
       <button
         onClick={onClick}
-        className="glass flex items-center gap-3 rounded-full px-5 py-3 shadow-lg transition-all hover:scale-105 hover:shadow-xl active:scale-95"
+        className="flex items-center gap-3 rounded-[2rem] border border-black/10 dark:border-white/10 bg-white/40 dark:bg-black/40 backdrop-blur-[25px] px-5 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)] transition-all hover:scale-105 hover:shadow-xl active:scale-95"
       >
         <div className="flex items-center justify-center">
           <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]" />
