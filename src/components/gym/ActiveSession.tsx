@@ -310,7 +310,7 @@ export function ActiveSession({
               .map((exercise, index) => (
                 <motion.div
                   key={exercise.id}
-                  layout="position"
+                  layout
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
@@ -320,6 +320,7 @@ export function ActiveSession({
                     duration: 0.4
                   }}
                   className="will-change-transform"
+                  style={{ borderRadius: 24 }}
                 >
                   <ExerciseCard
                     exercise={exercise}
@@ -428,15 +429,14 @@ function ExerciseCard({
         </div>
       )}
 
-      <AnimatePresence initial={false}>
-        {!exercise.completed && (
-          <motion.div 
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-            className="flex flex-col gap-3 overflow-hidden"
-          >
+      <div 
+        className={cn(
+          "grid transition-[grid-template-rows,opacity] duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
+          exercise.completed ? "grid-rows-[0fr] opacity-0" : "grid-rows-[1fr] opacity-100"
+        )}
+      >
+        <div className="overflow-hidden">
+          <div className="flex flex-col gap-3 pt-2">
             <div className="flex items-end gap-2">
               <div className="flex-1">
                 <StepperInput
@@ -463,16 +463,16 @@ function ExerciseCard({
             onClick={handleAddSet}
             disabled={!canAdd}
             className={cn(
-              "mt-2 flex h-[52px] w-full shrink-0 items-center justify-center rounded-xl bg-foreground text-background text-[15px] font-bold transition-all duration-200 disabled:opacity-40 disabled:active:scale-100",
+              "flex h-[52px] w-full shrink-0 items-center justify-center rounded-xl bg-foreground text-background text-[15px] font-bold transition-all duration-200 disabled:opacity-40 disabled:active:scale-100",
               addGlow ? "shadow-[0_0_15px_rgba(255,255,255,0.25)]" : "hover:bg-foreground/90 active:scale-[0.98] active:opacity-80"
             )}
           >
             <Plus className="h-5 w-5 mr-2" />
             Add Set
           </button>
-        </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+        </div>
+      </div>
       
       <button
         onClick={() => {
