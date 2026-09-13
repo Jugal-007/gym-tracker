@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { Trash2, Plus, Clock, Dumbbell, Trophy, X, Timer } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StepperInput } from "@/components/ui/StepperInput";
@@ -237,8 +236,12 @@ export function ActiveSession({
   }
 
   function toggleExerciseComplete(exerciseId: string) {
+    const ex = session.exercises.find(e => e.id === exerciseId);
+    const isCompleting = ex ? !ex.completed : false;
     onUpdate({
       ...session,
+      // Give a longer rest between exercises (2 min)
+      restTimerEndsAt: isCompleting ? Date.now() + 120 * 1000 : session.restTimerEndsAt,
       exercises: session.exercises.map((ex) =>
         ex.id === exerciseId ? { ...ex, completed: !ex.completed } : ex,
       ),
@@ -251,15 +254,7 @@ export function ActiveSession({
 
   return (
     <div className="mx-auto max-w-xl animate-fade-in">
-      {session.restTimerEndsAt && session.restTimerEndsAt > Date.now() &&
-        createPortal(
-          <RestTimerOverlay
-            endsAt={session.restTimerEndsAt}
-            onDismiss={() => onUpdate({ ...session, restTimerEndsAt: null })}
-          />,
-          document.body
-        )
-      }
+
       <div className="sticky top-[88px] z-30 mb-8 rounded-[2rem] border border-black/5 bg-background/80 px-5 py-4 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.06)] dark:border-white/10 dark:bg-card/60 dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -329,6 +324,14 @@ export function ActiveSession({
           )}
         </div>
       </div>
+
+      {/* Inline rest timer banner — shown just below the sticky header, no fixed/portal needed */}
+      {session.restTimerEndsAt && session.restTimerEndsAt > Date.now() && (
+        <RestTimerBanner
+          endsAt={session.restTimerEndsAt}
+          onDismiss={() => onUpdate({ ...session, restTimerEndsAt: null })}
+        />
+      )}
 
       <div className="px-4 pb-8">
         <div className="mb-6 flex items-end gap-2">
@@ -705,7 +708,7 @@ function SetRow({ set, index, onToggle, onDelete, onEdit }: SetRowProps) {
     </SwipeToDelete>
   );
 }
-function RestTimerOverlay({ endsAt, onDismiss }: { endsAt: number; onDismiss: () => void }) {
+function RestTimerBanner({ endsAt, onDismiss }: { endsAt: number; onDismiss: () => void }) {
   const [now, setNow] = useState(Date.now());
   const [played, setPlayed] = useState(false);
 
@@ -715,7 +718,7 @@ function RestTimerOverlay({ endsAt, onDismiss }: { endsAt: number; onDismiss: ()
   }, []);
 
   const remaining = Math.max(0, Math.ceil((endsAt - now) / 1000));
-  
+
   useEffect(() => {
     if (remaining === 0 && !played) {
       setPlayed(true);
@@ -723,23 +726,38 @@ function RestTimerOverlay({ endsAt, onDismiss }: { endsAt: number; onDismiss: ()
     }
   }, [remaining, played]);
 
-  if (remaining <= 0 && played) {
-    // Optionally auto-dismiss, but leaving it until dismissed is safer.
-  }
+  const mins = Math.floor(remaining / 60);
+  const secs = (remaining % 60).toString().padStart(2, "0");
 
   return (
-    <button 
-      onClick={onDismiss}
-      className="fixed bottom-40 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 rounded-full bg-primary text-primary-foreground px-6 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.2)] transition-all active:scale-95 animate-slide-up"
-    >
-      <Timer className="h-5 w-5 animate-pulse" />
-      <div className="flex flex-col items-start leading-none">
-        <span className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-1">Resting</span>
-        <span className="font-mono text-xl font-bold">
-          {Math.floor(remaining / 60)}:{(remaining % 60).toString().padStart(2, "0")}
-        </span>
-      </div>
-      <X className="h-4 w-4 ml-2 opacity-60" />
-    </button>
+    <div className="mx-4 mb-4">
+      <button
+        onClick={onDismiss}
+        className={cn(
+          "flex w-full items-center justify-between rounded-2xl px-5 py-3 transition-all active:scale-[0.98]",
+          remaining > 0
+            ? "bg-primary/10 border border-primary/20"
+            : "bg-muted border border-border"
+        )}
+      >
+        <div className="flex items-center gap-3">
+          <Timer className={cn("h-4 w-4", remaining > 0 ? "text-primary animate-pulse" : "text-muted-foreground")} />
+          <div className="flex flex-col items-start leading-none">
+            <span className={cn("text-[9px] font-bold uppercase tracking-widest mb-0.5", remaining > 0 ? "text-primary" : "text-muted-foreground")}>
+              {remaining > 0 ? "Resting" : "Rest complete"}
+            </span>
+            <span className={cn("font-mono text-lg font-bold", remaining > 0 ? "text-primary" : "text-foreground")}>
+              {mins}:{secs}
+            </span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {remaining === 0 && (
+            <span className="text-xs font-semibold text-muted-foreground">Tap to dismiss</span>
+          )}
+          <X className="h-4 w-4 text-muted-foreground" />
+        </div>
+      </button>
+    </div>
   );
 }
