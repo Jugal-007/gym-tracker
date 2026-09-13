@@ -480,30 +480,6 @@ function FloatingTimer({ session, onClick, onClearRestTimer }: { session: Sessio
   const elapsed = now - session.startedAt;
   const isResting = session.restTimerEndsAt && session.restTimerEndsAt > now;
 
-  if (isResting) {
-    const remaining = Math.max(0, Math.ceil((session.restTimerEndsAt! - now) / 1000));
-    return (
-      <div className="fixed bottom-32 right-4 z-50 sm:bottom-6 sm:right-6">
-        <button
-          onClick={onClick}
-          className="flex items-center gap-3 rounded-[2rem] border border-primary/20 bg-primary/10 backdrop-blur-[25px] px-5 py-3 shadow-lg transition-all hover:scale-105 hover:shadow-xl active:scale-95"
-        >
-          <div className="flex items-center justify-center">
-            <Timer className="h-4 w-4 text-primary animate-pulse" />
-          </div>
-          <div className="flex flex-col items-start leading-none">
-            <span className="text-[9px] font-bold uppercase tracking-widest text-primary mb-1">
-              Resting
-            </span>
-            <div className="scale-75 origin-left -mt-1 font-mono font-bold text-primary">
-              {Math.floor(remaining / 60)}:{(remaining % 60).toString().padStart(2, "0")}
-            </div>
-          </div>
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div className="fixed bottom-32 right-4 z-50 sm:bottom-6 sm:right-6">
       <button
