@@ -483,7 +483,7 @@ function FloatingTimer({ session, onClick, onClearRestTimer }: { session: Sessio
   if (isResting) {
     const remaining = Math.max(0, Math.ceil((session.restTimerEndsAt! - now) / 1000));
     return (
-      <div className="fixed bottom-24 right-4 z-50 sm:bottom-6 sm:right-6">
+      <div className="fixed bottom-32 right-4 z-50 sm:bottom-6 sm:right-6">
         <button
           onClick={onClick}
           className="flex items-center gap-3 rounded-[2rem] border border-primary/20 bg-primary/10 backdrop-blur-[25px] px-5 py-3 shadow-lg transition-all hover:scale-105 hover:shadow-xl active:scale-95"
@@ -505,7 +505,7 @@ function FloatingTimer({ session, onClick, onClearRestTimer }: { session: Sessio
   }
 
   return (
-    <div className="fixed bottom-24 right-4 z-50 sm:bottom-6 sm:right-6">
+    <div className="fixed bottom-32 right-4 z-50 sm:bottom-6 sm:right-6">
       <button
         onClick={onClick}
         className="flex items-center gap-3 rounded-[2rem] border border-black/10 dark:border-white/10 bg-white/40 dark:bg-black/40 backdrop-blur-[25px] px-5 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)] transition-all hover:scale-105 hover:shadow-xl active:scale-95"

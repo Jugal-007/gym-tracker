@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Trash2, Plus, Clock, Dumbbell, Trophy, X, Timer } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StepperInput } from "@/components/ui/StepperInput";
@@ -250,12 +251,15 @@ export function ActiveSession({
 
   return (
     <div className="mx-auto max-w-xl animate-fade-in">
-      {session.restTimerEndsAt && session.restTimerEndsAt > Date.now() && (
-        <RestTimerOverlay
-          endsAt={session.restTimerEndsAt}
-          onDismiss={() => onUpdate({ ...session, restTimerEndsAt: null })}
-        />
-      )}
+      {session.restTimerEndsAt && session.restTimerEndsAt > Date.now() &&
+        createPortal(
+          <RestTimerOverlay
+            endsAt={session.restTimerEndsAt}
+            onDismiss={() => onUpdate({ ...session, restTimerEndsAt: null })}
+          />,
+          document.body
+        )
+      }
       <div className="sticky top-[88px] z-30 mb-8 rounded-[2rem] border border-black/5 bg-background/80 px-5 py-4 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.06)] dark:border-white/10 dark:bg-card/60 dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -359,15 +363,13 @@ export function ActiveSession({
 
         <div className="space-y-4 relative">
           <AnimatePresence mode="popLayout">
-            {session.exercises.filter(ex => !ex.completed).map((exercise, index) => (
+            {session.exercises.filter(ex => !ex.completed).map((exercise) => (
               <motion.div
                 key={`uncompleted-${exercise.id}`}
-                layout="position"
-                initial={{ opacity: 0, y: 15, filter: "blur(4px)" }}
-                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                exit={{ opacity: 0, scale: 0.95, filter: "blur(4px)" }}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-                className="will-change-transform"
               >
                 <ExerciseCard
                   exercise={exercise}
@@ -386,15 +388,13 @@ export function ActiveSession({
           </AnimatePresence>
           
           <AnimatePresence mode="popLayout">
-            {session.exercises.filter(ex => ex.completed).map((exercise, index) => (
+            {session.exercises.filter(ex => ex.completed).map((exercise) => (
               <motion.div
                 key={`completed-${exercise.id}`}
-                layout="position"
-                initial={{ opacity: 0, y: -15, filter: "blur(4px)" }}
-                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                exit={{ opacity: 0, scale: 0.95, filter: "blur(4px)" }}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-                className="will-change-transform"
               >
                 <ExerciseCard
                   exercise={exercise}
@@ -730,7 +730,7 @@ function RestTimerOverlay({ endsAt, onDismiss }: { endsAt: number; onDismiss: ()
   return (
     <button 
       onClick={onDismiss}
-      className="fixed bottom-32 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 rounded-full bg-primary text-primary-foreground px-6 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.2)] transition-all active:scale-95 animate-slide-up"
+      className="fixed bottom-40 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 rounded-full bg-primary text-primary-foreground px-6 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.2)] transition-all active:scale-95 animate-slide-up"
     >
       <Timer className="h-5 w-5 animate-pulse" />
       <div className="flex flex-col items-start leading-none">
