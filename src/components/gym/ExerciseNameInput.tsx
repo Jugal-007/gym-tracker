@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Drawer } from "vaul";
 import { Command } from "cmdk";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ExerciseNameInputProps {
@@ -21,12 +21,28 @@ export function ExerciseNameInput({
 }: ExerciseNameInputProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [hidden, setHidden] = useState<string[]>([]);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("gym-tracker-hidden-exercises-v1");
+      if (stored) setHidden(JSON.parse(stored));
+    } catch {}
+  }, []);
+
+  function handleHide(e: React.MouseEvent, name: string) {
+    e.stopPropagation();
+    const next = [...hidden, name];
+    setHidden(next);
+    localStorage.setItem("gym-tracker-hidden-exercises-v1", JSON.stringify(next));
+  }
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
-    if (!query) return suggestions;
-    return suggestions.filter((name) => name.toLowerCase().includes(query));
-  }, [suggestions, search]);
+    const visible = suggestions.filter((s) => !hidden.includes(s));
+    if (!query) return visible;
+    return visible.filter((name) => name.toLowerCase().includes(query));
+  }, [suggestions, search, hidden]);
 
   const exactMatch = filtered.some((n) => n.toLowerCase() === search.trim().toLowerCase());
 
@@ -95,9 +111,16 @@ export function ExerciseNameInput({
                     key={name}
                     value={name}
                     onSelect={handleSelect}
-                    className="flex cursor-pointer items-center rounded-xl px-4 py-3.5 text-base font-medium transition-colors aria-selected:bg-accent aria-selected:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground active:scale-[0.98]"
+                    className="group flex cursor-pointer items-center justify-between rounded-xl px-4 py-3.5 text-base font-medium transition-colors aria-selected:bg-accent aria-selected:text-accent-foreground data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground active:scale-[0.98]"
                   >
-                    {name}
+                    <span>{name}</span>
+                    <button
+                      onClick={(e) => handleHide(e, name)}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-transparent text-muted-foreground transition-all hover:bg-destructive/10 hover:text-destructive active:scale-95"
+                      aria-label="Delete suggestion"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   </Command.Item>
                 ))}
 
