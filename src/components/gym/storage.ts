@@ -89,8 +89,28 @@ export function saveActiveSession(session: Session | null): void {
   }
 }
 
+const COMMON_EXERCISES = [
+  "Bench Press",
+  "Squat",
+  "Deadlift",
+  "Overhead Press",
+  "Barbell Row",
+  "Pull Up",
+  "Lat Pulldown",
+  "Bicep Curl",
+  "Tricep Extension",
+  "Leg Press",
+  "Leg Extension",
+  "Leg Curl",
+  "Incline Dumbbell Press",
+  "Dumbbell Lateral Raises",
+  "Seated Cable Row",
+  "Bulgarian Split Squat",
+  "Calf Raises"
+];
+
 export function getExerciseNames(sessions: Session[]): string[] {
-  const names = new Set<string>();
+  const names = new Set<string>(COMMON_EXERCISES);
   for (const session of sessions) {
     for (const exercise of session.exercises) {
       const trimmed = exercise.name.trim();

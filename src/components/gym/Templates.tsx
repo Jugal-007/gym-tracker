@@ -228,14 +228,23 @@ function TemplateEditor({ template, exerciseNames, onCancel, onSave }: TemplateE
             className="rounded-2xl"
           >
             <div className="glass rounded-2xl p-5 transition-all duration-300">
-            <div className="mb-3 flex items-end gap-2">
-              <ExerciseNameInput
-                suggestions={exerciseNames}
-                value={exercise.name}
-                onChange={(value) => update(exercise.id, { name: value })}
-                onSubmit={() => {}}
-                placeholder="Exercise name..."
-              />
+            <div className="mb-3 flex items-center gap-2">
+              <div className="flex-1">
+                <ExerciseNameInput
+                  suggestions={exerciseNames}
+                  value={exercise.name}
+                  onChange={(value) => update(exercise.id, { name: value })}
+                  onSubmit={() => {}}
+                  placeholder="Exercise name..."
+                />
+              </div>
+              <button
+                onClick={() => setExercises((prev) => prev.filter((e) => e.id !== exercise.id))}
+                className="inline-flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl border border-destructive/20 bg-destructive/10 text-destructive transition-all hover:bg-destructive/20 active:scale-95"
+                aria-label="Delete exercise"
+              >
+                <Trash2 className="h-5 w-5" />
+              </button>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <StepperInput
