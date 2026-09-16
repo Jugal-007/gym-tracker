@@ -67,12 +67,12 @@ export function ExerciseNameInput({
       
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" />
-        <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 mt-24 flex max-h-[85vh] flex-col rounded-t-[32px] bg-background outline-none">
-          <div className="flex-1 overflow-y-auto rounded-t-[32px] bg-background p-4 pt-5 pb-safe">
+        <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 flex max-h-[90vh] flex-col rounded-t-[32px] bg-background outline-none">
+          <div className="flex-1 flex flex-col overflow-hidden rounded-t-[32px] bg-background p-4 pt-5 pb-safe">
             <div className="mx-auto mb-6 h-1.5 w-12 shrink-0 rounded-full bg-muted" />
             
-            <Command className="flex flex-col overflow-hidden" shouldFilter={false}>
-              <div className="flex items-center gap-3 rounded-2xl bg-muted/50 px-4 py-3 border border-border/50 focus-within:border-foreground/30 focus-within:ring-2 focus-within:ring-foreground/10 transition-all">
+            <Command className="flex flex-col flex-1 overflow-hidden" shouldFilter={false}>
+              <div className="flex items-center gap-3 rounded-2xl bg-muted/50 px-4 py-3 border border-border/50 focus-within:border-foreground/30 focus-within:ring-2 focus-within:ring-foreground/10 transition-all shrink-0">
                 <Search className="h-5 w-5 text-muted-foreground" />
                 <Command.Input 
                   value={search}
@@ -85,7 +85,7 @@ export function ExerciseNameInput({
                 />
               </div>
 
-              <Command.List className="mt-4 overflow-y-auto overflow-x-hidden max-h-[50vh] px-1 space-y-1">
+              <Command.List className="mt-4 overflow-y-auto px-1 space-y-1 flex-1">
                 <Command.Empty className="py-6 text-center text-sm text-muted-foreground">
                   No exercises found.
                 </Command.Empty>
