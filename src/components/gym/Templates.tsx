@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { LayoutTemplate, Play, Plus, Trash2, X } from "lucide-react";
+import { LayoutTemplate, Play, Plus, Trash2, X, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ExerciseNameInput } from "./ExerciseNameInput";
 import { generateId } from "./storage";
@@ -110,6 +110,13 @@ export function Templates({ templates, exerciseNames, onStart, onSave, onDelete 
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-2">
+                <button
+                  onClick={() => setEditing(template)}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground transition-all hover:bg-muted/80 active:scale-95"
+                  aria-label="Edit routine"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <button
