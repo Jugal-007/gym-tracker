@@ -93,7 +93,7 @@ function Index() {
     saveTemplates(templates);
   }, [templates]);
 
-  const exerciseNames = useMemo(() => getExerciseNames(sessions), [sessions]);
+  const exerciseNames = useMemo(() => getExerciseNames(sessions, templates), [sessions, templates]);
 
   const records = useMemo(() => buildRecords(sessions), [sessions]);
 

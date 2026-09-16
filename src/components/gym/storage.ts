@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { Exercise, Session } from "./types";
+import type { Exercise, Session, Template } from "./types";
 import { syncUp } from "@/lib/sync";
 
 const STORAGE_KEY = "gym-tracker-sessions-v1";
@@ -109,10 +109,18 @@ const COMMON_EXERCISES = [
   "Calf Raises"
 ];
 
-export function getExerciseNames(sessions: Session[]): string[] {
+export function getExerciseNames(sessions: Session[], templates: Template[] = []): string[] {
   const names = new Set<string>(COMMON_EXERCISES);
   for (const session of sessions) {
     for (const exercise of session.exercises) {
+      const trimmed = exercise.name.trim();
+      if (trimmed) {
+        names.add(trimmed);
+      }
+    }
+  }
+  for (const template of templates) {
+    for (const exercise of template.exercises) {
       const trimmed = exercise.name.trim();
       if (trimmed) {
         names.add(trimmed);
