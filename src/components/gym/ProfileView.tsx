@@ -26,8 +26,8 @@ import { motion } from "framer-motion";
 import { startOfMonth } from "date-fns";
 
 function Avatar({ user }: { user: NonNullable<ReturnType<typeof useAuth>["user"]> }) {
-  const photoUrl = user.user_metadata?.avatar_url as string | undefined;
-  const name = (user.user_metadata?.full_name as string | undefined) ?? user.email ?? "";
+  const photoUrl = user.user_metadata?.['avatar_url'] as string | undefined;
+  const name = (user.user_metadata?.['full_name'] as string | undefined) ?? user.email ?? "";
   const initials = name
     .split(" ")
     .map((n) => n[0])
@@ -138,7 +138,7 @@ export function ProfileView({ onSignOut }: ProfileViewProps) {
   };
 
   const displayName =
-    (user?.user_metadata?.full_name as string | undefined) ??
+    (user?.user_metadata?.['full_name'] as string | undefined) ??
     user?.email?.split("@")[0] ??
     "Athlete";
 

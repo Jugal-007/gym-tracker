@@ -614,6 +614,7 @@ interface SetRowProps {
 }
 
 function SetRow({ set, index, onToggle, onDelete, onEdit }: SetRowProps) {
+  const { format: fmtWeight } = useWeightUnit();
   const [justCompleted, setJustCompleted] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
