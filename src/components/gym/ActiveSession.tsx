@@ -22,6 +22,7 @@ import { PR_LABEL, detectPR, normalizeName } from "./records";
 import type { Exercise, ExerciseRecord, PRKind, Session, WorkoutSet } from "./types";
 import { hapticMedium, hapticSuccess, hapticLight } from "@/utils/haptics";
 import { motion, AnimatePresence, useIsPresent } from "framer-motion";
+import { useWeightUnit } from "@/hooks/useWeightUnit";
 
 interface ActiveSessionProps {
   session: Session;
@@ -106,6 +107,7 @@ export function ActiveSession({
   const [newExerciseName, setNewExerciseName] = useState("");
   const [nextExercisePopUp, setNextExercisePopUp] = useState<string | null>(null);
   const isPresent = useIsPresent();
+  const { format: fmtWeight } = useWeightUnit();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -351,7 +353,7 @@ export function ActiveSession({
             <Dumbbell className="h-3.5 w-3.5" />
             {completedSets}/{totalSets} sets
           </span>
-          <span>{totalVolume.toLocaleString()} kg vol</span>
+          <span>{fmtWeight(computeSessionVolume(session))} vol</span>
           {prCount > 0 && (
             <span className="animate-bounce-scale-in inline-flex items-center gap-1.5 rounded-full bg-foreground/10 px-2 py-0.5 text-[10px] font-bold text-foreground">
               <Trophy className="h-3 w-3" />
@@ -504,6 +506,7 @@ function ExerciseCard({
     }
   }
 
+  const { format: fmtWeight } = useWeightUnit();
   const volume = useMemo(
     () => exercise.sets.reduce((sum, set) => sum + set.reps * set.weight, 0),
     [exercise.sets],
@@ -516,15 +519,15 @@ function ExerciseCard({
         <div>
           <h3 className={cn("font-semibold text-foreground transition-all", exercise.completed && "line-through opacity-70")}>{exercise.name}</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            {exercise.sets.length} sets · {volume.toLocaleString()} kg
+          {exercise.sets.length} sets · {fmtWeight(volume)}
             {exercise.targetSets
-              ? ` · target ${exercise.targetSets}×${exercise.targetReps ?? 0} @ ${exercise.targetWeight ?? 0} kg`
+              ? ` · target ${exercise.targetSets}×${exercise.targetReps ?? 0} @ ${fmtWeight(exercise.targetWeight ?? 0)}`
               : ""}
           </p>
           {record && record.bestWeight > 0 && (
             <p className="mt-1.5 inline-flex items-center gap-1 text-sm font-medium text-muted-foreground">
               <Trophy className="h-3 w-3" />
-              PR {record.bestWeight} kg × {record.bestWeightReps}
+              PR {fmtWeight(record.bestWeight)} × {record.bestWeightReps}
             </p>
           )}
         </div>
@@ -718,7 +721,7 @@ function SetRow({ set, index, onToggle, onDelete, onEdit }: SetRowProps) {
         >
           <p className="text-sm font-medium text-foreground">Set {index + 1}</p>
           <p className="text-sm text-muted-foreground">
-            {set.reps} reps × {set.weight} kg
+            {set.reps} reps × {fmtWeight(set.weight)}
           </p>
         </div>
         {set.pr && (

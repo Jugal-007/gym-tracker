@@ -106,6 +106,7 @@ function RootShell({ children }: { children: ReactNode }) {
 
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/components/auth/AuthProvider";
+import { WeightUnitProvider } from "@/hooks/useWeightUnit";
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
@@ -114,8 +115,10 @@ function RootComponent() {
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-          <Outlet />
+          <WeightUnitProvider>
+            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+            <Outlet />
+          </WeightUnitProvider>
         </AuthProvider>
       </QueryClientProvider>
     </ThemeProvider>

@@ -6,6 +6,7 @@ import { ExerciseNameInput } from "@/components/gym/ExerciseNameInput";
 import { SessionHistory } from "@/components/gym/SessionHistory";
 import { StatsPanel } from "@/components/gym/StatsPanel";
 import { Templates } from "@/components/gym/Templates.tsx";
+import { ProfileView } from "@/components/gym/ProfileView";
 import { AuthOverlay } from "@/components/auth/AuthOverlay";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -44,7 +45,7 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-type View = "landing" | "active" | "history" | "templates" | "stats";
+type View = "landing" | "active" | "history" | "templates" | "stats" | "profile";
 
 function Index() {
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -224,10 +225,13 @@ function Index() {
               
               <motion.button
                 whileTap={{ scale: 0.85 }}
-                onClick={() => (user ? signOut() : setIsAuthOpen(true))}
-                className="relative flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary/20 focus:outline-none"
+                onClick={() => (user ? setView("profile") : setIsAuthOpen(true))}
+                className={cn(
+                  "relative flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary/20 focus:outline-none",
+                  view === "profile" && "bg-primary text-primary-foreground"
+                )}
               >
-                {user ? <LogOut className="h-5 w-5" /> : <UserIcon className="h-5 w-5" />}
+                <UserIcon className="h-5 w-5" />
               </motion.button>
             </div>
           </div>
@@ -269,6 +273,8 @@ function Index() {
                 onSave={saveTemplate}
                 onDelete={deleteTemplate}
               />
+            ) : view === "profile" ? (
+              <ProfileView onSignOut={() => setView("landing")} />
             ) : (
               <LandingView
                 newExerciseName={newExerciseName}
@@ -309,6 +315,7 @@ const TAB_ITEMS: { key: View; label: string; icon: React.ReactNode }[] = [
   { key: "templates", label: "Routines", icon: <LayoutTemplate className="h-5 w-5" /> },
   { key: "stats", label: "Stats", icon: <BarChart3 className="h-5 w-5" /> },
   { key: "history", label: "History", icon: <History className="h-5 w-5" /> },
+  { key: "profile", label: "Profile", icon: <UserIcon className="h-5 w-5" /> },
 ];
 
 function TabNav({ view, setView, isMobile = false, hasActiveSession = false }: { view: View; setView: (v: View) => void, isMobile?: boolean, hasActiveSession?: boolean }) {

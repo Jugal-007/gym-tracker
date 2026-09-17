@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { computeSessionSets, computeSessionVolume } from "./storage";
 import { EmptyState } from "@/components/ui/EmptyState";
 import type { Session } from "./types";
+import { useWeightUnit } from "@/hooks/useWeightUnit";
 
 interface SessionHistoryProps {
   sessions: Session[];
@@ -26,6 +27,7 @@ function formatDuration(ms: number): string {
 export function SessionHistory({ sessions, onDelete, onSaveTemplate }: SessionHistoryProps) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
+  const { format: fmtWeight } = useWeightUnit();
 
   function handleDelete(id: string) {
     setDeletingIds((prev) => new Set(prev).add(id));
@@ -103,7 +105,7 @@ export function SessionHistory({ sessions, onDelete, onSaveTemplate }: SessionHi
               <div className="flex items-center gap-3">
                 <div className="text-right">
                   <p className="text-sm font-black tracking-tighter text-foreground">
-                    {volume.toLocaleString()} kg
+                    {fmtWeight(volume)}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {session.exercises.length} exercises · {sets} sets
@@ -148,7 +150,7 @@ export function SessionHistory({ sessions, onDelete, onSaveTemplate }: SessionHi
                               {exPr && <Trophy className="h-3.5 w-3.5" />}
                             </span>
                             <span className="text-muted-foreground">
-                              {exercise.sets.length} sets · {exVolume.toLocaleString()} kg
+                              {exercise.sets.length} sets · {fmtWeight(exVolume)}
                             </span>
                           </li>
                         );
@@ -157,7 +159,7 @@ export function SessionHistory({ sessions, onDelete, onSaveTemplate }: SessionHi
                   )}
                   <div className="mt-4 flex items-center justify-between">
                     <p className="text-xs text-muted-foreground">
-                      Total volume: {volume.toLocaleString()} kg
+                      Total volume: {fmtWeight(volume)}
                     </p>
                     <div className="flex items-center gap-1">
                       {onSaveTemplate && (

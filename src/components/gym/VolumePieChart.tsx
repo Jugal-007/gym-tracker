@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import type { Session, Template } from "./types";
+import { useWeightUnit } from "@/hooks/useWeightUnit";
 
 interface VolumePieChartProps {
   sessions: Session[];
@@ -8,6 +9,7 @@ interface VolumePieChartProps {
 }
 
 export function VolumePieChart({ sessions, templates = [] }: VolumePieChartProps) {
+  const { format: fmtWeight } = useWeightUnit();
   const data = useMemo(() => {
     const hasRoutines = templates.length > 0;
 
@@ -115,7 +117,7 @@ export function VolumePieChart({ sessions, templates = [] }: VolumePieChartProps
                     <div className="rounded-lg border border-border bg-popover px-3 py-2 text-xs shadow-md">
                       <p className="font-medium text-foreground">{d.name}</p>
                       <p className="font-mono text-muted-foreground">
-                        {(d.value as number)?.toLocaleString()} kg · {pct}%
+                        {fmtWeight(d.value as number)} · {pct}%
                       </p>
                     </div>
                   );

@@ -23,6 +23,7 @@ import { MuscleHeatmap } from "./MuscleHeatmap";
 import { ConsistencyGrid } from "./ConsistencyGrid";
 import { VolumePieChart } from "./VolumePieChart";
 import type { Session, Template } from "./types";
+import { useWeightUnit } from "@/hooks/useWeightUnit";
 
 interface StatsPanelProps {
   sessions: Session[];
@@ -74,6 +75,7 @@ export function StatsPanel({ sessions, templates = [] }: StatsPanelProps) {
   const [activeRoutine, setActiveRoutine] = useState<string>("all");
   const [selectedExercise, setSelectedExercise] = useState<string>("");
   const [weeklyGoal, setWeeklyGoal] = useState<number>(loadWeeklyGoal());
+  const { unit, format: fmtWeight } = useWeightUnit();
 
   const routines = useMemo(() => {
     const names = new Set<string>();
@@ -397,7 +399,7 @@ export function StatsPanel({ sessions, templates = [] }: StatsPanelProps) {
                 Lifter Level
               </p>
               <p className="text-sm font-medium text-foreground mt-1">
-                Total Volume: <strong className="font-mono">{totalVolume.toLocaleString()}</strong> kg
+                Total Volume: <strong className="font-mono">{fmtWeight(totalVolume)}</strong>
               </p>
             </div>
             <div className="flex items-baseline gap-1 bg-foreground text-background px-3 py-1 rounded-lg">
@@ -420,7 +422,7 @@ export function StatsPanel({ sessions, templates = [] }: StatsPanelProps) {
               />
             </div>
             <p className="mt-2 text-[10px] uppercase tracking-widest text-muted-foreground text-right">
-              Next level at {xpNext.toLocaleString()} kg
+              Next level at {fmtWeight(xpNext)}
             </p>
           </div>
         </div>
@@ -448,7 +450,7 @@ export function StatsPanel({ sessions, templates = [] }: StatsPanelProps) {
           icon={<Activity className="h-4 w-4" />}
           label="Total volume"
           value={totals.totalVolume}
-          suffix=" kg"
+          suffix={` ${unit}`}
           delay={180}
         />
       </div>
@@ -465,7 +467,7 @@ export function StatsPanel({ sessions, templates = [] }: StatsPanelProps) {
             <CartesianGrid strokeDasharray="2 4" stroke="var(--border)" vertical={false} />
             <XAxis dataKey="label" {...axisProps} />
             <YAxis {...axisProps} width={44} />
-            <Tooltip content={<MonoTooltip suffix=" kg" />} cursor={{ stroke: "var(--border)" }} />
+            <Tooltip content={<MonoTooltip suffix={` ${unit}`} />} cursor={{ stroke: "var(--border)" }} />
             <Line
               type="monotone"
               dataKey="volume"
@@ -544,7 +546,7 @@ export function StatsPanel({ sessions, templates = [] }: StatsPanelProps) {
               <XAxis dataKey="label" {...axisProps} />
               <YAxis {...axisProps} width={44} />
               <Tooltip
-                content={<MonoTooltip suffix=" kg" />}
+                content={<MonoTooltip suffix={` ${unit}`} />}
                 cursor={{ stroke: "var(--border)" }}
               />
               <Line
@@ -583,9 +585,9 @@ export function StatsPanel({ sessions, templates = [] }: StatsPanelProps) {
               <span className="truncate pr-2 text-sm font-medium text-foreground">{record.name}</span>
               <span className="shrink-0 text-right text-xs text-muted-foreground">
                 <span className="block font-mono text-sm text-foreground">
-                  {record.bestWeight} kg × {record.bestWeightReps}
+                  {fmtWeight(record.bestWeight)} × {record.bestWeightReps}
                 </span>
-                est. 1RM {Math.round(record.bestE1rm)} kg
+                est. 1RM {fmtWeight(Math.round(record.bestE1rm))}
               </span>
             </li>
           ))}

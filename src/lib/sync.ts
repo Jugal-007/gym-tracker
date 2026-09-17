@@ -3,7 +3,7 @@ import { loadSessions, saveSessions } from "@/components/gym/storage";
 import { loadTemplates, saveTemplates } from "@/components/gym/templates";
 import type { Session, Template } from "@/components/gym/types";
 
-// This file handles offline-first background syncing with Supabase.
+export const LAST_SYNCED_KEY = "gym-tracker-last-synced-at";
 
 export async function syncUp() {
   const { data: authData } = await supabase.auth.getSession();
@@ -106,6 +106,7 @@ export async function syncDown() {
   }
 
   if (synced) {
+    localStorage.setItem(LAST_SYNCED_KEY, new Date().toISOString());
     window.dispatchEvent(new Event("gym-sync-complete"));
   }
 }
