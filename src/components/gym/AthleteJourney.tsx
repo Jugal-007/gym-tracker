@@ -13,19 +13,19 @@ export function AthleteJourney({ sessions }: { sessions: Session[] }) {
       {/* Level Card */}
       <div className="relative overflow-hidden rounded-[2rem] border border-border/10 p-6 shadow-lg">
         {/* Complex Gradient Background */}
-        <div className="absolute inset-0 bg-[#0A0A0A] dark:bg-[#0A0A0A]" />
-        <div className="absolute -inset-[100%] opacity-50">
-          <div className="absolute top-[20%] left-[20%] h-[60%] w-[60%] rounded-full bg-gradient-to-r from-orange-600 via-pink-600 to-blue-600 blur-[60px] transform rotate-12" />
+        <div className="absolute inset-0 bg-white dark:bg-[#0A0A0A]" />
+        <div className="absolute -inset-[100%] opacity-15 dark:opacity-50">
+          <div className="absolute top-[20%] left-[20%] h-[60%] w-[60%] rounded-full bg-gradient-to-r from-orange-500 via-pink-500 to-blue-500 blur-[60px] transform rotate-12" />
         </div>
         
         <div className="relative z-10 space-y-4">
           <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-background/20 backdrop-blur-sm ring-1 ring-white/20 shadow-inner">
-              <Flame className="h-8 w-8 text-orange-400" fill="currentColor" />
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-background/50 backdrop-blur-sm ring-1 ring-border/50 shadow-inner">
+              <Flame className="h-8 w-8 text-orange-500" fill="currentColor" />
             </div>
             <div>
-              <h3 className="text-3xl font-black text-white tracking-tight">Level {xp.level}</h3>
-              <p className="text-sm font-semibold text-white/80 mt-0.5">
+              <h3 className="text-3xl font-black text-foreground tracking-tight">Level {xp.level}</h3>
+              <p className="text-sm font-semibold text-muted-foreground mt-0.5">
                 {xp.totalXP.toLocaleString()} / {xp.nextLevelXP.toLocaleString()} XP
               </p>
             </div>
@@ -33,15 +33,15 @@ export function AthleteJourney({ sessions }: { sessions: Session[] }) {
           
           <div className="pt-2">
             <div className="flex items-center gap-3">
-              <div className="h-2 flex-1 overflow-hidden rounded-full bg-black/40 shadow-inner">
+              <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted shadow-inner">
                 <div 
-                  className="h-full rounded-full bg-white transition-all duration-1000 ease-out"
+                  className="h-full rounded-full bg-foreground transition-all duration-1000 ease-out"
                   style={{ width: `${xp.progress}%` }}
                 />
               </div>
-              <span className="text-xs font-bold text-white">{Math.round(xp.progress)}%</span>
+              <span className="text-xs font-bold text-foreground">{Math.round(xp.progress)}%</span>
             </div>
-            <p className="mt-2 text-xs font-medium text-white/60">
+            <p className="mt-2 text-xs font-medium text-muted-foreground">
               {xp.nextLevelXP - xp.totalXP} XP to Level {xp.level + 1}
             </p>
           </div>

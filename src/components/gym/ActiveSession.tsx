@@ -223,33 +223,33 @@ export function ActiveSession({
 
   if (session.exercises.length === 0) {
     return (
-      <div className="fixed inset-0 z-50 bg-[#0A0A0A] flex flex-col pt-12 px-6">
+      <div className="fixed inset-0 z-50 bg-background flex flex-col pt-12 px-6">
         <div className="flex justify-between items-center mb-8">
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <button className="text-white/60 hover:text-white"><X className="h-6 w-6" /></button>
+              <button className="text-muted-foreground hover:text-foreground"><X className="h-6 w-6" /></button>
             </AlertDialogTrigger>
-            <AlertDialogContent className="bg-[#1A1A1A] border-white/10 text-white rounded-3xl">
+            <AlertDialogContent className="bg-card border-border text-foreground rounded-3xl">
               <AlertDialogHeader>
                 <AlertDialogTitle>Cancel session?</AlertDialogTitle>
-                <AlertDialogDescription className="text-white/60">
+                <AlertDialogDescription className="text-muted-foreground">
                   Are you sure you want to cancel? This empty session will be discarded.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel className="border-white/10 text-white hover:bg-white/10 rounded-xl">Keep training</AlertDialogCancel>
-                <AlertDialogAction onClick={onCancel} className="bg-red-500 text-white hover:bg-red-600 rounded-xl">Discard session</AlertDialogAction>
+                <AlertDialogCancel className="border-border text-foreground hover:bg-muted rounded-xl">Keep training</AlertDialogCancel>
+                <AlertDialogAction onClick={onCancel} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl">Discard session</AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-          <span className="font-bold text-white">Empty Session</span>
+          <span className="font-bold text-foreground">Empty Session</span>
           <div className="w-6" />
         </div>
         
         <div className="flex-1 flex flex-col items-center justify-center -mt-20">
-          <Dumbbell className="h-16 w-16 text-white/20 mb-6" />
-          <h2 className="text-2xl font-bold text-white mb-2">Ready to train?</h2>
-          <p className="text-white/60 mb-8 text-center max-w-[250px]">Add your first exercise to begin your workout session.</p>
+          <Dumbbell className="h-16 w-16 text-muted-foreground/30 mb-6" />
+          <h2 className="text-2xl font-bold text-foreground mb-2">Ready to train?</h2>
+          <p className="text-muted-foreground mb-8 text-center max-w-[250px]">Add your first exercise to begin your workout session.</p>
           
           <div className="w-full max-w-sm space-y-4">
             <ExerciseNameInput
@@ -273,35 +273,35 @@ export function ActiveSession({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#0A0A0A] flex flex-col text-white animate-fade-in overflow-hidden">
+    <div className="fixed inset-0 z-50 bg-background flex flex-col text-foreground animate-fade-in overflow-hidden">
       {/* Header */}
       <div className="px-6 pt-12 pb-4 flex items-center justify-between">
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <button className="text-white/60 hover:text-white transition-colors active:scale-95"><X className="h-6 w-6" /></button>
+            <button className="text-muted-foreground hover:text-foreground transition-colors active:scale-95"><X className="h-6 w-6" /></button>
           </AlertDialogTrigger>
-          <AlertDialogContent className="bg-[#1A1A1A] border-white/10 text-white rounded-3xl">
+          <AlertDialogContent className="bg-card border-border text-foreground rounded-3xl">
             <AlertDialogHeader>
               <AlertDialogTitle>Cancel session?</AlertDialogTitle>
-              <AlertDialogDescription className="text-white/60">
+              <AlertDialogDescription className="text-muted-foreground">
                 Are you sure you want to cancel? All logged sets and progress in this session will be lost.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel className="border-white/10 text-white hover:bg-white/10 rounded-xl">Keep training</AlertDialogCancel>
-              <AlertDialogAction onClick={onCancel} className="bg-red-500 text-white hover:bg-red-600 rounded-xl">Discard session</AlertDialogAction>
+              <AlertDialogCancel className="border-border text-foreground hover:bg-muted rounded-xl">Keep training</AlertDialogCancel>
+              <AlertDialogAction onClick={onCancel} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl">Discard session</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
         
         <div className="flex flex-col items-center">
-          <span className="text-xs font-semibold text-white/50 tracking-widest uppercase mb-1">
+          <span className="text-xs font-semibold text-muted-foreground tracking-widest uppercase mb-1">
             Exercise {currentExIndex + 1} of {session.exercises.length}
           </span>
           <span className="font-bold text-base">{session.templateName || "Active Workout"}</span>
         </div>
         
-        <button onClick={() => onFinish({ ...session, endedAt: Date.now() })} className="text-blue-500 font-bold active:scale-95">
+        <button onClick={() => onFinish({ ...session, endedAt: Date.now() })} className="text-blue-600 dark:text-blue-500 font-bold active:scale-95">
           Finish
         </button>
       </div>
@@ -312,7 +312,7 @@ export function ActiveSession({
           <button 
             onClick={() => setCurrentExIndex(Math.max(0, currentExIndex - 1))}
             disabled={currentExIndex === 0}
-            className="p-2 rounded-full bg-white/5 text-white disabled:opacity-20 active:scale-95"
+            className="p-2 rounded-full bg-foreground/5 text-foreground disabled:opacity-20 active:scale-95"
           >
             <ChevronLeft className="h-6 w-6" />
           </button>
@@ -324,7 +324,7 @@ export function ActiveSession({
           <button 
             onClick={() => setCurrentExIndex(Math.min(session.exercises.length - 1, currentExIndex + 1))}
             disabled={currentExIndex === session.exercises.length - 1}
-            className="p-2 rounded-full bg-white/5 text-white disabled:opacity-20 active:scale-95"
+            className="p-2 rounded-full bg-foreground/5 text-foreground disabled:opacity-20 active:scale-95"
           >
             <ChevronRight className="h-6 w-6" />
           </button>
@@ -333,7 +333,7 @@ export function ActiveSession({
         {/* Muscle Tags */}
         <div className="flex items-center justify-center gap-2 mt-6">
           {getMuscleGroups(activeExercise.name).map(m => (
-            <span key={m} className="px-3 py-1 rounded-full bg-white/10 text-xs font-semibold text-white/80 border border-white/5">
+            <span key={m} className="px-3 py-1 rounded-full bg-foreground/5 text-xs font-semibold text-foreground/80 border border-border/50">
               {m}
             </span>
           ))}
@@ -341,15 +341,15 @@ export function ActiveSession({
 
         {/* Reference Stats */}
         <div className="grid grid-cols-2 gap-4 mt-8">
-          <div className="bg-[#1A1A1A] rounded-2xl p-4 flex flex-col items-center border border-white/5">
-            <span className="text-[10px] uppercase font-bold text-white/40 tracking-widest mb-1">Previous</span>
-            <span className="font-bold text-white">
+          <div className="bg-card rounded-2xl p-4 flex flex-col items-center border border-border/50 shadow-sm">
+            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Previous</span>
+            <span className="font-bold text-foreground">
               {record ? `${fmtWeight(record.bestWeight)} × ${record.bestWeightReps}` : "--"}
             </span>
           </div>
-          <div className="bg-[#1A1A1A] rounded-2xl p-4 flex flex-col items-center border border-white/5">
-            <span className="text-[10px] uppercase font-bold text-white/40 tracking-widest mb-1">Suggested</span>
-            <span className="font-bold text-green-400">
+          <div className="bg-card rounded-2xl p-4 flex flex-col items-center border border-border/50 shadow-sm">
+            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Suggested</span>
+            <span className="font-bold text-green-600 dark:text-green-400">
               {activeExercise.targetWeight ? `${fmtWeight(activeExercise.targetWeight)} × ${activeExercise.targetReps}` : "--"}
             </span>
           </div>
@@ -357,31 +357,31 @@ export function ActiveSession({
 
         {/* Current Set Inputs */}
         <div className="mt-12 flex-1 flex flex-col justify-center">
-          <p className="text-center font-bold text-white mb-6">
-            Set {currentSetNumber} <span className="text-white/40 font-medium">of {totalSets}</span>
+          <p className="text-center font-bold text-foreground mb-6">
+            Set {currentSetNumber} <span className="text-muted-foreground font-medium">of {totalSets}</span>
           </p>
 
           <div className="flex gap-4">
-            <div className="flex-1 bg-[#1A1A1A] rounded-3xl p-6 border border-white/10 flex flex-col items-center justify-center shadow-lg relative overflow-hidden focus-within:border-blue-500/50 transition-colors">
+            <div className="flex-1 bg-card rounded-3xl p-6 border border-border/50 flex flex-col items-center justify-center shadow-md relative overflow-hidden focus-within:border-blue-500/50 transition-colors">
               <input 
                 type="number" 
                 value={inputWeight}
                 onChange={e => setInputWeight(e.target.value)}
-                className="w-full bg-transparent text-center text-5xl font-black text-white outline-none"
+                className="w-full bg-transparent text-center text-5xl font-black text-foreground outline-none"
                 placeholder="0"
               />
-              <span className="text-white/40 font-bold mt-2">kg</span>
+              <span className="text-muted-foreground font-bold mt-2">kg</span>
             </div>
             
-            <div className="flex-1 bg-[#1A1A1A] rounded-3xl p-6 border border-white/10 flex flex-col items-center justify-center shadow-lg relative overflow-hidden focus-within:border-blue-500/50 transition-colors">
+            <div className="flex-1 bg-card rounded-3xl p-6 border border-border/50 flex flex-col items-center justify-center shadow-md relative overflow-hidden focus-within:border-blue-500/50 transition-colors">
               <input 
                 type="number" 
                 value={inputReps}
                 onChange={e => setInputReps(e.target.value)}
-                className="w-full bg-transparent text-center text-5xl font-black text-white outline-none"
+                className="w-full bg-transparent text-center text-5xl font-black text-foreground outline-none"
                 placeholder="0"
               />
-              <span className="text-white/40 font-bold mt-2">reps</span>
+              <span className="text-muted-foreground font-bold mt-2">reps</span>
             </div>
           </div>
 
@@ -396,7 +396,7 @@ export function ActiveSession({
           {/* Completed sets pill indicators */}
           <div className="flex justify-center gap-1.5 mt-6">
             {activeExercise.sets.map((set, i) => (
-              <div key={set.id} className={cn("h-1.5 rounded-full transition-all", set.completed ? "w-6 bg-[#22C55E]" : "w-1.5 bg-white/20")} />
+              <div key={set.id} className={cn("h-1.5 rounded-full transition-all", set.completed ? "w-6 bg-[#22C55E]" : "w-1.5 bg-foreground/20")} />
             ))}
           </div>
         </div>
@@ -405,12 +405,12 @@ export function ActiveSession({
       {/* Floating Rest Timer */}
       {isResting && (
         <div className="absolute bottom-8 left-6 right-6 z-50">
-          <div className="bg-[#1A1A1A] border border-white/10 rounded-[2rem] p-4 flex items-center justify-between shadow-[0_20px_40px_rgba(0,0,0,0.5)]">
+          <div className="bg-card border border-border/50 rounded-[2rem] p-4 flex items-center justify-between shadow-xl">
             <div className="flex items-center gap-4 pl-2">
               {/* Circular progress */}
               <div className="relative flex h-14 w-14 items-center justify-center">
                 <svg className="absolute inset-0 h-full w-full -rotate-90" viewBox="0 0 100 100">
-                  <circle className="text-white/10 stroke-current" strokeWidth="8" cx="50" cy="50" r="40" fill="transparent"></circle>
+                  <circle className="text-muted/40 stroke-current" strokeWidth="8" cx="50" cy="50" r="40" fill="transparent"></circle>
                   <circle 
                     className="text-[#22C55E] stroke-current transition-all duration-1000 ease-linear" 
                     strokeWidth="8" strokeLinecap="round" cx="50" cy="50" r="40" fill="transparent" 
@@ -419,22 +419,22 @@ export function ActiveSession({
                   ></circle>
                 </svg>
                 <div className="flex flex-col items-center justify-center mt-0.5">
-                  <span className="text-xs font-bold font-mono tracking-tighter">
+                  <span className="text-xs font-bold font-mono tracking-tighter text-foreground">
                     {Math.floor(restRemaining / 60)}:{String(restRemaining % 60).padStart(2, '0')}
                   </span>
                 </div>
               </div>
               <div>
-                <p className="text-white font-bold">Rest</p>
-                <p className="text-white/40 text-xs">Next Set</p>
+                <p className="text-foreground font-bold">Rest</p>
+                <p className="text-muted-foreground text-xs">Next Set</p>
               </div>
             </div>
             
             <div className="flex gap-2 pr-1">
-              <button onClick={handleAddRest} className="px-4 py-3 bg-white/5 hover:bg-white/10 rounded-2xl text-xs font-bold text-white transition-colors">
+              <button onClick={handleAddRest} className="px-4 py-3 bg-foreground/5 hover:bg-foreground/10 rounded-2xl text-xs font-bold text-foreground transition-colors">
                 +30s
               </button>
-              <button onClick={handleSkipRest} className="px-4 py-3 bg-white/5 hover:bg-white/10 rounded-2xl text-xs font-bold text-white transition-colors">
+              <button onClick={handleSkipRest} className="px-4 py-3 bg-foreground/5 hover:bg-foreground/10 rounded-2xl text-xs font-bold text-foreground transition-colors">
                 Skip
               </button>
             </div>
@@ -447,13 +447,13 @@ export function ActiveSession({
         <div className="absolute bottom-8 right-6">
            <AlertDialog>
              <AlertDialogTrigger asChild>
-                <button className="h-14 w-14 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 rounded-full flex items-center justify-center text-white shadow-lg active:scale-95 transition-all">
+                <button className="h-14 w-14 bg-card/80 hover:bg-card backdrop-blur-md border border-border/50 rounded-full flex items-center justify-center text-foreground shadow-lg active:scale-95 transition-all">
                   <Plus className="h-6 w-6" />
                 </button>
              </AlertDialogTrigger>
-             <AlertDialogContent className="bg-[#1A1A1A] border-white/10 rounded-3xl p-6">
+             <AlertDialogContent className="bg-card border-border rounded-3xl p-6">
                 <AlertDialogHeader>
-                  <AlertDialogTitle className="text-white text-xl">Add Exercise</AlertDialogTitle>
+                  <AlertDialogTitle className="text-foreground text-xl">Add Exercise</AlertDialogTitle>
                 </AlertDialogHeader>
                 <div className="py-4">
                   <ExerciseNameInput
@@ -465,7 +465,7 @@ export function ActiveSession({
                   />
                 </div>
                 <AlertDialogFooter>
-                  <AlertDialogCancel className="border-white/10 text-white hover:bg-white/10 rounded-xl">Cancel</AlertDialogCancel>
+                  <AlertDialogCancel className="border-border text-foreground hover:bg-muted rounded-xl">Cancel</AlertDialogCancel>
                   <AlertDialogAction onClick={handleAddExercise} className="bg-blue-600 text-white hover:bg-blue-700 rounded-xl">Add</AlertDialogAction>
                 </AlertDialogFooter>
              </AlertDialogContent>
