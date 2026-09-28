@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Trash2, Plus, Clock, Dumbbell, Trophy, X, Timer } from "lucide-react";
+import { Trash2, Plus, Clock, Dumbbell, Trophy, X, Timer, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DndContext, closestCenter, type DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { StepperInput } from "@/components/ui/StepperInput";
 import { SwipeToDelete } from "@/components/ui/SwipeToDelete";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -23,6 +26,8 @@ import type { Exercise, ExerciseRecord, PRKind, Session, WorkoutSet } from "./ty
 import { hapticMedium, hapticSuccess, hapticLight } from "@/utils/haptics";
 import { motion, AnimatePresence, useIsPresent } from "framer-motion";
 import { useWeightUnit } from "@/hooks/useWeightUnit";
+import { useWorkoutSettings } from "@/hooks/useWorkoutSettings";
+import type { SetKind } from "./types";
 
 interface ActiveSessionProps {
   session: Session;
@@ -108,6 +113,7 @@ export function ActiveSession({
   const [nextExercisePopUp, setNextExercisePopUp] = useState<string | null>(null);
   const isPresent = useIsPresent();
   const { format: fmtWeight } = useWeightUnit();
+  const { restBetweenSets, restBetweenExercises } = useWorkoutSettings();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -141,7 +147,7 @@ export function ActiveSession({
     setNewExerciseName("");
   }
 
-  function addSet(exerciseId: string, reps: number, weight: number) {
+  function addSet(exerciseId: string, reps: number, weight: number, kind: SetKind = "normal") {
     const exercise = session.exercises.find((ex) => ex.id === exerciseId);
     const record = exercise ? records[normalizeName(exercise.name)] : undefined;
     // Also respect PRs already set earlier in this same session.
@@ -175,7 +181,8 @@ export function ActiveSession({
       reps,
       weight,
       completed: false,
-      pr,
+      pr: kind === "warmup" ? null : pr,
+      kind,
     };
     onUpdate({
       ...session,
@@ -187,6 +194,7 @@ export function ActiveSession({
 
   function toggleSet(exerciseId: string, setId: string) {
     let newlyCompleted = false;
+    let wasWarmup = false;
     const nextSession = {
       ...session,
       exercises: session.exercises.map((ex) =>
@@ -195,7 +203,10 @@ export function ActiveSession({
               ...ex,
               sets: ex.sets.map((set) => {
                 if (set.id === setId) {
-                  if (!set.completed) newlyCompleted = true;
+                  if (!set.completed) {
+                    newlyCompleted = true;
+                    wasWarmup = set.kind === "warmup";
+                  }
                   return { ...set, completed: !set.completed };
                 }
                 return set;
@@ -204,8 +215,8 @@ export function ActiveSession({
           : ex,
       ),
     };
-    if (newlyCompleted) {
-      nextSession.restTimerEndsAt = Date.now() + 90 * 1000;
+    if (newlyCompleted && !wasWarmup) {
+      nextSession.restTimerEndsAt = Date.now() + restBetweenSets * 1000;
     }
     onUpdate(nextSession);
   }
@@ -255,12 +266,28 @@ export function ActiveSession({
 
     onUpdate({
       ...session,
-      // Give a longer rest between exercises (2 min)
-      restTimerEndsAt: isCompleting ? Date.now() + 120 * 1000 : session.restTimerEndsAt,
+      // Give a longer rest between exercises
+      restTimerEndsAt: isCompleting ? Date.now() + restBetweenExercises * 1000 : session.restTimerEndsAt,
       exercises: session.exercises.map((ex) =>
         ex.id === exerciseId ? { ...ex, completed: !ex.completed } : ex,
       ),
     });
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = session.exercises.findIndex((ex) => ex.id === active.id);
+      const newIndex = session.exercises.findIndex((ex) => ex.id === over.id);
+      
+      const newExercises = [...session.exercises];
+      const [moved] = newExercises.splice(oldIndex, 1);
+      if (moved) {
+        newExercises.splice(newIndex, 0, moved);
+      }
+      
+      onUpdate({ ...session, exercises: newExercises });
+    }
   }
 
   function handleFinish() {
@@ -283,6 +310,16 @@ export function ActiveSession({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {isPresent && session.warmupEndsAt && session.warmupEndsAt > Date.now() &&
+        createPortal(
+          <WarmupCountdownOverlay
+            endsAt={session.warmupEndsAt}
+            onDismiss={() => onUpdate({ ...session, warmupEndsAt: null })}
+          />,
+          document.body
+        )
+      }
 
       {isPresent && session.restTimerEndsAt && session.restTimerEndsAt > Date.now() &&
         createPortal(
@@ -395,59 +432,45 @@ export function ActiveSession({
         )}
 
         <div className="space-y-4 relative">
-          <AnimatePresence mode="popLayout">
-            {session.exercises.filter(ex => !ex.completed).map((exercise) => (
-              <motion.div
-                key={`uncompleted-${exercise.id}`}
-                layout="position"
-                initial={{ opacity: 0, y: 15, filter: "blur(4px)" }}
-                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                exit={{ opacity: 0, scale: 0.95, filter: "blur(4px)" }}
-                transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-                className="will-change-transform"
-              >
-                <ExerciseCard
-                  exercise={exercise}
-                  index={session.exercises.findIndex(e => e.id === exercise.id)}
-                  nextExerciseName={session.exercises[session.exercises.findIndex(e => e.id === exercise.id) + 1]?.name}
-                  record={records[normalizeName(exercise.name)]}
-                  onAddSet={addSet}
-                  onEditSet={editSet}
-                  onToggleSet={toggleSet}
-                  onDeleteSet={deleteSet}
-                  onDeleteExercise={deleteExercise}
-                  onToggleComplete={() => toggleExerciseComplete(exercise.id)}
-                />
-              </motion.div>
-            ))}
-          </AnimatePresence>
-          
-          <AnimatePresence mode="popLayout">
-            {session.exercises.filter(ex => ex.completed).map((exercise) => (
-              <motion.div
-                key={`completed-${exercise.id}`}
-                layout="position"
-                initial={{ opacity: 0, y: -15, filter: "blur(4px)" }}
-                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                exit={{ opacity: 0, scale: 0.95, filter: "blur(4px)" }}
-                transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-                className="will-change-transform"
-              >
-                <ExerciseCard
-                  exercise={exercise}
-                  index={session.exercises.findIndex(e => e.id === exercise.id)}
-                  nextExerciseName={session.exercises[session.exercises.findIndex(e => e.id === exercise.id) + 1]?.name}
-                  record={records[normalizeName(exercise.name)]}
-                  onAddSet={addSet}
-                  onEditSet={editSet}
-                  onToggleSet={toggleSet}
-                  onDeleteSet={deleteSet}
-                  onDeleteExercise={deleteExercise}
-                  onToggleComplete={() => toggleExerciseComplete(exercise.id)}
-                />
-              </motion.div>
-            ))}
-          </AnimatePresence>
+          <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={session.exercises.map(e => e.id)} strategy={verticalListSortingStrategy}>
+              <AnimatePresence mode="popLayout">
+                {session.exercises.filter(ex => !ex.completed).map((exercise) => (
+                  <SortableExerciseCard
+                    key={`uncompleted-${exercise.id}`}
+                    exercise={exercise}
+                    index={session.exercises.findIndex(e => e.id === exercise.id)}
+                    nextExerciseName={session.exercises[session.exercises.findIndex(e => e.id === exercise.id) + 1]?.name}
+                    record={records[normalizeName(exercise.name)]}
+                    onAddSet={addSet}
+                    onEditSet={editSet}
+                    onToggleSet={toggleSet}
+                    onDeleteSet={deleteSet}
+                    onDeleteExercise={deleteExercise}
+                    onToggleComplete={() => toggleExerciseComplete(exercise.id)}
+                  />
+                ))}
+              </AnimatePresence>
+              
+              <AnimatePresence mode="popLayout">
+                {session.exercises.filter(ex => ex.completed).map((exercise) => (
+                  <SortableExerciseCard
+                    key={`completed-${exercise.id}`}
+                    exercise={exercise}
+                    index={session.exercises.findIndex(e => e.id === exercise.id)}
+                    nextExerciseName={session.exercises[session.exercises.findIndex(e => e.id === exercise.id) + 1]?.name}
+                    record={records[normalizeName(exercise.name)]}
+                    onAddSet={addSet}
+                    onEditSet={editSet}
+                    onToggleSet={toggleSet}
+                    onDeleteSet={deleteSet}
+                    onDeleteExercise={deleteExercise}
+                    onToggleComplete={() => toggleExerciseComplete(exercise.id)}
+                  />
+                ))}
+              </AnimatePresence>
+            </SortableContext>
+          </DndContext>
         </div>
       </div>
     </div>
@@ -459,12 +482,14 @@ interface ExerciseCardProps {
   index: number;
   nextExerciseName?: string | undefined;
   record: ExerciseRecord | undefined;
-  onAddSet: (exerciseId: string, reps: number, weight: number) => void;
+  onAddSet: (exerciseId: string, reps: number, weight: number, kind: SetKind) => void;
   onEditSet: (exerciseId: string, setId: string, reps: number, weight: number) => void;
   onToggleSet: (exerciseId: string, setId: string) => void;
   onDeleteSet: (exerciseId: string, setId: string) => void;
   onDeleteExercise: (exerciseId: string) => void;
   onToggleComplete: () => void;
+  dragAttributes?: any;
+  dragListeners?: any;
 }
 
 function ExerciseCard({
@@ -478,9 +503,12 @@ function ExerciseCard({
   onDeleteSet,
   onDeleteExercise,
   onToggleComplete,
+  dragAttributes,
+  dragListeners,
 }: ExerciseCardProps) {
   const [reps, setReps] = useState(exercise.targetReps ? String(exercise.targetReps) : "");
   const [weight, setWeight] = useState(exercise.targetWeight ? String(exercise.targetWeight) : "");
+  const [kind, setKind] = useState<SetKind>("normal");
   const [addGlow, setAddGlow] = useState(false);
 
   const canAdd = !!reps && !!weight;
@@ -500,7 +528,7 @@ function ExerciseCard({
     const parsedWeight = parseFloat(weight);
     if (parsedReps > 0 && parsedWeight >= 0) {
       hapticMedium();
-      onAddSet(exercise.id, parsedReps, parsedWeight);
+      onAddSet(exercise.id, parsedReps, parsedWeight, kind);
       setReps("");
       setWeight("");
     }
@@ -515,8 +543,16 @@ function ExerciseCard({
   return (
     <SwipeToDelete onDelete={() => onDeleteExercise(exercise.id)} className="rounded-3xl">
       <div className={cn("glass rounded-3xl p-5 transition-all duration-500", exercise.completed && "opacity-50 grayscale hover:grayscale-0 hover:opacity-100")}>
-        <div className="mb-4 flex items-center justify-between">
-        <div>
+        <div className="mb-4 flex items-start gap-3">
+          <button
+            {...dragAttributes}
+            {...dragListeners}
+            className="mt-1 flex h-[24px] w-[24px] items-center justify-center text-muted-foreground hover:text-foreground touch-none shrink-0"
+            aria-label="Drag to reorder"
+          >
+            <GripVertical className="h-5 w-5" />
+          </button>
+        <div className="flex-1 min-w-0">
           <h3 className={cn("font-semibold text-foreground transition-all", exercise.completed && "line-through opacity-70")}>{exercise.name}</h3>
           <p className="mt-1 text-sm text-muted-foreground">
           {exercise.sets.length} sets · {fmtWeight(volume)}
@@ -550,6 +586,22 @@ function ExerciseCard({
 
       {!exercise.completed && (
         <div className="flex flex-col gap-3 pt-2">
+          <div className="flex rounded-xl border border-border/50 bg-muted/40 p-1">
+            {(["normal", "warmup", "dropset"] as SetKind[]).map((k) => (
+              <button
+                key={k}
+                onClick={() => setKind(k)}
+                className={cn(
+                  "flex-1 rounded-lg py-1.5 text-xs font-bold capitalize transition-all",
+                  kind === k
+                    ? "bg-foreground text-background shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {k}
+              </button>
+            ))}
+          </div>
           <div className="flex items-end gap-2">
             <div className="flex-1">
               <StepperInput
@@ -602,6 +654,34 @@ function ExerciseCard({
       </button>
     </div>
     </SwipeToDelete>
+  );
+}
+
+function SortableExerciseCard(props: ExerciseCardProps) {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: props.exercise.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: transform ? 50 : "auto",
+  };
+
+  return (
+    <motion.div
+      ref={setNodeRef}
+      style={style}
+      layout="position"
+      initial={{ opacity: 0, y: 15, filter: "blur(4px)" }}
+      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      exit={{ opacity: 0, scale: 0.95, filter: "blur(4px)" }}
+      transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+      className="will-change-transform"
+    >
+      <ExerciseCard
+        {...props}
+        dragAttributes={attributes}
+        dragListeners={listeners}
+      />
+    </motion.div>
   );
 }
 
@@ -673,11 +753,13 @@ function SetRow({ set, index, onToggle, onDelete, onEdit }: SetRowProps) {
     <SwipeToDelete onDelete={onDelete} className="rounded-2xl">
       <div
         className={cn(
-        "flex items-center justify-between rounded-2xl border border-border/40 p-3.5 transition-all duration-300",
+        "flex items-center justify-between rounded-2xl border border-border/40 p-3.5 transition-all duration-300 relative overflow-hidden",
         deleting && "deleting",
         set.completed && !justCompleted && "bg-muted/10 border-transparent opacity-60 scale-[0.98]",
         justCompleted && "set-completed-sweep scale-[0.98]",
         set.pr && !set.completed && "border-foreground/30 shadow-sm bg-foreground/5",
+        set.kind === "warmup" && "opacity-80 border-orange-500/30",
+        set.kind === "dropset" && "border-l-4 border-l-purple-500 rounded-l-md"
       )}
     >
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1">
@@ -720,7 +802,15 @@ function SetRow({ set, index, onToggle, onDelete, onEdit }: SetRowProps) {
           className={cn("flex-1", !set.completed && "cursor-pointer hover:opacity-80 transition-opacity")}
           title={!set.completed ? "Tap to edit" : undefined}
         >
-          <p className="text-sm font-medium text-foreground">Set {index + 1}</p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-sm font-medium text-foreground">Set {index + 1}</p>
+            {set.kind === "warmup" && (
+              <span className="text-[10px] font-bold text-orange-500 bg-orange-500/10 px-1.5 rounded uppercase">W</span>
+            )}
+            {set.kind === "dropset" && (
+              <span className="text-[10px] font-bold text-purple-500 bg-purple-500/10 px-1.5 rounded uppercase">Drop</span>
+            )}
+          </div>
           <p className="text-sm text-muted-foreground">
             {set.reps} reps × {fmtWeight(set.weight)}
           </p>
@@ -768,5 +858,39 @@ function RestTimerOverlay({ endsAt, onDismiss }: { endsAt: number; onDismiss: ()
       </div>
       <X className="h-4 w-4 ml-2 opacity-60" />
     </button>
+  );
+}
+
+function WarmupCountdownOverlay({ endsAt, onDismiss }: { endsAt: number; onDismiss: () => void }) {
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const nextNow = Date.now();
+      setNow(nextNow);
+      if (nextNow >= endsAt) {
+        onDismiss(); // Auto-dismiss when finished
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [endsAt, onDismiss]);
+
+  const remaining = Math.max(0, Math.ceil((endsAt - now) / 1000));
+
+  return (
+    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background/95 backdrop-blur-md p-6 text-center animate-fade-in">
+      <div className="mb-8 flex h-40 w-40 items-center justify-center rounded-full bg-foreground text-background shadow-2xl">
+        <span className="font-mono text-6xl font-extrabold">{remaining}</span>
+      </div>
+      <h2 className="mb-2 text-3xl font-black uppercase tracking-tight text-foreground">Warm Up</h2>
+      <p className="mb-12 text-muted-foreground text-lg">Get ready for your workout.</p>
+      
+      <button
+        onClick={onDismiss}
+        className="rounded-2xl border-2 border-border/50 bg-transparent px-8 py-4 font-bold text-muted-foreground transition-all active:scale-95 hover:bg-muted"
+      >
+        Skip Warmup
+      </button>
+    </div>
   );
 }

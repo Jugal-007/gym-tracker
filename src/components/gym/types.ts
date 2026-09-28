@@ -1,3 +1,5 @@
+export type SetKind = "normal" | "warmup" | "dropset";
+
 export interface WorkoutSet {
   id: string;
   reps: number;
@@ -5,6 +7,7 @@ export interface WorkoutSet {
   completed: boolean;
   /** Marked when this set beat a previous personal record. */
   pr?: PRKind | null | undefined;
+  kind?: SetKind | undefined;
 }
 
 export interface Exercise {
@@ -25,6 +28,7 @@ export interface Session {
   templateId?: string | null | undefined;
   templateName?: string | null | undefined;
   restTimerEndsAt?: number | null | undefined;
+  warmupEndsAt?: number | null | undefined;
   updatedAt?: number | undefined;
 }
 

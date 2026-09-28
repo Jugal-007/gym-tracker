@@ -1,5 +1,8 @@
 import { useState } from "react";
-import { LayoutTemplate, Play, Plus, Trash2, X, Pencil } from "lucide-react";
+import { LayoutTemplate, Play, Plus, Trash2, X, Pencil, GripVertical } from "lucide-react";
+import { DndContext, closestCenter, type DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { ExerciseNameInput } from "./ExerciseNameInput";
 import { generateId } from "./storage";
@@ -71,7 +74,7 @@ export function Templates({ templates, exerciseNames, onStart, onSave, onDelete 
     <div className="mx-auto max-w-xl space-y-3 animate-fade-in">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-          Routines ({templates.length})
+          Templates ({templates.length})
         </h2>
         <button
           onClick={newTemplate}
@@ -85,8 +88,17 @@ export function Templates({ templates, exerciseNames, onStart, onSave, onDelete 
       {templates.length === 0 ? (
         <EmptyState
           icon={<LayoutTemplate className="h-12 w-12" strokeWidth={1.5} />}
-          title="No routines yet"
-          description="Save your usual routine and start it in one tap."
+          title="No templates yet"
+          description="Save your workout routines to start training with a single tap."
+          action={
+            <button
+              onClick={newTemplate}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-foreground px-4 py-2.5 text-sm font-semibold text-background transition-all hover:bg-foreground/90 active:scale-95 shadow-sm"
+            >
+              <Plus className="h-4 w-4" />
+              Build a template
+            </button>
+          }
         />
       ) : (
         templates.map((template) => (
@@ -191,6 +203,21 @@ function TemplateEditor({ template, exerciseNames, onCancel, onSave }: TemplateE
     );
   }
 
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = exercises.findIndex((ex) => ex.id === active.id);
+      const newIndex = exercises.findIndex((ex) => ex.id === over.id);
+      
+      const next = [...exercises];
+      const [moved] = next.splice(oldIndex, 1);
+      if (moved) {
+        next.splice(newIndex, 0, moved);
+      }
+      setExercises(next);
+    }
+  }
+
   const canSave = name.trim().length > 0 && exercises.some((exercise) => exercise.name.trim());
 
   return (
@@ -221,50 +248,19 @@ function TemplateEditor({ template, exerciseNames, onCancel, onSave }: TemplateE
       </div>
 
       <div className="space-y-4">
-        {exercises.map((exercise) => (
-          <SwipeToDelete
-            key={exercise.id}
-            onDelete={() => setExercises((prev) => prev.filter((e) => e.id !== exercise.id))}
-            className="rounded-2xl"
-          >
-            <div className="glass rounded-2xl p-5 transition-all duration-300">
-            <div className="mb-3 flex items-center gap-2">
-              <div className="flex-1">
-                <ExerciseNameInput
-                  suggestions={exerciseNames}
-                  value={exercise.name}
-                  onChange={(value) => update(exercise.id, { name: value })}
-                  onSubmit={() => {}}
-                  placeholder="Exercise name..."
-                />
-              </div>
-              <button
-                onClick={() => setExercises((prev) => prev.filter((e) => e.id !== exercise.id))}
-                className="inline-flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl border border-destructive/20 bg-destructive/10 text-destructive transition-all hover:bg-destructive/20 active:scale-95"
-                aria-label="Delete exercise"
-              >
-                <Trash2 className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <StepperInput
-                label="Sets"
-                value={String(exercise.targetSets)}
-                onChange={(v) => update(exercise.id, { targetSets: Number(v) || 0 })}
-                min={1}
-                step={1}
+        <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={exercises.map(e => e.id)} strategy={verticalListSortingStrategy}>
+            {exercises.map((exercise) => (
+              <SortableExerciseRow
+                key={exercise.id}
+                exercise={exercise}
+                exerciseNames={exerciseNames}
+                onUpdate={(patch) => update(exercise.id, patch)}
+                onDelete={() => setExercises((prev) => prev.filter((e) => e.id !== exercise.id))}
               />
-              <StepperInput
-                label="Reps"
-                value={String(exercise.targetReps)}
-                onChange={(v) => update(exercise.id, { targetReps: Number(v) || 0 })}
-                min={1}
-                step={1}
-              />
-            </div>
-            </div>
-          </SwipeToDelete>
-        ))}
+            ))}
+          </SortableContext>
+        </DndContext>
       </div>
 
       <button
@@ -292,3 +288,69 @@ function TemplateEditor({ template, exerciseNames, onCancel, onSave }: TemplateE
   );
 }
 
+
+interface SortableExerciseRowProps {
+  exercise: TemplateExercise;
+  exerciseNames: string[];
+  onUpdate: (patch: Partial<TemplateExercise>) => void;
+  onDelete: () => void;
+}
+
+function SortableExerciseRow({ exercise, exerciseNames, onUpdate, onDelete }: SortableExerciseRowProps) {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: exercise.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="relative z-10 touch-none">
+      <SwipeToDelete onDelete={onDelete} className="rounded-2xl">
+        <div className="glass rounded-2xl p-5 transition-all duration-300">
+          <div className="mb-3 flex items-center gap-2">
+            <button
+              {...attributes}
+              {...listeners}
+              className="flex h-[52px] w-[40px] items-center justify-center text-muted-foreground hover:text-foreground touch-none"
+              aria-label="Drag to reorder"
+            >
+              <GripVertical className="h-5 w-5" />
+            </button>
+            <div className="flex-1">
+              <ExerciseNameInput
+                suggestions={exerciseNames}
+                value={exercise.name}
+                onChange={(value) => onUpdate({ name: value })}
+                onSubmit={() => {}}
+                placeholder="Exercise name..."
+              />
+            </div>
+            <button
+              onClick={onDelete}
+              className="inline-flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl border border-destructive/20 bg-destructive/10 text-destructive transition-all hover:bg-destructive/20 active:scale-95"
+              aria-label="Delete exercise"
+            >
+              <Trash2 className="h-5 w-5" />
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-2 pl-[48px]">
+            <StepperInput
+              label="Sets"
+              value={String(exercise.targetSets)}
+              onChange={(v) => onUpdate({ targetSets: Number(v) || 0 })}
+              min={1}
+              step={1}
+            />
+            <StepperInput
+              label="Reps"
+              value={String(exercise.targetReps)}
+              onChange={(v) => onUpdate({ targetReps: Number(v) || 0 })}
+              min={1}
+              step={1}
+            />
+          </div>
+        </div>
+      </SwipeToDelete>
+    </div>
+  );
+}

@@ -5,108 +5,171 @@ import type { Session, Template } from "@/components/gym/types";
 
 export const LAST_SYNCED_KEY = "gym-tracker-last-synced-at";
 
+/**
+ * syncUp — "Local is truth". Replaces cloud data for this user with
+ * exactly what's in local storage. Deletions are respected.
+ */
 export async function syncUp() {
   const { data: authData } = await supabase.auth.getSession();
   const user = authData.session?.user;
-  
-  if (!user) return; // Not logged in, skip sync
+  if (!user) return;
 
   const sessions = loadSessions();
   const templates = loadTemplates();
 
-  // Push Sessions to Supabase
+  // Safeguard: Never wipe the cloud database if local storage is completely empty
+  // (e.g. fresh device, unhydrated state, or cleared cache).
+  if (sessions.length === 0 && templates.length === 0) {
+    return;
+  }
+
+  // --- Sessions: delete all, then re-insert current local state ---
+  await supabase.from("sessions").delete().eq("user_id", user.id);
+
   if (sessions.length > 0) {
-    const sessionsPayload = sessions.map(s => ({
+    const sessionsPayload = sessions.map((s) => ({
       id: s.id,
       user_id: user.id,
       started_at: s.startedAt,
       ended_at: s.endedAt,
       exercises: s.exercises,
-      template_id: s.templateId,
-      template_name: s.templateName,
-      updated_at: s.updatedAt ? new Date(s.updatedAt).toISOString() : new Date(s.startedAt).toISOString(),
+      template_id: s.templateId ?? null,
+      template_name: s.templateName ?? null,
+      updated_at: s.updatedAt
+        ? new Date(s.updatedAt).toISOString()
+        : new Date(s.startedAt).toISOString(),
     }));
-
-    await supabase.from("sessions").upsert(sessionsPayload, { onConflict: "id" });
+    await supabase.from("sessions").insert(sessionsPayload);
   }
 
-  // Push Templates to Supabase
+  // --- Templates: delete all, then re-insert ---
+  await supabase.from("templates").delete().eq("user_id", user.id);
+
   if (templates.length > 0) {
-    const templatesPayload = templates.map(t => ({
+    const templatesPayload = templates.map((t) => ({
       id: t.id,
       user_id: user.id,
       name: t.name,
       exercises: t.exercises,
       created_at: t.createdAt,
-      updated_at: t.updatedAt ? new Date(t.updatedAt).toISOString() : new Date(t.createdAt).toISOString(),
+      updated_at: t.updatedAt
+        ? new Date(t.updatedAt).toISOString()
+        : new Date(t.createdAt).toISOString(),
     }));
-
-    await supabase.from("templates").upsert(templatesPayload, { onConflict: "id" });
+    await supabase.from("templates").insert(templatesPayload);
   }
+
+  localStorage.setItem(LAST_SYNCED_KEY, new Date().toISOString());
 }
 
+/**
+ * syncDown — "Cloud fills gaps". Only adds cloud items whose IDs don't
+ * exist locally. Never overwrites or deletes local data.
+ * Used automatically on first login when local storage is empty.
+ */
 export async function syncDown() {
   const { data: authData } = await supabase.auth.getSession();
   const user = authData.session?.user;
-  
   if (!user) return;
 
   const [sessionsRes, templatesRes] = await Promise.all([
     supabase.from("sessions").select("*"),
-    supabase.from("templates").select("*")
+    supabase.from("templates").select("*"),
   ]);
 
   let synced = false;
 
   if (sessionsRes.data && sessionsRes.data.length > 0) {
     const localSessions = loadSessions();
-    const localMap = new Map(localSessions.map(s => [s.id, s]));
+    const localIds = new Set(localSessions.map((s) => s.id));
 
-    for (const row of sessionsRes.data) {
-      const cloudSession: Session = {
+    const toAdd: Session[] = sessionsRes.data
+      .filter((row) => !localIds.has(row.id))
+      .map((row) => ({
         id: row.id,
         startedAt: row.started_at,
         endedAt: row.ended_at,
         exercises: row.exercises,
-        templateId: row.template_id,
-        templateName: row.template_name,
+        templateId: row.template_id ?? undefined,
+        templateName: row.template_name ?? undefined,
         updatedAt: new Date(row.updated_at).getTime(),
-      };
+      }));
 
-      const local = localMap.get(cloudSession.id);
-      // Cloud wins if it's newer, or if we don't have it locally
-      if (!local || (cloudSession.updatedAt && local.updatedAt && cloudSession.updatedAt > local.updatedAt) || (!local.updatedAt)) {
-        localMap.set(cloudSession.id, cloudSession);
-        synced = true;
-      }
+    if (toAdd.length > 0) {
+      saveSessions(
+        [...localSessions, ...toAdd].sort((a, b) => b.startedAt - a.startedAt)
+      );
+      synced = true;
     }
-    if (synced) saveSessions(Array.from(localMap.values()).sort((a, b) => b.startedAt - a.startedAt));
   }
 
   if (templatesRes.data && templatesRes.data.length > 0) {
     const localTemplates = loadTemplates();
-    const localMap = new Map(localTemplates.map(t => [t.id, t]));
+    const localIds = new Set(localTemplates.map((t) => t.id));
 
-    for (const row of templatesRes.data) {
-      const cloudTemplate: Template = {
+    const toAdd: Template[] = templatesRes.data
+      .filter((row) => !localIds.has(row.id))
+      .map((row) => ({
         id: row.id,
         name: row.name,
         exercises: row.exercises,
         createdAt: row.created_at,
         updatedAt: new Date(row.updated_at).getTime(),
-      };
+      }));
 
-      const local = localMap.get(cloudTemplate.id);
-      if (!local || (cloudTemplate.updatedAt && local.updatedAt && cloudTemplate.updatedAt > local.updatedAt) || (!local.updatedAt)) {
-        localMap.set(cloudTemplate.id, cloudTemplate);
-        synced = true;
-      }
+    if (toAdd.length > 0) {
+      saveTemplates(
+        [...localTemplates, ...toAdd].sort((a, b) => b.createdAt - a.createdAt)
+      );
+      synced = true;
     }
-    if (synced) saveTemplates(Array.from(localMap.values()).sort((a, b) => b.createdAt - a.createdAt));
   }
 
   if (synced) {
     localStorage.setItem(LAST_SYNCED_KEY, new Date().toISOString());
     window.dispatchEvent(new Event("gym-sync-complete"));
   }
+}
+
+/**
+ * replaceLocalFromCloud — "Cloud is truth". Completely replaces local storage
+ * with cloud data. Called only when user explicitly presses "Import from Cloud"
+ * and confirms the warning.
+ */
+export async function replaceLocalFromCloud() {
+  const { data: authData } = await supabase.auth.getSession();
+  const user = authData.session?.user;
+  if (!user) return;
+
+  const [sessionsRes, templatesRes] = await Promise.all([
+    supabase.from("sessions").select("*"),
+    supabase.from("templates").select("*"),
+  ]);
+
+  if (sessionsRes.data) {
+    const sessions: Session[] = sessionsRes.data.map((row) => ({
+      id: row.id,
+      startedAt: row.started_at,
+      endedAt: row.ended_at,
+      exercises: row.exercises,
+      templateId: row.template_id ?? undefined,
+      templateName: row.template_name ?? undefined,
+      updatedAt: new Date(row.updated_at).getTime(),
+    }));
+    saveSessions(sessions.sort((a, b) => b.startedAt - a.startedAt));
+  }
+
+  if (templatesRes.data) {
+    const templates: Template[] = templatesRes.data.map((row) => ({
+      id: row.id,
+      name: row.name,
+      exercises: row.exercises,
+      createdAt: row.created_at,
+      updatedAt: new Date(row.updated_at).getTime(),
+    }));
+    saveTemplates(templates.sort((a, b) => b.createdAt - a.createdAt));
+  }
+
+  localStorage.setItem(LAST_SYNCED_KEY, new Date().toISOString());
+  window.dispatchEvent(new Event("gym-sync-complete"));
 }

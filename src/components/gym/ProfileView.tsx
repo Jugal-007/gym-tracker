@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useWeightUnit, type WeightUnit } from "@/hooks/useWeightUnit";
+import { useWorkoutSettings } from "@/hooks/useWorkoutSettings";
 import { loadSessions, computeSessionVolume, loadWeeklyGoal, saveWeeklyGoal } from "@/components/gym/storage";
 import { loadTemplates } from "@/components/gym/templates";
-import { syncDown, syncUp, LAST_SYNCED_KEY } from "@/lib/sync";
+import { syncDown, syncUp, replaceLocalFromCloud, LAST_SYNCED_KEY } from "@/lib/sync";
 import { buildRecords } from "@/components/gym/records";
 import {
   LogOut, RefreshCw, Download, Trash2, User as UserIcon,
-  Database, ChevronRight, CheckCircle2, Clock,
+  Database, ChevronRight, CheckCircle2, Clock, CloudUpload, CloudDownload
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -70,6 +71,7 @@ interface ProfileViewProps {
 export function ProfileView({ onSignOut }: ProfileViewProps) {
   const { user, signOut } = useAuth();
   const { unit, setUnit, format } = useWeightUnit();
+  const { warmupDuration, restBetweenSets, restBetweenExercises, updateSettings } = useWorkoutSettings();
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSynced, setLastSynced] = useState<string | null>(null);
   const [weeklyGoal, setWeeklyGoalState] = useState(loadWeeklyGoal());
@@ -88,14 +90,24 @@ export function ProfileView({ onSignOut }: ProfileViewProps) {
     if (raw) setLastSynced(raw);
   }, []);
 
-  const handleSyncNow = async () => {
+  const handleUpload = async () => {
     setIsSyncing(true);
     try {
       await syncUp();
-      await syncDown();
       const now = new Date().toISOString();
-      localStorage.setItem(LAST_SYNCED_KEY, now);
       setLastSynced(now);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleImport = async () => {
+    setIsSyncing(true);
+    try {
+      await replaceLocalFromCloud();
+      const now = new Date().toISOString();
+      setLastSynced(now);
+      window.location.reload(); // Refresh to show new data
     } finally {
       setIsSyncing(false);
     }
@@ -272,6 +284,97 @@ export function ProfileView({ onSignOut }: ProfileViewProps) {
         </div>
       </motion.div>
 
+      {/* ── Workout Timers ── */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.12 }}
+      >
+        <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-muted-foreground/80 px-1">
+          Workout Timers
+        </h2>
+        <div className="space-y-2 rounded-3xl border border-border/30 bg-card/60 p-4 backdrop-blur-[20px] shadow-sm">
+          {/* Warmup duration */}
+          <div className="flex items-center justify-between py-2">
+            <div>
+              <p className="text-sm font-semibold text-foreground">Warmup Countdown</p>
+              <p className="text-xs text-muted-foreground">Before first set (seconds)</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => updateSettings({ warmupDuration: Math.max(0, warmupDuration - 15) })}
+                className="flex h-8 w-8 items-center justify-center rounded-xl bg-muted/60 text-lg font-bold text-foreground transition-colors hover:bg-muted active:scale-90"
+              >
+                −
+              </button>
+              <span className="w-8 text-center text-base font-extrabold tabular-nums text-foreground">
+                {warmupDuration}
+              </span>
+              <button
+                onClick={() => updateSettings({ warmupDuration: Math.min(300, warmupDuration + 15) })}
+                className="flex h-8 w-8 items-center justify-center rounded-xl bg-muted/60 text-lg font-bold text-foreground transition-colors hover:bg-muted active:scale-90"
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          <div className="border-t border-border/30" />
+
+          {/* Rest between sets */}
+          <div className="flex items-center justify-between py-2">
+            <div>
+              <p className="text-sm font-semibold text-foreground">Set Rest Timer</p>
+              <p className="text-xs text-muted-foreground">After completing a set</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => updateSettings({ restBetweenSets: Math.max(0, restBetweenSets - 15) })}
+                className="flex h-8 w-8 items-center justify-center rounded-xl bg-muted/60 text-lg font-bold text-foreground transition-colors hover:bg-muted active:scale-90"
+              >
+                −
+              </button>
+              <span className="w-8 text-center text-base font-extrabold tabular-nums text-foreground">
+                {restBetweenSets}
+              </span>
+              <button
+                onClick={() => updateSettings({ restBetweenSets: Math.min(300, restBetweenSets + 15) })}
+                className="flex h-8 w-8 items-center justify-center rounded-xl bg-muted/60 text-lg font-bold text-foreground transition-colors hover:bg-muted active:scale-90"
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          <div className="border-t border-border/30" />
+
+          {/* Rest between exercises */}
+          <div className="flex items-center justify-between py-2">
+            <div>
+              <p className="text-sm font-semibold text-foreground">Exercise Rest</p>
+              <p className="text-xs text-muted-foreground">After completing an exercise</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => updateSettings({ restBetweenExercises: Math.max(0, restBetweenExercises - 30) })}
+                className="flex h-8 w-8 items-center justify-center rounded-xl bg-muted/60 text-lg font-bold text-foreground transition-colors hover:bg-muted active:scale-90"
+              >
+                −
+              </button>
+              <span className="w-8 text-center text-base font-extrabold tabular-nums text-foreground">
+                {restBetweenExercises}
+              </span>
+              <button
+                onClick={() => updateSettings({ restBetweenExercises: Math.min(600, restBetweenExercises + 30) })}
+                className="flex h-8 w-8 items-center justify-center rounded-xl bg-muted/60 text-lg font-bold text-foreground transition-colors hover:bg-muted active:scale-90"
+              >
+                +
+              </button>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+
       {/* ── Data & Backup ── */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
@@ -283,7 +386,7 @@ export function ProfileView({ onSignOut }: ProfileViewProps) {
         </h2>
         <div className="space-y-2 rounded-3xl border border-border/30 bg-card/60 p-4 backdrop-blur-[20px] shadow-sm">
 
-          {/* Sync status */}
+          {/* Upload to Cloud */}
           <div className="flex items-center justify-between py-2">
             <div className="flex items-center gap-3">
               <Database className="h-5 w-5 text-muted-foreground" />
@@ -295,14 +398,48 @@ export function ProfileView({ onSignOut }: ProfileViewProps) {
                 </p>
               </div>
             </div>
+          </div>
+          <div className="flex flex-col gap-2 pt-1 pb-3">
             <button
-              onClick={handleSyncNow}
+              onClick={handleUpload}
               disabled={isSyncing}
-              className="flex items-center gap-1.5 rounded-xl border border-border/60 px-3 py-1.5 text-xs font-semibold text-foreground transition-all hover:bg-muted active:scale-95 disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-border/60 bg-foreground/5 py-2.5 text-sm font-semibold text-foreground transition-all hover:bg-foreground/10 active:scale-95 disabled:opacity-50"
             >
-              <RefreshCw className={cn("h-3.5 w-3.5", isSyncing && "animate-spin")} />
-              {isSyncing ? "Syncing…" : "Sync Now"}
+              {isSyncing ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <CloudUpload className="h-4 w-4" />
+              )}
+              {isSyncing ? "Uploading…" : "Upload to Cloud"}
             </button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <button
+                  disabled={isSyncing}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-border/60 py-2.5 text-sm font-semibold text-muted-foreground transition-all hover:bg-muted active:scale-95 disabled:opacity-50"
+                >
+                  <CloudDownload className="h-4 w-4" />
+                  Import from Cloud
+                </button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Overwrite local data?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will replace all workouts on this device with the data currently stored in your cloud account. Any unsynced local changes will be lost.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleImport}
+                    className="bg-primary text-primary-foreground hover:bg-primary/90"
+                  >
+                    Yes, import data
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
 
           <div className="border-t border-border/30" />

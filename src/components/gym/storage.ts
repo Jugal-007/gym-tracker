@@ -10,6 +10,7 @@ const WorkoutSetSchema = z.object({
   weight: z.number().nonnegative(),
   completed: z.boolean(),
   pr: z.enum(["weight", "e1rm"]).nullable().optional(),
+  kind: z.enum(["normal", "warmup", "dropset"]).optional(),
 });
 
 const ExerciseSchema = z.object({
@@ -28,6 +29,8 @@ const SessionSchema = z.object({
   exercises: z.array(ExerciseSchema),
   templateId: z.string().nullable().optional(),
   templateName: z.string().nullable().optional(),
+  restTimerEndsAt: z.number().nullable().optional(),
+  warmupEndsAt: z.number().nullable().optional(),
   updatedAt: z.number().optional(),
 });
 
@@ -131,7 +134,9 @@ export function getExerciseNames(sessions: Session[], templates: Template[] = []
 }
 
 export function computeVolume(exercise: Exercise): number {
-  return exercise.sets.reduce((sum, set) => sum + set.reps * set.weight, 0);
+  return exercise.sets
+    .filter(s => s.kind !== "warmup")
+    .reduce((sum, set) => sum + set.reps * set.weight, 0);
 }
 
 export function computeSessionVolume(session: Session): number {

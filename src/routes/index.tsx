@@ -10,6 +10,7 @@ import { ProfileView } from "@/components/gym/ProfileView";
 import { AuthOverlay } from "@/components/auth/AuthOverlay";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { useWorkoutSettings } from "@/hooks/useWorkoutSettings";
 import { buildRecords } from "@/components/gym/records";
 import { syncDown } from "@/lib/sync";
 import {
@@ -51,6 +52,8 @@ function Index() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [activeSession, setActiveSession] = useState<Session | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const { warmupDuration } = useWorkoutSettings();
   const [view, setView] = useState<View>("landing");
   const [newExerciseName, setNewExerciseName] = useState("");
   const [isAuthOpen, setIsAuthOpen] = useState(false);
@@ -58,41 +61,46 @@ function Index() {
   const { user, signOut } = useAuth();
 
   useEffect(() => {
-    const handleSync = () => {
-      setSessions(loadSessions());
-      setTemplates(loadTemplates());
-    };
+    // 1. Initial hydration / load from localStorage
+    setSessions(loadSessions());
+    setTemplates(loadTemplates());
+    setIsLoaded(true);
 
-    handleSync();
-    
-    // Also load active session (which shouldn't be overwritten by cloud, but good to ensure consistency)
     const active = loadActiveSession();
     if (active) {
       setActiveSession(active);
       setView("active");
     }
 
+    const handleSync = () => {
+      setSessions(loadSessions());
+      setTemplates(loadTemplates());
+    };
+
     window.addEventListener("gym-sync-complete", handleSync);
     return () => window.removeEventListener("gym-sync-complete", handleSync);
   }, []);
 
   useEffect(() => {
-    if (user) {
+    if (user && isLoaded) {
       syncDown().catch(console.error);
     }
-  }, [user]);
+  }, [user, isLoaded]);
 
   useEffect(() => {
+    if (!isLoaded) return;
     saveSessions(sessions);
-  }, [sessions]);
+  }, [sessions, isLoaded]);
 
   useEffect(() => {
+    if (!isLoaded) return;
     saveActiveSession(activeSession);
-  }, [activeSession]);
+  }, [activeSession, isLoaded]);
 
   useEffect(() => {
+    if (!isLoaded) return;
     saveTemplates(templates);
-  }, [templates]);
+  }, [templates, isLoaded]);
 
   const exerciseNames = useMemo(() => getExerciseNames(sessions, templates), [sessions, templates]);
 
@@ -103,6 +111,7 @@ function Index() {
       id: generateId(),
       startedAt: Date.now(),
       endedAt: null,
+      warmupEndsAt: warmupDuration > 0 ? Date.now() + warmupDuration * 1000 : null,
       exercises: [],
     };
     setActiveSession(session);
@@ -130,7 +139,9 @@ function Index() {
   }
 
   function startFromTemplate(template: Template) {
-    setActiveSession(sessionFromTemplate(template));
+    const session = sessionFromTemplate(template);
+    session.warmupEndsAt = warmupDuration > 0 ? Date.now() + warmupDuration * 1000 : null;
+    setActiveSession(session);
     setView("active");
   }
 
@@ -312,7 +323,7 @@ function Index() {
 
 const TAB_ITEMS: { key: View; label: string; icon: React.ReactNode }[] = [
   { key: "landing", label: "Start", icon: undefined },
-  { key: "templates", label: "Routines", icon: <LayoutTemplate className="h-5 w-5" /> },
+  { key: "templates", label: "Templates", icon: <LayoutTemplate className="h-5 w-5" /> },
   { key: "stats", label: "Stats", icon: <BarChart3 className="h-5 w-5" /> },
   { key: "history", label: "History", icon: <History className="h-5 w-5" /> },
   { key: "profile", label: "Profile", icon: <UserIcon className="h-5 w-5" /> },
@@ -431,11 +442,11 @@ function LandingView({
 
       {templates.length > 0 ? (
         <>
-          {/* Routines are the PRIMARY CTA when they exist */}
+          {/* Templates / Routines are the PRIMARY CTA when they exist */}
           <div>
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground/80">
-                Your Routines
+                Your Templates
               </h2>
               <button
                 onClick={onManageTemplates}
@@ -481,14 +492,34 @@ function LandingView({
           </div>
         </>
       ) : (
-        /* No routines yet — big primary CTA */
-        <button
-          onClick={onStart}
-          className="flex w-full items-center justify-center gap-3 rounded-3xl bg-foreground px-6 py-5 text-lg font-bold text-background transition-all hover:bg-foreground/90 hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98]"
-        >
-          <Dumbbell className="h-6 w-6" />
-          Start Empty Workout
-        </button>
+        /* No templates yet — big primary CTA + visible Templates prompt */
+        <div className="space-y-4">
+          <button
+            onClick={onStart}
+            className="flex w-full items-center justify-center gap-3 rounded-3xl bg-foreground px-6 py-5 text-lg font-bold text-background transition-all hover:bg-foreground/90 hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98]"
+          >
+            <Dumbbell className="h-6 w-6" />
+            Start Empty Workout
+          </button>
+
+          <div className="rounded-2xl border border-dashed border-border/70 bg-card/40 p-4">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground/80 flex items-center gap-1.5">
+                <LayoutTemplate className="h-3.5 w-3.5" />
+                Templates
+              </span>
+              <button
+                onClick={onManageTemplates}
+                className="text-xs font-semibold text-primary hover:underline"
+              >
+                Create template &rarr;
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Save workout routines to start your regular sessions in a single tap.
+            </p>
+          </div>
+        </div>
       )}
 
       {recentSessions.length > 0 && (
