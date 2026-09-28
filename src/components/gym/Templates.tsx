@@ -1,15 +1,14 @@
-import { useState } from "react";
-import { LayoutTemplate, Play, Plus, Trash2, X, Pencil, GripVertical } from "lucide-react";
+import { useMemo, useState } from "react";
+import { LayoutTemplate, Play, Plus, Trash2, X, Pencil, GripVertical, Sparkles, RotateCcw } from "lucide-react";
 import { DndContext, closestCenter, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { ExerciseNameInput } from "./ExerciseNameInput";
 import { generateId } from "./storage";
-import { emptyTemplateExercise } from "./templates";
+import { emptyTemplateExercise, STARTER_TEMPLATES, recoverTemplatesFromSessions } from "./templates";
 import { StepperInput } from "@/components/ui/StepperInput";
 import { SwipeToDelete } from "@/components/ui/SwipeToDelete";
-import { EmptyState } from "@/components/ui/EmptyState";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,19 +20,38 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import type { Template, TemplateExercise } from "./types";
+import type { Session, Template, TemplateExercise } from "./types";
 
 interface TemplatesProps {
   templates: Template[];
   exerciseNames: string[];
+  sessions?: Session[];
   onStart: (template: Template) => void;
   onSave: (template: Template) => void;
   onDelete: (id: string) => void;
 }
 
-export function Templates({ templates, exerciseNames, onStart, onSave, onDelete }: TemplatesProps) {
+export function Templates({ templates, exerciseNames, sessions = [], onStart, onSave, onDelete }: TemplatesProps) {
   const [editing, setEditing] = useState<Template | null>(null);
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
+
+  const recoverable = useMemo(() => {
+    return recoverTemplatesFromSessions(sessions);
+  }, [sessions]);
+
+  function handleLoadStarters() {
+    STARTER_TEMPLATES.forEach((starter) => {
+      if (!templates.some((t) => t.name.toLowerCase() === starter.name.toLowerCase())) {
+        onSave(starter);
+      }
+    });
+  }
+
+  function handleRecover() {
+    recoverable.forEach((routine) => {
+      onSave(routine);
+    });
+  }
 
   function newTemplate() {
     setEditing({
@@ -71,36 +89,98 @@ export function Templates({ templates, exerciseNames, onStart, onSave, onDelete 
   }
 
   return (
-    <div className="mx-auto max-w-xl space-y-3 animate-fade-in">
+    <div className="mx-auto max-w-xl space-y-4 animate-fade-in">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
           Templates ({templates.length})
         </h2>
-        <button
-          onClick={newTemplate}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-border/60 bg-transparent px-3.5 py-2 text-sm font-semibold text-foreground transition-all hover:bg-muted active:scale-95"
-        >
-          <Plus className="h-4 w-4" />
-          New
-        </button>
+        <div className="flex items-center gap-2">
+          {recoverable.length > 0 && templates.length > 0 && (
+            <button
+              onClick={handleRecover}
+              className="inline-flex items-center gap-1 rounded-xl border border-primary/40 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition-all hover:bg-primary/20 active:scale-95"
+              title="Restore routines found in your workout history"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              Restore ({recoverable.length})
+            </button>
+          )}
+          {templates.length > 0 && (
+            <button
+              onClick={handleLoadStarters}
+              className="inline-flex items-center gap-1 rounded-xl border border-border/60 bg-muted/40 px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-all hover:text-foreground active:scale-95"
+              title="Load Push / Pull / Legs starter routines"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              + Starters
+            </button>
+          )}
+          <button
+            onClick={newTemplate}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-border/60 bg-transparent px-3.5 py-1.5 text-sm font-semibold text-foreground transition-all hover:bg-muted active:scale-95"
+          >
+            <Plus className="h-4 w-4" />
+            New
+          </button>
+        </div>
       </div>
 
       {templates.length === 0 ? (
-        <EmptyState
-          icon={<LayoutTemplate className="h-12 w-12" strokeWidth={1.5} />}
-          title="No templates yet"
-          description="Save your workout routines to start training with a single tap."
-          action={
-            <button
-              onClick={newTemplate}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-foreground px-4 py-2.5 text-sm font-semibold text-background transition-all hover:bg-foreground/90 active:scale-95 shadow-sm"
-            >
-              <Plus className="h-4 w-4" />
-              Build a template
-            </button>
-          }
-        />
+        <div className="space-y-4">
+          {recoverable.length > 0 && (
+            <div className="rounded-3xl border border-primary/30 bg-primary/5 p-5 backdrop-blur-md">
+              <div className="flex items-start gap-3.5">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
+                  <RotateCcw className="h-5 w-5" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-bold text-foreground">Restore from Workout History</h3>
+                  <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                    Found <strong className="text-foreground">{recoverable.length} routine{recoverable.length > 1 ? "s" : ""}</strong> from your previously logged workouts: {recoverable.map((r) => r.name).join(", ")}.
+                  </p>
+                  <button
+                    onClick={handleRecover}
+                    className="mt-3.5 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-primary-foreground shadow-sm hover:bg-primary/90 active:scale-95"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" />
+                    Restore {recoverable.length} Routine{recoverable.length > 1 ? "s" : ""}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="rounded-3xl border border-border/50 bg-card/60 p-6 text-center backdrop-blur-md space-y-4">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-muted/60 text-muted-foreground">
+              <LayoutTemplate className="h-7 w-7" strokeWidth={1.5} />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-foreground">No Templates Saved</h3>
+              <p className="mt-1 text-xs text-muted-foreground max-w-sm mx-auto">
+                Save routines to start workouts in one tap, or load our pre-made Push/Pull/Legs templates to begin immediately.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-2">
+              <button
+                onClick={handleLoadStarters}
+                className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-foreground px-5 py-3 text-xs font-bold text-background shadow-sm hover:bg-foreground/90 active:scale-95"
+              >
+                <Sparkles className="h-4 w-4" />
+                Load Starter Routines (Push / Pull / Legs)
+              </button>
+              <button
+                onClick={newTemplate}
+                className="flex w-full sm:w-auto items-center justify-center gap-1.5 rounded-xl border border-border/60 bg-transparent px-4 py-3 text-xs font-semibold text-foreground hover:bg-muted active:scale-95"
+              >
+                <Plus className="h-4 w-4" />
+                Build from Scratch
+              </button>
+            </div>
+          </div>
+        </div>
       ) : (
+
         templates.map((template) => (
             <SwipeToDelete
             key={template.id}

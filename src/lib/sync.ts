@@ -6,8 +6,8 @@ import type { Session, Template } from "@/components/gym/types";
 export const LAST_SYNCED_KEY = "gym-tracker-last-synced-at";
 
 /**
- * syncUp — "Local is truth". Replaces cloud data for this user with
- * exactly what's in local storage. Deletions are respected.
+ * syncUp — Safe, non-destructive cloud synchronization using upsert.
+ * Only uploads existing items to Supabase without blindly wiping cloud data.
  */
 export async function syncUp() {
   const { data: authData } = await supabase.auth.getSession();
@@ -16,15 +16,6 @@ export async function syncUp() {
 
   const sessions = loadSessions();
   const templates = loadTemplates();
-
-  // Safeguard: Never wipe the cloud database if local storage is completely empty
-  // (e.g. fresh device, unhydrated state, or cleared cache).
-  if (sessions.length === 0 && templates.length === 0) {
-    return;
-  }
-
-  // --- Sessions: delete all, then re-insert current local state ---
-  await supabase.from("sessions").delete().eq("user_id", user.id);
 
   if (sessions.length > 0) {
     const sessionsPayload = sessions.map((s) => ({
@@ -39,11 +30,9 @@ export async function syncUp() {
         ? new Date(s.updatedAt).toISOString()
         : new Date(s.startedAt).toISOString(),
     }));
-    await supabase.from("sessions").insert(sessionsPayload);
+    const { error: sessionErr } = await supabase.from("sessions").upsert(sessionsPayload, { onConflict: "id" });
+    if (sessionErr) console.error("Error syncing sessions up:", sessionErr);
   }
-
-  // --- Templates: delete all, then re-insert ---
-  await supabase.from("templates").delete().eq("user_id", user.id);
 
   if (templates.length > 0) {
     const templatesPayload = templates.map((t) => ({
@@ -51,16 +40,34 @@ export async function syncUp() {
       user_id: user.id,
       name: t.name,
       exercises: t.exercises,
-      created_at: t.createdAt,
+      created_at: typeof t.createdAt === "number" ? t.createdAt : Number(t.createdAt) || Date.now(),
       updated_at: t.updatedAt
         ? new Date(t.updatedAt).toISOString()
         : new Date(t.createdAt).toISOString(),
     }));
-    await supabase.from("templates").insert(templatesPayload);
+    const { error: templateErr } = await supabase.from("templates").upsert(templatesPayload, { onConflict: "id" });
+    if (templateErr) console.error("Error syncing templates up:", templateErr);
   }
 
   localStorage.setItem(LAST_SYNCED_KEY, new Date().toISOString());
 }
+
+/** Explicitly delete a single session from cloud */
+export async function syncDeleteSession(sessionId: string) {
+  const { data: authData } = await supabase.auth.getSession();
+  const user = authData.session?.user;
+  if (!user) return;
+  await supabase.from("sessions").delete().eq("id", sessionId).eq("user_id", user.id);
+}
+
+/** Explicitly delete a single template from cloud */
+export async function syncDeleteTemplate(templateId: string) {
+  const { data: authData } = await supabase.auth.getSession();
+  const user = authData.session?.user;
+  if (!user) return;
+  await supabase.from("templates").delete().eq("id", templateId).eq("user_id", user.id);
+}
+
 
 /**
  * syncDown — "Cloud fills gaps". Only adds cloud items whose IDs don't
@@ -77,6 +84,9 @@ export async function syncDown() {
     supabase.from("templates").select("*"),
   ]);
 
+  if (sessionsRes.error) console.error("Error fetching sessions from cloud:", sessionsRes.error);
+  if (templatesRes.error) console.error("Error fetching templates from cloud:", templatesRes.error);
+
   let synced = false;
 
   if (sessionsRes.data && sessionsRes.data.length > 0) {
@@ -87,8 +97,8 @@ export async function syncDown() {
       .filter((row) => !localIds.has(row.id))
       .map((row) => ({
         id: row.id,
-        startedAt: row.started_at,
-        endedAt: row.ended_at,
+        startedAt: typeof row.started_at === "number" ? row.started_at : Number(row.started_at) || Date.now(),
+        endedAt: row.ended_at ? (typeof row.ended_at === "number" ? row.ended_at : Number(row.ended_at)) : null,
         exercises: row.exercises,
         templateId: row.template_id ?? undefined,
         templateName: row.template_name ?? undefined,
@@ -113,7 +123,7 @@ export async function syncDown() {
         id: row.id,
         name: row.name,
         exercises: row.exercises,
-        createdAt: row.created_at,
+        createdAt: typeof row.created_at === "number" ? row.created_at : Number(row.created_at) || Date.now(),
         updatedAt: new Date(row.updated_at).getTime(),
       }));
 

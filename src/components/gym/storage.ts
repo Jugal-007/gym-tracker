@@ -1,14 +1,13 @@
 import { z } from "zod";
 import type { Exercise, Session, Template } from "./types";
-import { syncUp } from "@/lib/sync";
 
 const STORAGE_KEY = "gym-tracker-sessions-v1";
 
 const WorkoutSetSchema = z.object({
   id: z.string(),
-  reps: z.number().nonnegative(),
-  weight: z.number().nonnegative(),
-  completed: z.boolean(),
+  reps: z.coerce.number().nonnegative(),
+  weight: z.coerce.number().nonnegative(),
+  completed: z.boolean().default(false),
   pr: z.enum(["weight", "e1rm"]).nullable().optional(),
   kind: z.enum(["normal", "warmup", "dropset"]).optional(),
 });
@@ -17,21 +16,21 @@ const ExerciseSchema = z.object({
   id: z.string(),
   name: z.string(),
   sets: z.array(WorkoutSetSchema),
-  targetSets: z.number().optional(),
-  targetReps: z.number().optional(),
-  targetWeight: z.number().optional(),
+  targetSets: z.coerce.number().optional(),
+  targetReps: z.coerce.number().optional(),
+  targetWeight: z.coerce.number().optional(),
 });
 
 const SessionSchema = z.object({
   id: z.string(),
-  startedAt: z.number(),
-  endedAt: z.number().nullable(),
+  startedAt: z.union([z.number(), z.string().transform((s) => new Date(s).getTime())]),
+  endedAt: z.union([z.number(), z.string().transform((s) => new Date(s).getTime())]).nullable(),
   exercises: z.array(ExerciseSchema),
   templateId: z.string().nullable().optional(),
   templateName: z.string().nullable().optional(),
-  restTimerEndsAt: z.number().nullable().optional(),
-  warmupEndsAt: z.number().nullable().optional(),
-  updatedAt: z.number().optional(),
+  restTimerEndsAt: z.union([z.number(), z.string().transform((s) => new Date(s).getTime())]).nullable().optional(),
+  warmupEndsAt: z.union([z.number(), z.string().transform((s) => new Date(s).getTime())]).nullable().optional(),
+  updatedAt: z.union([z.number(), z.string().transform((s) => new Date(s).getTime())]).optional(),
 });
 
 const SessionsListSchema = z.array(SessionSchema);
@@ -62,7 +61,6 @@ export function loadSessions(): Session[] {
 export function saveSessions(sessions: Session[]): void {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
-  syncUp().catch(console.error);
 }
 
 const ACTIVE_SESSION_KEY = "gym-tracker-active-session-v1";
