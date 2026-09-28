@@ -1,13 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
-import { Trash2, Plus, Clock, Dumbbell, Trophy, X, Timer, GripVertical } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { X, Clock, ChevronLeft, ChevronRight, Check, Plus, Timer, Dumbbell } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { DndContext, closestCenter, type DragEndEvent } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { StepperInput } from "@/components/ui/StepperInput";
-import { SwipeToDelete } from "@/components/ui/SwipeToDelete";
-import { EmptyState } from "@/components/ui/EmptyState";
+import { ExerciseNameInput } from "./ExerciseNameInput";
+import { generateId, computeSessionVolume } from "./storage";
+import { detectPR, normalizeName } from "./records";
+import type { Session, Exercise, WorkoutSet, ExerciseRecord } from "./types";
+import { useWeightUnit } from "@/hooks/useWeightUnit";
+import { hapticMedium, hapticSuccess, hapticLight } from "@/utils/haptics";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,15 +18,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { ExerciseNameInput } from "./ExerciseNameInput";
-import { computeSessionSets, computeSessionVolume, generateId } from "./storage";
-import { PR_LABEL, detectPR, normalizeName } from "./records";
-import type { Exercise, ExerciseRecord, PRKind, Session, WorkoutSet } from "./types";
-import { hapticMedium, hapticSuccess, hapticLight } from "@/utils/haptics";
-import { motion, AnimatePresence, useIsPresent } from "framer-motion";
-import { useWeightUnit } from "@/hooks/useWeightUnit";
 import { useWorkoutSettings } from "@/hooks/useWorkoutSettings";
-import type { SetKind } from "./types";
+import { createPortal } from "react-dom";
 
 interface ActiveSessionProps {
   session: Session;
@@ -36,68 +28,6 @@ interface ActiveSessionProps {
   onUpdate: (session: Session) => void;
   onFinish: (session: Session) => void;
   onCancel: () => void;
-}
-
-/* ─── Single-digit rolling counter slot ─── */
-function DigitSlot({ digit }: { digit: string }) {
-  const prevRef = useRef(digit);
-  const [animating, setAnimating] = useState(false);
-
-  useEffect(() => {
-    let timer: any;
-    if (prevRef.current !== digit) {
-      prevRef.current = digit;
-      setAnimating(true);
-      timer = setTimeout(() => setAnimating(false), 360);
-    }
-    return () => clearTimeout(timer);
-  }, [digit]);
-
-  return (
-    <span className="relative inline-block h-[1.15em] w-[0.62em] overflow-hidden align-middle font-mono tabular-nums text-center select-none">
-      <span
-        key={digit}
-        className={cn(
-          "inline-block w-full text-center will-change-transform",
-          animating && "animate-digit-scroll",
-        )}
-      >
-        {digit}
-      </span>
-    </span>
-  );
-}
-
-function ColonSeparator() {
-  return (
-    <span className="inline-block px-[1px] font-mono select-none opacity-60 align-middle">:</span>
-  );
-}
-
-export function TimerDisplay({ ms }: { ms: number }) {
-  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-
-  const mStr = String(minutes).padStart(2, "0");
-  const sStr = String(seconds).padStart(2, "0");
-
-  return (
-    <span className="inline-flex items-center font-mono text-3xl font-semibold tracking-tight text-foreground tabular-nums select-none">
-      {hours > 0 && (
-        <>
-          <DigitSlot digit={String(hours)} />
-          <ColonSeparator />
-        </>
-      )}
-      <DigitSlot digit={mStr[0]!} />
-      <DigitSlot digit={mStr[1]!} />
-      <ColonSeparator />
-      <DigitSlot digit={sStr[0]!} />
-      <DigitSlot digit={sStr[1]!} />
-    </span>
-  );
 }
 
 export function ActiveSession({
@@ -109,11 +39,10 @@ export function ActiveSession({
   onCancel,
 }: ActiveSessionProps) {
   const [elapsed, setElapsed] = useState(() => Date.now() - session.startedAt);
+  const [currentExIndex, setCurrentExIndex] = useState(0);
   const [newExerciseName, setNewExerciseName] = useState("");
-  const [nextExercisePopUp, setNextExercisePopUp] = useState<string | null>(null);
-  const isPresent = useIsPresent();
   const { format: fmtWeight } = useWeightUnit();
-  const { restBetweenSets, restBetweenExercises } = useWorkoutSettings();
+  const { restBetweenSets } = useWorkoutSettings();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -122,775 +51,365 @@ export function ActiveSession({
     return () => clearInterval(interval);
   }, [session.startedAt]);
 
-  const totalVolume = useMemo(() => computeSessionVolume(session), [session]);
-  const totalSets = useMemo(() => computeSessionSets(session), [session]);
-  const completedSets = useMemo(
-    () => session.exercises.reduce((sum, ex) => sum + ex.sets.filter((s) => s.completed).length, 0),
-    [session]
-  );
-  const progressPercent = totalSets > 0 ? (completedSets / totalSets) * 100 : 0;
+  const activeExercise = session.exercises[currentExIndex];
   
-  const prCount = useMemo(
-    () => session.exercises.reduce((sum, ex) => sum + ex.sets.filter((set) => set.pr).length, 0),
-    [session],
-  );
+  // Calculate current set number for the active exercise
+  const currentSetNumber = activeExercise 
+    ? activeExercise.sets.filter(s => s.completed).length + 1 
+    : 1;
+    
+  const totalSets = activeExercise?.targetSets || Math.max(4, activeExercise?.sets.length || 4);
 
-  function addExercise() {
+  // Local state for the inputs
+  const [inputWeight, setInputWeight] = useState(activeExercise?.targetWeight ? String(activeExercise.targetWeight) : "");
+  const [inputReps, setInputReps] = useState(activeExercise?.targetReps ? String(activeExercise.targetReps) : "");
+
+  // Update inputs when exercise changes
+  useEffect(() => {
+    if (activeExercise) {
+      const lastSet = activeExercise.sets[activeExercise.sets.length - 1];
+      if (lastSet && lastSet.completed) {
+        setInputWeight(String(lastSet.weight));
+        setInputReps(String(lastSet.reps));
+      } else if (!inputWeight && !inputReps) {
+        setInputWeight(activeExercise.targetWeight ? String(activeExercise.targetWeight) : "");
+        setInputReps(activeExercise.targetReps ? String(activeExercise.targetReps) : "");
+      }
+    }
+  }, [currentExIndex, activeExercise]);
+
+  const record = activeExercise ? records[normalizeName(activeExercise.name)] : undefined;
+
+  function handleCompleteSet() {
+    if (!activeExercise) return;
+    
+    const w = parseFloat(inputWeight) || 0;
+    const r = parseInt(inputReps, 10) || 0;
+    
+    if (r <= 0) return; // Need at least 1 rep
+    
+    const pr = detectPR(record, w, r);
+    if (pr) hapticSuccess();
+    else hapticMedium();
+
+    const newSet: WorkoutSet = {
+      id: generateId(),
+      weight: w,
+      reps: r,
+      completed: true,
+      kind: "normal",
+      pr: pr
+    };
+
+    const updatedExercises = [...session.exercises];
+    updatedExercises[currentExIndex] = {
+      ...activeExercise,
+      sets: [...activeExercise.sets, newSet]
+    };
+
+    // Start rest timer
+    const restTimerEndsAt = Date.now() + restBetweenSets * 1000;
+
+    onUpdate({
+      ...session,
+      exercises: updatedExercises,
+      restTimerEndsAt
+    });
+  }
+
+  function handleAddExercise() {
     const trimmed = newExerciseName.trim();
     if (!trimmed) return;
-    const exercise: Exercise = {
+    
+    const newEx: Exercise = {
       id: generateId(),
       name: trimmed,
-      sets: [],
+      sets: []
     };
-    onUpdate({ ...session, exercises: [...session.exercises, exercise] });
+    
+    onUpdate({
+      ...session,
+      exercises: [...session.exercises, newEx]
+    });
+    
     setNewExerciseName("");
+    setCurrentExIndex(session.exercises.length);
   }
 
-  function addSet(exerciseId: string, reps: number, weight: number, kind: SetKind = "normal") {
-    const exercise = session.exercises.find((ex) => ex.id === exerciseId);
-    const record = exercise ? records[normalizeName(exercise.name)] : undefined;
-    // Also respect PRs already set earlier in this same session.
-    const liveRecord = exercise
-      ? exercise.sets.reduce(
-          (acc, set) => ({
-            ...acc,
-            bestWeight: Math.max(acc.bestWeight, set.weight),
-            bestE1rm: Math.max(acc.bestE1rm, set.weight * (1 + set.reps / 30)),
-          }),
-          record ?? {
-            name: exercise.name,
-            bestWeight: 0,
-            bestWeightReps: 0,
-            bestE1rm: 0,
-            bestE1rmWeight: 0,
-            bestE1rmReps: 0,
-            bestSessionVolume: 0,
-            totalSets: 0,
-            lastPerformedAt: 0,
-            achievedAt: 0,
-          },
-        )
-      : record;
-    const pr =
-      exercise && exercise.sets.length === 0 && !record
-        ? detectPR(undefined, weight, reps)
-        : detectPR(liveRecord, weight, reps);
-    const set: WorkoutSet = {
-      id: generateId(),
-      reps,
-      weight,
-      completed: false,
-      pr: kind === "warmup" ? null : pr,
-      kind,
-    };
-    onUpdate({
-      ...session,
-      exercises: session.exercises.map((ex) =>
-        ex.id === exerciseId ? { ...ex, sets: [...ex.sets, set] } : ex,
-      ),
-    });
+  function handleSkipRest() {
+    hapticLight();
+    onUpdate({ ...session, restTimerEndsAt: null });
   }
 
-  function toggleSet(exerciseId: string, setId: string) {
-    let newlyCompleted = false;
-    let wasWarmup = false;
-    const nextSession = {
-      ...session,
-      exercises: session.exercises.map((ex) =>
-        ex.id === exerciseId
-          ? {
-              ...ex,
-              sets: ex.sets.map((set) => {
-                if (set.id === setId) {
-                  if (!set.completed) {
-                    newlyCompleted = true;
-                    wasWarmup = set.kind === "warmup";
-                  }
-                  return { ...set, completed: !set.completed };
-                }
-                return set;
-              }),
-            }
-          : ex,
-      ),
-    };
-    if (newlyCompleted && !wasWarmup) {
-      nextSession.restTimerEndsAt = Date.now() + restBetweenSets * 1000;
-    }
-    onUpdate(nextSession);
+  function handleAddRest() {
+    hapticLight();
+    onUpdate({ ...session, restTimerEndsAt: (session.restTimerEndsAt || Date.now()) + 30000 });
   }
 
-  function editSet(exerciseId: string, setId: string, reps: number, weight: number) {
-    onUpdate({
-      ...session,
-      exercises: session.exercises.map((ex) =>
-        ex.id === exerciseId
-          ? {
-              ...ex,
-              sets: ex.sets.map((set) => (set.id === setId ? { ...set, reps, weight } : set)),
-            }
-          : ex,
-      ),
-    });
-  }
-
-  function deleteSet(exerciseId: string, setId: string) {
-    onUpdate({
-      ...session,
-      exercises: session.exercises.map((ex) =>
-        ex.id === exerciseId ? { ...ex, sets: ex.sets.filter((set) => set.id !== setId) } : ex,
-      ),
-    });
-  }
-
-  function deleteExercise(exerciseId: string) {
-    onUpdate({
-      ...session,
-      exercises: session.exercises.filter((ex) => ex.id !== exerciseId),
-    });
-  }
-
-  function toggleExerciseComplete(exerciseId: string) {
-    const currentIndex = session.exercises.findIndex(e => e.id === exerciseId);
-    const ex = session.exercises[currentIndex];
-    const isCompleting = ex ? !ex.completed : false;
-
-    if (isCompleting) {
-      const nextEx = session.exercises.slice(currentIndex + 1).find(e => !e.completed);
-      if (nextEx) {
-        setNextExercisePopUp(nextEx.name);
-        setTimeout(() => setNextExercisePopUp(null), 3500);
-      }
-    }
-
-    onUpdate({
-      ...session,
-      // Give a longer rest between exercises
-      restTimerEndsAt: isCompleting ? Date.now() + restBetweenExercises * 1000 : session.restTimerEndsAt,
-      exercises: session.exercises.map((ex) =>
-        ex.id === exerciseId ? { ...ex, completed: !ex.completed } : ex,
-      ),
-    });
-  }
-
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-    if (over && active.id !== over.id) {
-      const oldIndex = session.exercises.findIndex((ex) => ex.id === active.id);
-      const newIndex = session.exercises.findIndex((ex) => ex.id === over.id);
-      
-      const newExercises = [...session.exercises];
-      const [moved] = newExercises.splice(oldIndex, 1);
-      if (moved) {
-        newExercises.splice(newIndex, 0, moved);
-      }
-      
-      onUpdate({ ...session, exercises: newExercises });
-    }
-  }
-
-  function handleFinish() {
-    onFinish({ ...session, endedAt: Date.now() });
-  }
-
-  return (
-    <div className="mx-auto max-w-xl animate-fade-in">
-      <AnimatePresence>
-        {nextExercisePopUp && (
-          <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            className="fixed top-28 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2 rounded-full bg-foreground/90 backdrop-blur-md px-5 py-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
-          >
-            <span className="text-sm font-bold tracking-wide text-background">
-              <span className="opacity-70 font-medium">Next:</span> {nextExercisePopUp}
-            </span>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {isPresent && session.warmupEndsAt && session.warmupEndsAt > Date.now() &&
-        createPortal(
-          <WarmupCountdownOverlay
-            endsAt={session.warmupEndsAt}
-            onDismiss={() => onUpdate({ ...session, warmupEndsAt: null })}
-          />,
-          document.body
-        )
-      }
-
-      {isPresent && session.restTimerEndsAt && session.restTimerEndsAt > Date.now() &&
-        createPortal(
-          <RestTimerOverlay
-            endsAt={session.restTimerEndsAt}
-            onDismiss={() => onUpdate({ ...session, restTimerEndsAt: null })}
-          />,
-          document.body
-        )
-      }
-      <div className="sticky top-[88px] z-30 mb-8 rounded-[2rem] border border-black/5 bg-background/80 px-5 py-4 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.06)] dark:border-white/10 dark:bg-card/60 dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-border/50 bg-background/50 shadow-inner">
-              <Clock className="h-5 w-5 text-foreground animate-pulse-soft" />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                Live session
-              </p>
-              <div className="drop-shadow-sm">
-                <TimerDisplay ms={elapsed} />
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <button
-                  onClick={() => hapticLight()}
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-border/50 bg-background/50 text-muted-foreground transition-all hover:bg-muted active:scale-95 active:opacity-70"
-                  aria-label="Cancel workout"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </AlertDialogTrigger>
-              <AlertDialogContent className="rounded-3xl border-border/20 bg-card backdrop-blur-[25px] sm:rounded-3xl">
-                <AlertDialogHeader>
-                  <AlertDialogTitle className="text-foreground">Cancel session?</AlertDialogTitle>
-                  <AlertDialogDescription className="text-muted-foreground">
-                    Are you sure you want to cancel? All logged sets and progress in this session will be lost. This cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel className="rounded-xl border-border bg-transparent hover:bg-muted">Keep training</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={onCancel}
-                    className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
-                    Discard session
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-            <button
-              onClick={() => {
-                hapticMedium();
-                handleFinish();
-              }}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-foreground px-6 text-sm font-bold text-background transition-all hover:bg-foreground/90 hover:shadow-md active:scale-95 active:opacity-80"
-            >
-              Finish
-            </button>
-          </div>
-        </div>
-        <div className="mt-4 flex items-center gap-4 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
-          <span className="flex items-center gap-1.5">
-            <Dumbbell className="h-3.5 w-3.5" />
-            {completedSets}/{totalSets} sets
-          </span>
-          <span>{fmtWeight(computeSessionVolume(session))} vol</span>
-          {prCount > 0 && (
-            <span className="animate-bounce-scale-in inline-flex items-center gap-1.5 rounded-full bg-foreground/10 px-2 py-0.5 text-[10px] font-bold text-foreground">
-              <Trophy className="h-3 w-3" />
-              {prCount} PR{prCount > 1 ? "s" : ""}
-            </span>
-          )}
-        </div>
-      </div>
-
-      <div className="px-4 pb-8">
-        <div className="mb-6 flex items-end gap-2">
-          <ExerciseNameInput
-            suggestions={exerciseNames}
-            value={newExerciseName}
-            onChange={setNewExerciseName}
-            onSubmit={addExercise}
-            placeholder="Add an exercise..."
-          />
-          <button
-            onClick={() => {
-              hapticLight();
-              addExercise();
-            }}
-            disabled={!newExerciseName.trim()}
-            className="inline-flex items-center justify-center rounded-xl bg-foreground p-3 text-primary-foreground transition-all hover:bg-foreground/90 hover:shadow-md active:scale-95 active:opacity-80 disabled:opacity-40 disabled:active:scale-100"
-            aria-label="Add exercise"
-          >
-            <Plus className="h-6 w-6" />
-          </button>
-        </div>
-
-        {session.exercises.length === 0 && (
-          <EmptyState
-            icon={<Dumbbell className="h-12 w-12" strokeWidth={1.5} />}
-            title="Empty Workout"
-            description="Add your first exercise above to start logging sets and hitting PRs."
-            className="py-12"
-          />
-        )}
-
-        <div className="space-y-4 relative">
-          <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={session.exercises.map(e => e.id)} strategy={verticalListSortingStrategy}>
-              <AnimatePresence mode="popLayout">
-                {session.exercises.filter(ex => !ex.completed).map((exercise) => (
-                  <SortableExerciseCard
-                    key={`uncompleted-${exercise.id}`}
-                    exercise={exercise}
-                    index={session.exercises.findIndex(e => e.id === exercise.id)}
-                    nextExerciseName={session.exercises[session.exercises.findIndex(e => e.id === exercise.id) + 1]?.name}
-                    record={records[normalizeName(exercise.name)]}
-                    onAddSet={addSet}
-                    onEditSet={editSet}
-                    onToggleSet={toggleSet}
-                    onDeleteSet={deleteSet}
-                    onDeleteExercise={deleteExercise}
-                    onToggleComplete={() => toggleExerciseComplete(exercise.id)}
-                  />
-                ))}
-              </AnimatePresence>
-              
-              <AnimatePresence mode="popLayout">
-                {session.exercises.filter(ex => ex.completed).map((exercise) => (
-                  <SortableExerciseCard
-                    key={`completed-${exercise.id}`}
-                    exercise={exercise}
-                    index={session.exercises.findIndex(e => e.id === exercise.id)}
-                    nextExerciseName={session.exercises[session.exercises.findIndex(e => e.id === exercise.id) + 1]?.name}
-                    record={records[normalizeName(exercise.name)]}
-                    onAddSet={addSet}
-                    onEditSet={editSet}
-                    onToggleSet={toggleSet}
-                    onDeleteSet={deleteSet}
-                    onDeleteExercise={deleteExercise}
-                    onToggleComplete={() => toggleExerciseComplete(exercise.id)}
-                  />
-                ))}
-              </AnimatePresence>
-            </SortableContext>
-          </DndContext>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-interface ExerciseCardProps {
-  exercise: Exercise;
-  index: number;
-  nextExerciseName?: string | undefined;
-  record: ExerciseRecord | undefined;
-  onAddSet: (exerciseId: string, reps: number, weight: number, kind: SetKind) => void;
-  onEditSet: (exerciseId: string, setId: string, reps: number, weight: number) => void;
-  onToggleSet: (exerciseId: string, setId: string) => void;
-  onDeleteSet: (exerciseId: string, setId: string) => void;
-  onDeleteExercise: (exerciseId: string) => void;
-  onToggleComplete: () => void;
-  dragAttributes?: any;
-  dragListeners?: any;
-}
-
-function ExerciseCard({
-  exercise,
-  index,
-  nextExerciseName,
-  record,
-  onAddSet,
-  onEditSet,
-  onToggleSet,
-  onDeleteSet,
-  onDeleteExercise,
-  onToggleComplete,
-  dragAttributes,
-  dragListeners,
-}: ExerciseCardProps) {
-  const [reps, setReps] = useState(exercise.targetReps ? String(exercise.targetReps) : "");
-  const [weight, setWeight] = useState(exercise.targetWeight ? String(exercise.targetWeight) : "");
-  const [kind, setKind] = useState<SetKind>("normal");
-  const [addGlow, setAddGlow] = useState(false);
-
-  const canAdd = !!reps && !!weight;
-
-  // Pulse the add button when both fields are filled
-  useEffect(() => {
-    let t: any;
-    if (canAdd) {
-      setAddGlow(true);
-      t = setTimeout(() => setAddGlow(false), 800);
-    }
-    return () => clearTimeout(t);
-  }, [canAdd]);
-
-  function handleAddSet() {
-    const parsedReps = parseInt(reps, 10);
-    const parsedWeight = parseFloat(weight);
-    if (parsedReps > 0 && parsedWeight >= 0) {
-      hapticMedium();
-      onAddSet(exercise.id, parsedReps, parsedWeight, kind);
-      setReps("");
-      setWeight("");
-    }
-  }
-
-  const { format: fmtWeight } = useWeightUnit();
-  const volume = useMemo(
-    () => exercise.sets.reduce((sum, set) => sum + set.reps * set.weight, 0),
-    [exercise.sets],
-  );
-
-  return (
-    <SwipeToDelete onDelete={() => onDeleteExercise(exercise.id)} className="rounded-3xl">
-      <div className={cn("glass rounded-3xl p-5 transition-all duration-500", exercise.completed && "opacity-50 grayscale hover:grayscale-0 hover:opacity-100")}>
-        <div className="mb-4 flex items-start gap-3">
-          <button
-            {...dragAttributes}
-            {...dragListeners}
-            className="mt-1 flex h-[24px] w-[24px] items-center justify-center text-muted-foreground hover:text-foreground touch-none shrink-0"
-            aria-label="Drag to reorder"
-          >
-            <GripVertical className="h-5 w-5" />
-          </button>
-        <div className="flex-1 min-w-0">
-          <h3 className={cn("font-semibold text-foreground transition-all", exercise.completed && "line-through opacity-70")}>{exercise.name}</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-          {exercise.sets.length} sets · {fmtWeight(volume)}
-            {exercise.targetSets
-              ? ` · target ${exercise.targetSets}×${exercise.targetReps ?? 0} @ ${fmtWeight(exercise.targetWeight ?? 0)}`
-              : ""}
-          </p>
-          {record && record.bestWeight > 0 && (
-            <p className="mt-1.5 inline-flex items-center gap-1 text-sm font-medium text-muted-foreground">
-              <Trophy className="h-3 w-3" />
-              PR {fmtWeight(record.bestWeight)} × {record.bestWeightReps}
-            </p>
-          )}
-        </div>
-      </div>
-
-      {exercise.sets.length > 0 && (
-        <div className="mb-3 space-y-1">
-          {exercise.sets.map((set, setIndex) => (
-            <SetRow
-              key={set.id}
-              set={set}
-              index={setIndex}
-              onToggle={() => onToggleSet(exercise.id, set.id)}
-              onDelete={() => onDeleteSet(exercise.id, set.id)}
-              onEdit={(reps, weight) => onEditSet(exercise.id, set.id, reps, weight)}
-            />
-          ))}
-        </div>
-      )}
-
-      {!exercise.completed && (
-        <div className="flex flex-col gap-3 pt-2">
-          <div className="flex rounded-xl border border-border/50 bg-muted/40 p-1">
-            {(["normal", "warmup", "dropset"] as SetKind[]).map((k) => (
-              <button
-                key={k}
-                onClick={() => setKind(k)}
-                className={cn(
-                  "flex-1 rounded-lg py-1.5 text-xs font-bold capitalize transition-all",
-                  kind === k
-                    ? "bg-foreground text-background shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {k}
-              </button>
-            ))}
-          </div>
-          <div className="flex items-end gap-2">
-            <div className="flex-1">
-              <StepperInput
-                label="Reps"
-                value={reps}
-                onChange={setReps}
-                onEnter={handleAddSet}
-                min={1}
-                step={1}
-              />
-            </div>
-            <div className="flex-1">
-              <StepperInput
-                label="Weight (kg)"
-                value={weight}
-                onChange={setWeight}
-                onEnter={handleAddSet}
-                min={0}
-                step={2.5}
-              />
-            </div>
-          </div>
-          <button
-          onClick={handleAddSet}
-          disabled={!canAdd}
-          className={cn(
-            "flex h-[52px] w-full shrink-0 items-center justify-center rounded-xl bg-foreground text-background text-[15px] font-bold transition-all duration-200 disabled:opacity-40 disabled:active:scale-100",
-            addGlow ? "shadow-[0_0_15px_rgba(255,255,255,0.25)]" : "hover:bg-foreground/90 active:scale-[0.98] active:opacity-80"
-          )}
-        >
-          <Plus className="h-5 w-5 mr-2" />
-          Add Set
-        </button>
-        </div>
-      )}
-      
-      <button
-        onClick={() => {
-          hapticLight();
-          onToggleComplete();
-        }}
-        className={cn(
-          "mt-4 w-full rounded-xl py-3.5 text-[15px] font-bold transition-all duration-200 active:scale-[0.98] active:opacity-70",
-          exercise.completed 
-            ? "bg-transparent border-2 border-border/50 text-muted-foreground hover:bg-muted" 
-            : "bg-primary/10 text-primary hover:bg-primary/20"
-        )}
-      >
-        {exercise.completed ? "Undo Finish" : "Finish Exercise"}
-      </button>
-    </div>
-    </SwipeToDelete>
-  );
-}
-
-function SortableExerciseCard(props: ExerciseCardProps) {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: props.exercise.id });
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    zIndex: transform ? 50 : "auto",
+  const isResting = session.restTimerEndsAt && session.restTimerEndsAt > Date.now();
+  const restRemaining = isResting ? Math.ceil((session.restTimerEndsAt! - Date.now()) / 1000) : 0;
+  
+  // Fake muscle groups for UI aesthetics based on name
+  const getMuscleGroups = (name: string) => {
+    const n = name.toLowerCase();
+    if (n.includes("bench") || n.includes("push")) return ["Chest", "Triceps", "Shoulders"];
+    if (n.includes("squat") || n.includes("leg")) return ["Quads", "Glutes", "Core"];
+    if (n.includes("pull") || n.includes("row")) return ["Back", "Biceps"];
+    if (n.includes("deadlift")) return ["Hamstrings", "Glutes", "Lower Back"];
+    return ["Full Body"];
   };
 
-  return (
-    <motion.div
-      ref={setNodeRef}
-      style={style}
-      layout="position"
-      initial={{ opacity: 0, y: 15, filter: "blur(4px)" }}
-      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-      exit={{ opacity: 0, scale: 0.95, filter: "blur(4px)" }}
-      transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-      className="will-change-transform"
-    >
-      <ExerciseCard
-        {...props}
-        dragAttributes={attributes}
-        dragListeners={listeners}
-      />
-    </motion.div>
-  );
-}
-
-interface SetRowProps {
-  set: WorkoutSet;
-  index: number;
-  onToggle: () => void;
-  onDelete: () => void;
-  onEdit: (reps: number, weight: number) => void;
-}
-
-function SetRow({ set, index, onToggle, onDelete, onEdit }: SetRowProps) {
-  const { format: fmtWeight } = useWeightUnit();
-  const [justCompleted, setJustCompleted] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editReps, setEditReps] = useState(String(set.reps));
-  const [editWeight, setEditWeight] = useState(String(set.weight));
-  const prevCompleted = useRef(set.completed);
-
-  useEffect(() => {
-    let t: any;
-    if (set.completed && !prevCompleted.current) {
-      setJustCompleted(true);
-      if (set.pr) {
-        hapticSuccess();
-      } else {
-        hapticMedium();
-      }
-      t = setTimeout(() => setJustCompleted(false), 400);
-    }
-    prevCompleted.current = set.completed;
-    return () => clearTimeout(t);
-  }, [set.completed, set.pr]);
-
-  function handleDelete() {
-    setDeleting(true);
-    setTimeout(onDelete, 350);
-  }
-
-  function handleSaveEdit() {
-    const r = parseInt(editReps, 10);
-    const w = parseFloat(editWeight);
-    if (!isNaN(r) && !isNaN(w) && r > 0 && w >= 0) {
-      onEdit(r, w);
-      setIsEditing(false);
-    }
-  }
-
-  if (isEditing) {
+  if (session.exercises.length === 0) {
     return (
-      <div className="flex items-center justify-between rounded-2xl border border-primary/40 p-3.5 bg-card shadow-sm animate-fade-in">
-        <div className="flex gap-2 flex-1 items-center flex-wrap">
-           <span className="text-sm font-medium mr-1">Set {index+1}</span>
-           <input type="number" value={editReps} onChange={e => setEditReps(e.target.value)} className="w-14 rounded bg-muted px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-primary/20" inputMode="decimal" enterKeyHint="done" />
-           <span className="text-muted-foreground text-sm">reps ×</span>
-           <input type="number" value={editWeight} onChange={e => setEditWeight(e.target.value)} className="w-16 rounded bg-muted px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-primary/20" inputMode="decimal" enterKeyHint="done" />
-           <span className="text-muted-foreground text-sm">kg</span>
+      <div className="fixed inset-0 z-50 bg-[#0A0A0A] flex flex-col pt-12 px-6">
+        <div className="flex justify-between items-center mb-8">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <button className="text-white/60 hover:text-white"><X className="h-6 w-6" /></button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="bg-[#1A1A1A] border-white/10 text-white rounded-3xl">
+              <AlertDialogHeader>
+                <AlertDialogTitle>Cancel session?</AlertDialogTitle>
+                <AlertDialogDescription className="text-white/60">
+                  Are you sure you want to cancel? This empty session will be discarded.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel className="border-white/10 text-white hover:bg-white/10 rounded-xl">Keep training</AlertDialogCancel>
+                <AlertDialogAction onClick={onCancel} className="bg-red-500 text-white hover:bg-red-600 rounded-xl">Discard session</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+          <span className="font-bold text-white">Empty Session</span>
+          <div className="w-6" />
         </div>
-        <div className="flex items-center gap-2">
-          <button onClick={() => setIsEditing(false)} className="p-2 text-muted-foreground hover:bg-muted rounded-lg active:scale-95"><X className="h-4 w-4" /></button>
-          <button onClick={handleSaveEdit} className="px-3 py-1.5 bg-primary text-primary-foreground text-xs font-bold rounded-lg hover:opacity-90 active:scale-95">Save</button>
+        
+        <div className="flex-1 flex flex-col items-center justify-center -mt-20">
+          <Dumbbell className="h-16 w-16 text-white/20 mb-6" />
+          <h2 className="text-2xl font-bold text-white mb-2">Ready to train?</h2>
+          <p className="text-white/60 mb-8 text-center max-w-[250px]">Add your first exercise to begin your workout session.</p>
+          
+          <div className="w-full max-w-sm space-y-4">
+            <ExerciseNameInput
+              suggestions={exerciseNames}
+              value={newExerciseName}
+              onChange={setNewExerciseName}
+              onSubmit={handleAddExercise}
+              placeholder="Search exercises..."
+            />
+            <button
+              onClick={handleAddExercise}
+              disabled={!newExerciseName.trim()}
+              className="w-full py-4 bg-blue-600 text-white font-bold rounded-2xl disabled:opacity-50"
+            >
+              Add Exercise
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <SwipeToDelete onDelete={onDelete} className="rounded-2xl">
-      <div
-        className={cn(
-        "flex items-center justify-between rounded-2xl border border-border/40 p-3.5 transition-all duration-300 relative overflow-hidden",
-        deleting && "deleting",
-        set.completed && !justCompleted && "bg-muted/10 border-transparent opacity-60 scale-[0.98]",
-        justCompleted && "set-completed-sweep scale-[0.98]",
-        set.pr && !set.completed && "border-foreground/30 shadow-sm bg-foreground/5",
-        set.kind === "warmup" && "opacity-80 border-orange-500/30",
-        set.kind === "dropset" && "border-l-4 border-l-purple-500 rounded-l-md"
-      )}
-    >
-      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1">
-        <button
-          onClick={onToggle}
-          className={cn(
-            "relative flex h-6 w-6 items-center justify-center rounded-full border-2 transition-all duration-200",
-            set.completed
-              ? "border-foreground bg-foreground text-primary-foreground"
-              : "border-border text-transparent hover:border-foreground/50",
-            justCompleted && "check-ripple",
-          )}
-          aria-label={set.completed ? "Mark incomplete" : "Mark complete"}
-        >
-          {set.completed ? (
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="relative z-10">
-              <path
-                d="M3 7.5L6 10.5L11 4"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className={justCompleted ? "check-draw-path" : ""}
-              />
-            </svg>
-          ) : (
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path
-                d="M3 7.5L6 10.5L11 4"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          )}
-        </button>
-        <div 
-          onClick={() => !set.completed && setIsEditing(true)} 
-          className={cn("flex-1", !set.completed && "cursor-pointer hover:opacity-80 transition-opacity")}
-          title={!set.completed ? "Tap to edit" : undefined}
-        >
-          <div className="flex items-center gap-1.5">
-            <p className="text-sm font-medium text-foreground">Set {index + 1}</p>
-            {set.kind === "warmup" && (
-              <span className="text-[10px] font-bold text-orange-500 bg-orange-500/10 px-1.5 rounded uppercase">W</span>
-            )}
-            {set.kind === "dropset" && (
-              <span className="text-[10px] font-bold text-purple-500 bg-purple-500/10 px-1.5 rounded uppercase">Drop</span>
-            )}
-          </div>
-          <p className="text-sm text-muted-foreground">
-            {set.reps} reps × {fmtWeight(set.weight)}
-          </p>
-        </div>
-        {set.pr && (
-          <span className="animate-bounce-scale-in animate-glow-ring inline-flex items-center gap-1 rounded-full bg-foreground px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary-foreground">
-            <Trophy className="h-3 w-3" />
-            {PR_LABEL[set.pr as PRKind]}
+    <div className="fixed inset-0 z-50 bg-[#0A0A0A] flex flex-col text-white animate-fade-in overflow-hidden">
+      {/* Header */}
+      <div className="px-6 pt-12 pb-4 flex items-center justify-between">
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <button className="text-white/60 hover:text-white transition-colors active:scale-95"><X className="h-6 w-6" /></button>
+          </AlertDialogTrigger>
+          <AlertDialogContent className="bg-[#1A1A1A] border-white/10 text-white rounded-3xl">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Cancel session?</AlertDialogTitle>
+              <AlertDialogDescription className="text-white/60">
+                Are you sure you want to cancel? All logged sets and progress in this session will be lost.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="border-white/10 text-white hover:bg-white/10 rounded-xl">Keep training</AlertDialogCancel>
+              <AlertDialogAction onClick={onCancel} className="bg-red-500 text-white hover:bg-red-600 rounded-xl">Discard session</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        
+        <div className="flex flex-col items-center">
+          <span className="text-xs font-semibold text-white/50 tracking-widest uppercase mb-1">
+            Exercise {currentExIndex + 1} of {session.exercises.length}
           </span>
-        )}
+          <span className="font-bold text-base">{session.templateName || "Active Workout"}</span>
+        </div>
+        
+        <button onClick={() => onFinish({ ...session, endedAt: Date.now() })} className="text-blue-500 font-bold active:scale-95">
+          Finish
+        </button>
       </div>
-    </div>
-    </SwipeToDelete>
-  );
-}
-function RestTimerOverlay({ endsAt, onDismiss }: { endsAt: number; onDismiss: () => void }) {
-  const [now, setNow] = useState(Date.now());
-  const [played, setPlayed] = useState(false);
 
-  useEffect(() => {
-    const interval = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(interval);
-  }, []);
+      <div className="flex-1 overflow-y-auto px-6 pb-32 no-scrollbar flex flex-col">
+        {/* Navigation Arrows for Exercises */}
+        <div className="flex items-center justify-between mt-6">
+          <button 
+            onClick={() => setCurrentExIndex(Math.max(0, currentExIndex - 1))}
+            disabled={currentExIndex === 0}
+            className="p-2 rounded-full bg-white/5 text-white disabled:opacity-20 active:scale-95"
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </button>
+          
+          <h1 className="text-4xl font-black tracking-tight text-center flex-1 mx-4">
+            {activeExercise.name}
+          </h1>
 
-  const remaining = Math.max(0, Math.ceil((endsAt - now) / 1000));
+          <button 
+            onClick={() => setCurrentExIndex(Math.min(session.exercises.length - 1, currentExIndex + 1))}
+            disabled={currentExIndex === session.exercises.length - 1}
+            className="p-2 rounded-full bg-white/5 text-white disabled:opacity-20 active:scale-95"
+          >
+            <ChevronRight className="h-6 w-6" />
+          </button>
+        </div>
 
-  useEffect(() => {
-    if (remaining === 0 && !played) {
-      setPlayed(true);
-      hapticMedium();
-    }
-  }, [remaining, played]);
+        {/* Muscle Tags */}
+        <div className="flex items-center justify-center gap-2 mt-6">
+          {getMuscleGroups(activeExercise.name).map(m => (
+            <span key={m} className="px-3 py-1 rounded-full bg-white/10 text-xs font-semibold text-white/80 border border-white/5">
+              {m}
+            </span>
+          ))}
+        </div>
 
-  return (
-    <button
-      onClick={onDismiss}
-      className="fixed bottom-40 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 rounded-full bg-primary text-primary-foreground px-6 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.2)] transition-all active:scale-95 animate-slide-up"
-    >
-      <Timer className="h-5 w-5 animate-pulse" />
-      <div className="flex flex-col items-start leading-none">
-        <span className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-1">Resting</span>
-        <span className="font-mono text-xl font-bold">
-          {Math.floor(remaining / 60)}:{(remaining % 60).toString().padStart(2, "0")}
-        </span>
+        {/* Reference Stats */}
+        <div className="grid grid-cols-2 gap-4 mt-8">
+          <div className="bg-[#1A1A1A] rounded-2xl p-4 flex flex-col items-center border border-white/5">
+            <span className="text-[10px] uppercase font-bold text-white/40 tracking-widest mb-1">Previous</span>
+            <span className="font-bold text-white">
+              {record ? `${fmtWeight(record.bestWeight)} × ${record.bestWeightReps}` : "--"}
+            </span>
+          </div>
+          <div className="bg-[#1A1A1A] rounded-2xl p-4 flex flex-col items-center border border-white/5">
+            <span className="text-[10px] uppercase font-bold text-white/40 tracking-widest mb-1">Suggested</span>
+            <span className="font-bold text-green-400">
+              {activeExercise.targetWeight ? `${fmtWeight(activeExercise.targetWeight)} × ${activeExercise.targetReps}` : "--"}
+            </span>
+          </div>
+        </div>
+
+        {/* Current Set Inputs */}
+        <div className="mt-12 flex-1 flex flex-col justify-center">
+          <p className="text-center font-bold text-white mb-6">
+            Set {currentSetNumber} <span className="text-white/40 font-medium">of {totalSets}</span>
+          </p>
+
+          <div className="flex gap-4">
+            <div className="flex-1 bg-[#1A1A1A] rounded-3xl p-6 border border-white/10 flex flex-col items-center justify-center shadow-lg relative overflow-hidden focus-within:border-blue-500/50 transition-colors">
+              <input 
+                type="number" 
+                value={inputWeight}
+                onChange={e => setInputWeight(e.target.value)}
+                className="w-full bg-transparent text-center text-5xl font-black text-white outline-none"
+                placeholder="0"
+              />
+              <span className="text-white/40 font-bold mt-2">kg</span>
+            </div>
+            
+            <div className="flex-1 bg-[#1A1A1A] rounded-3xl p-6 border border-white/10 flex flex-col items-center justify-center shadow-lg relative overflow-hidden focus-within:border-blue-500/50 transition-colors">
+              <input 
+                type="number" 
+                value={inputReps}
+                onChange={e => setInputReps(e.target.value)}
+                className="w-full bg-transparent text-center text-5xl font-black text-white outline-none"
+                placeholder="0"
+              />
+              <span className="text-white/40 font-bold mt-2">reps</span>
+            </div>
+          </div>
+
+          <button 
+            onClick={handleCompleteSet}
+            disabled={!inputWeight || !inputReps || isResting}
+            className="w-full mt-8 py-5 bg-[#22C55E] hover:bg-[#16A34A] text-white font-black text-xl tracking-wide rounded-[2rem] shadow-[0_0_30px_rgba(34,197,94,0.3)] transition-all active:scale-[0.98] disabled:opacity-40 disabled:scale-100 disabled:shadow-none"
+          >
+            Complete Set
+          </button>
+          
+          {/* Completed sets pill indicators */}
+          <div className="flex justify-center gap-1.5 mt-6">
+            {activeExercise.sets.map((set, i) => (
+              <div key={set.id} className={cn("h-1.5 rounded-full transition-all", set.completed ? "w-6 bg-[#22C55E]" : "w-1.5 bg-white/20")} />
+            ))}
+          </div>
+        </div>
       </div>
-      <X className="h-4 w-4 ml-2 opacity-60" />
-    </button>
-  );
-}
 
-function WarmupCountdownOverlay({ endsAt, onDismiss }: { endsAt: number; onDismiss: () => void }) {
-  const [now, setNow] = useState(Date.now());
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const nextNow = Date.now();
-      setNow(nextNow);
-      if (nextNow >= endsAt) {
-        onDismiss(); // Auto-dismiss when finished
-      }
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [endsAt, onDismiss]);
-
-  const remaining = Math.max(0, Math.ceil((endsAt - now) / 1000));
-
-  return (
-    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background/95 backdrop-blur-md p-6 text-center animate-fade-in">
-      <div className="mb-8 flex h-40 w-40 items-center justify-center rounded-full bg-foreground text-background shadow-2xl">
-        <span className="font-mono text-6xl font-extrabold">{remaining}</span>
-      </div>
-      <h2 className="mb-2 text-3xl font-black uppercase tracking-tight text-foreground">Warm Up</h2>
-      <p className="mb-12 text-muted-foreground text-lg">Get ready for your workout.</p>
+      {/* Floating Rest Timer */}
+      {isResting && (
+        <div className="absolute bottom-8 left-6 right-6 z-50">
+          <div className="bg-[#1A1A1A] border border-white/10 rounded-[2rem] p-4 flex items-center justify-between shadow-[0_20px_40px_rgba(0,0,0,0.5)]">
+            <div className="flex items-center gap-4 pl-2">
+              {/* Circular progress */}
+              <div className="relative flex h-14 w-14 items-center justify-center">
+                <svg className="absolute inset-0 h-full w-full -rotate-90" viewBox="0 0 100 100">
+                  <circle className="text-white/10 stroke-current" strokeWidth="8" cx="50" cy="50" r="40" fill="transparent"></circle>
+                  <circle 
+                    className="text-[#22C55E] stroke-current transition-all duration-1000 ease-linear" 
+                    strokeWidth="8" strokeLinecap="round" cx="50" cy="50" r="40" fill="transparent" 
+                    strokeDasharray="251.2" 
+                    strokeDashoffset={251.2 * (1 - (restRemaining / restBetweenSets))}
+                  ></circle>
+                </svg>
+                <div className="flex flex-col items-center justify-center mt-0.5">
+                  <span className="text-xs font-bold font-mono tracking-tighter">
+                    {Math.floor(restRemaining / 60)}:{String(restRemaining % 60).padStart(2, '0')}
+                  </span>
+                </div>
+              </div>
+              <div>
+                <p className="text-white font-bold">Rest</p>
+                <p className="text-white/40 text-xs">Next Set</p>
+              </div>
+            </div>
+            
+            <div className="flex gap-2 pr-1">
+              <button onClick={handleAddRest} className="px-4 py-3 bg-white/5 hover:bg-white/10 rounded-2xl text-xs font-bold text-white transition-colors">
+                +30s
+              </button>
+              <button onClick={handleSkipRest} className="px-4 py-3 bg-white/5 hover:bg-white/10 rounded-2xl text-xs font-bold text-white transition-colors">
+                Skip
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       
-      <button
-        onClick={onDismiss}
-        className="rounded-2xl border-2 border-border/50 bg-transparent px-8 py-4 font-bold text-muted-foreground transition-all active:scale-95 hover:bg-muted"
-      >
-        Skip Warmup
-      </button>
+      {/* Quick Add floating button (hidden during rest to prevent clutter) */}
+      {!isResting && (
+        <div className="absolute bottom-8 right-6">
+           <AlertDialog>
+             <AlertDialogTrigger asChild>
+                <button className="h-14 w-14 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 rounded-full flex items-center justify-center text-white shadow-lg active:scale-95 transition-all">
+                  <Plus className="h-6 w-6" />
+                </button>
+             </AlertDialogTrigger>
+             <AlertDialogContent className="bg-[#1A1A1A] border-white/10 rounded-3xl p-6">
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="text-white text-xl">Add Exercise</AlertDialogTitle>
+                </AlertDialogHeader>
+                <div className="py-4">
+                  <ExerciseNameInput
+                    suggestions={exerciseNames}
+                    value={newExerciseName}
+                    onChange={setNewExerciseName}
+                    onSubmit={() => {}}
+                    placeholder="Search exercises..."
+                  />
+                </div>
+                <AlertDialogFooter>
+                  <AlertDialogCancel className="border-white/10 text-white hover:bg-white/10 rounded-xl">Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleAddExercise} className="bg-blue-600 text-white hover:bg-blue-700 rounded-xl">Add</AlertDialogAction>
+                </AlertDialogFooter>
+             </AlertDialogContent>
+           </AlertDialog>
+        </div>
+      )}
     </div>
   );
 }

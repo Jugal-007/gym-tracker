@@ -10,33 +10,97 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as HistoryRouteImport } from './routes/history'
+import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as ProgressRouteImport } from './routes/progress'
+import { Route as WorkoutIndexRouteImport } from './routes/workout/index'
+import { Route as WorkoutActiveRouteImport } from './routes/workout/active'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HistoryRoute = HistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProgressRoute = ProgressRouteImport.update({
+  id: '/progress',
+  path: '/progress',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WorkoutIndexRoute = WorkoutIndexRouteImport.update({
+  id: '/workout/',
+  path: '/workout/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WorkoutActiveRoute = WorkoutActiveRouteImport.update({
+  id: '/workout/active',
+  path: '/workout/active',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/history': typeof HistoryRoute
+  '/profile': typeof ProfileRoute
+  '/progress': typeof ProgressRoute
+  '/workout/active': typeof WorkoutActiveRoute
+  '/workout/': typeof WorkoutIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/history': typeof HistoryRoute
+  '/profile': typeof ProfileRoute
+  '/progress': typeof ProgressRoute
+  '/workout/active': typeof WorkoutActiveRoute
+  '/workout': typeof WorkoutIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/history': typeof HistoryRoute
+  '/profile': typeof ProfileRoute
+  '/progress': typeof ProgressRoute
+  '/workout/active': typeof WorkoutActiveRoute
+  '/workout/': typeof WorkoutIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/history'
+    | '/profile'
+    | '/progress'
+    | '/workout/active'
+    | '/workout/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    '/' | '/history' | '/profile' | '/progress' | '/workout/active' | '/workout'
+  id:
+    | '__root__'
+    | '/'
+    | '/history'
+    | '/profile'
+    | '/progress'
+    | '/workout/active'
+    | '/workout/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  HistoryRoute: typeof HistoryRoute
+  ProfileRoute: typeof ProfileRoute
+  ProgressRoute: typeof ProgressRoute
+  WorkoutActiveRoute: typeof WorkoutActiveRoute
+  WorkoutIndexRoute: typeof WorkoutIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +112,51 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/history': {
+      id: '/history'
+      path: '/history'
+      fullPath: '/history'
+      preLoaderRoute: typeof HistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/progress': {
+      id: '/progress'
+      path: '/progress'
+      fullPath: '/progress'
+      preLoaderRoute: typeof ProgressRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/workout/': {
+      id: '/workout/'
+      path: '/workout'
+      fullPath: '/workout/'
+      preLoaderRoute: typeof WorkoutIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/workout/active': {
+      id: '/workout/active'
+      path: '/workout/active'
+      fullPath: '/workout/active'
+      preLoaderRoute: typeof WorkoutActiveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  HistoryRoute: HistoryRoute,
+  ProfileRoute: ProfileRoute,
+  ProgressRoute: ProgressRoute,
+  WorkoutActiveRoute: WorkoutActiveRoute,
+  WorkoutIndexRoute: WorkoutIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

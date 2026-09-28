@@ -109,6 +109,8 @@ import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { WeightUnitProvider } from "@/hooks/useWeightUnit";
 import { WorkoutSettingsProvider } from "@/hooks/useWorkoutSettings";
+import { GymProvider } from "@/hooks/useGymStore";
+import { AppShell } from "@/components/layout/AppShell";
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
@@ -119,8 +121,11 @@ function RootComponent() {
         <AuthProvider>
           <WorkoutSettingsProvider>
             <WeightUnitProvider>
-              {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-              <Outlet />
+              <GymProvider>
+                <AppShell>
+                  <Outlet />
+                </AppShell>
+              </GymProvider>
             </WeightUnitProvider>
           </WorkoutSettingsProvider>
         </AuthProvider>

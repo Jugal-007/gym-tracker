@@ -25,6 +25,7 @@ import {
 import { supabase } from "@/lib/supabase";
 import { motion } from "framer-motion";
 import { startOfMonth } from "date-fns";
+import { AthleteJourney } from "./AthleteJourney";
 
 function Avatar({ user }: { user: NonNullable<ReturnType<typeof useAuth>["user"]> }) {
   const photoUrl = user.user_metadata?.['avatar_url'] as string | undefined;
@@ -201,6 +202,10 @@ export function ProfileView({ onSignOut }: ProfileViewProps) {
           <LogOut className="h-4 w-4" />
           Sign Out
         </button>
+      </motion.div>
+
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.02 }}>
+        <AthleteJourney sessions={sessions} />
       </motion.div>
 
       {/* ── Stats Summary ── */}
