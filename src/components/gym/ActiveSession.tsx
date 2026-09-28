@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { X, Clock, ChevronLeft, ChevronRight, Check, Plus, Timer, Dumbbell } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ExerciseNameInput } from "./ExerciseNameInput";
@@ -20,6 +20,68 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useWorkoutSettings } from "@/hooks/useWorkoutSettings";
 import { createPortal } from "react-dom";
+
+/* ─── Single-digit rolling counter slot ─── */
+function DigitSlot({ digit }: { digit: string }) {
+  const prevRef = useRef(digit);
+  const [animating, setAnimating] = useState(false);
+
+  useEffect(() => {
+    let timer: any;
+    if (prevRef.current !== digit) {
+      prevRef.current = digit;
+      setAnimating(true);
+      timer = setTimeout(() => setAnimating(false), 360);
+    }
+    return () => clearTimeout(timer);
+  }, [digit]);
+
+  return (
+    <span className="relative inline-block h-[1.15em] w-[0.62em] overflow-hidden align-middle font-mono tabular-nums text-center select-none">
+      <span
+        key={digit}
+        className={cn(
+          "inline-block w-full text-center will-change-transform",
+          animating && "animate-digit-scroll",
+        )}
+      >
+        {digit}
+      </span>
+    </span>
+  );
+}
+
+function ColonSeparator() {
+  return (
+    <span className="inline-block px-[1px] font-mono select-none opacity-60 align-middle">:</span>
+  );
+}
+
+export function TimerDisplay({ ms }: { ms: number }) {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  const mStr = String(minutes).padStart(2, "0");
+  const sStr = String(seconds).padStart(2, "0");
+
+  return (
+    <span className="inline-flex items-center font-mono text-3xl font-semibold tracking-tight text-foreground tabular-nums select-none">
+      {hours > 0 && (
+        <>
+          <DigitSlot digit={String(hours)} />
+          <ColonSeparator />
+        </>
+      )}
+      <DigitSlot digit={mStr[0]!} />
+      <DigitSlot digit={mStr[1]!} />
+      <ColonSeparator />
+      <DigitSlot digit={sStr[0]!} />
+      <DigitSlot digit={sStr[1]!} />
+    </span>
+  );
+}
 
 interface ActiveSessionProps {
   session: Session;
