@@ -2,13 +2,27 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useWeightUnit, type WeightUnit } from "@/hooks/useWeightUnit";
 import { useWorkoutSettings } from "@/hooks/useWorkoutSettings";
-import { loadSessions, computeSessionVolume, loadWeeklyGoal, saveWeeklyGoal } from "@/components/gym/storage";
+import {
+  loadSessions,
+  computeSessionVolume,
+  loadWeeklyGoal,
+  saveWeeklyGoal,
+} from "@/components/gym/storage";
 import { loadTemplates } from "@/components/gym/templates";
 import { syncDown, syncUp, replaceLocalFromCloud, LAST_SYNCED_KEY } from "@/lib/sync";
 import { buildRecords } from "@/components/gym/records";
 import {
-  LogOut, RefreshCw, Download, Trash2, User as UserIcon,
-  Database, ChevronRight, CheckCircle2, Clock, CloudUpload, CloudDownload
+  LogOut,
+  RefreshCw,
+  Download,
+  Trash2,
+  User as UserIcon,
+  Database,
+  ChevronRight,
+  CheckCircle2,
+  Clock,
+  CloudUpload,
+  CloudDownload,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -28,14 +42,15 @@ import { startOfMonth } from "date-fns";
 import { AthleteJourney } from "./AthleteJourney";
 
 function Avatar({ user }: { user: NonNullable<ReturnType<typeof useAuth>["user"]> }) {
-  const photoUrl = user.user_metadata?.['avatar_url'] as string | undefined;
-  const name = (user.user_metadata?.['full_name'] as string | undefined) ?? user.email ?? "";
-  const initials = name
-    .split(" ")
-    .map((n) => n[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase() || "?";
+  const photoUrl = user.user_metadata?.["avatar_url"] as string | undefined;
+  const name = (user.user_metadata?.["full_name"] as string | undefined) ?? user.email ?? "";
+  const initials =
+    name
+      .split(" ")
+      .map((n) => n[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase() || "?";
 
   if (photoUrl) {
     return (
@@ -58,7 +73,9 @@ function Avatar({ user }: { user: NonNullable<ReturnType<typeof useAuth>["user"]
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
     <div className="flex flex-col gap-0.5 rounded-2xl border border-border/50 bg-card/60 p-4 backdrop-blur-sm">
-      <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</span>
+      <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+        {label}
+      </span>
       <span className="text-2xl font-extrabold text-foreground tabular-nums">{value}</span>
       {sub && <span className="text-xs text-muted-foreground">{sub}</span>}
     </div>
@@ -72,7 +89,8 @@ interface ProfileViewProps {
 export function ProfileView({ onSignOut }: ProfileViewProps) {
   const { user, signOut } = useAuth();
   const { unit, setUnit, format } = useWeightUnit();
-  const { warmupDuration, restBetweenSets, restBetweenExercises, updateSettings } = useWorkoutSettings();
+  const { warmupDuration, restBetweenSets, restBetweenExercises, updateSettings } =
+    useWorkoutSettings();
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSynced, setLastSynced] = useState<string | null>(null);
   const [weeklyGoal, setWeeklyGoalState] = useState(loadWeeklyGoal());
@@ -151,7 +169,7 @@ export function ProfileView({ onSignOut }: ProfileViewProps) {
   };
 
   const displayName =
-    (user?.user_metadata?.['full_name'] as string | undefined) ??
+    (user?.user_metadata?.["full_name"] as string | undefined) ??
     user?.email?.split("@")[0] ??
     "Athlete";
 
@@ -204,8 +222,12 @@ export function ProfileView({ onSignOut }: ProfileViewProps) {
         </button>
       </motion.div>
 
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.02 }}>
-        <AthleteJourney sessions={sessions} />
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.02 }}
+      >
+        <AthleteJourney sessions={sessions} compact />
       </motion.div>
 
       {/* ── Stats Summary ── */}
@@ -235,7 +257,6 @@ export function ProfileView({ onSignOut }: ProfileViewProps) {
           Preferences
         </h2>
         <div className="space-y-2 rounded-3xl border border-border/30 bg-card/60 p-4 backdrop-blur-[20px] shadow-sm">
-
           {/* Weight unit toggle */}
           <div className="flex items-center justify-between py-2">
             <div>
@@ -251,7 +272,7 @@ export function ProfileView({ onSignOut }: ProfileViewProps) {
                     "rounded-lg px-4 py-1.5 text-sm font-bold transition-all",
                     unit === u
                       ? "bg-foreground text-background shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
+                      : "text-muted-foreground hover:text-foreground",
                   )}
                 >
                   {u}
@@ -316,7 +337,9 @@ export function ProfileView({ onSignOut }: ProfileViewProps) {
                 {warmupDuration}
               </span>
               <button
-                onClick={() => updateSettings({ warmupDuration: Math.min(300, warmupDuration + 15) })}
+                onClick={() =>
+                  updateSettings({ warmupDuration: Math.min(300, warmupDuration + 15) })
+                }
                 className="flex h-8 w-8 items-center justify-center rounded-xl bg-muted/60 text-lg font-bold text-foreground transition-colors hover:bg-muted active:scale-90"
               >
                 +
@@ -334,7 +357,9 @@ export function ProfileView({ onSignOut }: ProfileViewProps) {
             </div>
             <div className="flex items-center gap-3">
               <button
-                onClick={() => updateSettings({ restBetweenSets: Math.max(0, restBetweenSets - 15) })}
+                onClick={() =>
+                  updateSettings({ restBetweenSets: Math.max(0, restBetweenSets - 15) })
+                }
                 className="flex h-8 w-8 items-center justify-center rounded-xl bg-muted/60 text-lg font-bold text-foreground transition-colors hover:bg-muted active:scale-90"
               >
                 −
@@ -343,7 +368,9 @@ export function ProfileView({ onSignOut }: ProfileViewProps) {
                 {restBetweenSets}
               </span>
               <button
-                onClick={() => updateSettings({ restBetweenSets: Math.min(300, restBetweenSets + 15) })}
+                onClick={() =>
+                  updateSettings({ restBetweenSets: Math.min(300, restBetweenSets + 15) })
+                }
                 className="flex h-8 w-8 items-center justify-center rounded-xl bg-muted/60 text-lg font-bold text-foreground transition-colors hover:bg-muted active:scale-90"
               >
                 +
@@ -361,7 +388,9 @@ export function ProfileView({ onSignOut }: ProfileViewProps) {
             </div>
             <div className="flex items-center gap-3">
               <button
-                onClick={() => updateSettings({ restBetweenExercises: Math.max(0, restBetweenExercises - 30) })}
+                onClick={() =>
+                  updateSettings({ restBetweenExercises: Math.max(0, restBetweenExercises - 30) })
+                }
                 className="flex h-8 w-8 items-center justify-center rounded-xl bg-muted/60 text-lg font-bold text-foreground transition-colors hover:bg-muted active:scale-90"
               >
                 −
@@ -370,7 +399,9 @@ export function ProfileView({ onSignOut }: ProfileViewProps) {
                 {restBetweenExercises}
               </span>
               <button
-                onClick={() => updateSettings({ restBetweenExercises: Math.min(600, restBetweenExercises + 30) })}
+                onClick={() =>
+                  updateSettings({ restBetweenExercises: Math.min(600, restBetweenExercises + 30) })
+                }
                 className="flex h-8 w-8 items-center justify-center rounded-xl bg-muted/60 text-lg font-bold text-foreground transition-colors hover:bg-muted active:scale-90"
               >
                 +
@@ -390,7 +421,6 @@ export function ProfileView({ onSignOut }: ProfileViewProps) {
           Data & Backup
         </h2>
         <div className="space-y-2 rounded-3xl border border-border/30 bg-card/60 p-4 backdrop-blur-[20px] shadow-sm">
-
           {/* Upload to Cloud */}
           <div className="flex items-center justify-between py-2">
             <div className="flex items-center gap-3">
@@ -431,7 +461,8 @@ export function ProfileView({ onSignOut }: ProfileViewProps) {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Overwrite local data?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This will replace all workouts on this device with the data currently stored in your cloud account. Any unsynced local changes will be lost.
+                    This will replace all workouts on this device with the data currently stored in
+                    your cloud account. Any unsynced local changes will be lost.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -458,7 +489,9 @@ export function ProfileView({ onSignOut }: ProfileViewProps) {
               <Download className="h-5 w-5 text-muted-foreground" />
               <div>
                 <p className="text-sm font-semibold text-foreground">Export Data</p>
-                <p className="text-xs text-muted-foreground">Download all sessions & routines as JSON</p>
+                <p className="text-xs text-muted-foreground">
+                  Download all sessions & routines as JSON
+                </p>
               </div>
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -505,7 +538,8 @@ export function ProfileView({ onSignOut }: ProfileViewProps) {
               <AlertDialogHeader>
                 <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This will permanently delete your account and all your workout data from our servers. This action cannot be undone.
+                  This will permanently delete your account and all your workout data from our
+                  servers. This action cannot be undone.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>

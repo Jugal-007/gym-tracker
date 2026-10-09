@@ -1,112 +1,165 @@
-import { useMemo } from "react";
+import { Link } from "@tanstack/react-router";
+import { Award, ChevronRight, Flame, Lock, Target } from "lucide-react";
+import { useMemo, type ReactNode } from "react";
 import { computeGamification } from "@/lib/gamification";
-import { Flame, Trophy, Target } from "lucide-react";
-import type { Session } from "@/components/gym/types";
+import { computeSessionVolume, loadWeeklyGoal } from "./storage";
+import type { Session } from "./types";
 
-export function AthleteJourney({ sessions }: { sessions: Session[] }) {
-  const { xp, currentStreak, longestStreak, achievements } = useMemo(() => computeGamification(sessions), [sessions]);
-
+export function AthleteJourney({
+  sessions,
+  compact = false,
+}: {
+  sessions: Session[];
+  compact?: boolean;
+}) {
+  const { xp, currentStreak, longestStreak, achievements } = useMemo(
+    () => computeGamification(sessions),
+    [sessions],
+  );
+  const totalVolume = sessions.reduce((sum, session) => sum + computeSessionVolume(session), 0);
+  const goal = loadWeeklyGoal();
+  const start = new Date();
+  start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
+  start.setHours(0, 0, 0, 0);
+  const weeklySessions = sessions.filter(
+    (session) => session.endedAt && session.startedAt >= start.getTime(),
+  ).length;
+  const unlocked = achievements.filter((achievement) => achievement.unlocked);
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-foreground">Athlete Journey</h2>
-
-      {/* Level Card */}
-      <div className="relative overflow-hidden rounded-[2rem] border border-border/10 p-6 shadow-lg">
-        {/* Complex Gradient Background */}
-        <div className="absolute inset-0 bg-white dark:bg-[#0A0A0A]" />
-        <div className="absolute -inset-[100%] opacity-15 dark:opacity-50">
-          <div className="absolute top-[20%] left-[20%] h-[60%] w-[60%] rounded-full bg-gradient-to-r from-orange-500 via-pink-500 to-blue-500 blur-[60px] transform rotate-12" />
-        </div>
-        
-        <div className="relative z-10 space-y-4">
-          <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-background/50 backdrop-blur-sm ring-1 ring-border/50 shadow-inner">
-              <Flame className="h-8 w-8 text-orange-500" fill="currentColor" />
-            </div>
-            <div>
-              <h3 className="text-3xl font-black text-foreground tracking-tight">Level {xp.level}</h3>
-              <p className="text-sm font-semibold text-muted-foreground mt-0.5">
-                {xp.totalXP.toLocaleString()} / {xp.nextLevelXP.toLocaleString()} XP
-              </p>
-            </div>
-          </div>
-          
-          <div className="pt-2">
-            <div className="flex items-center gap-3">
-              <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted shadow-inner">
-                <div 
-                  className="h-full rounded-full bg-foreground transition-all duration-1000 ease-out"
-                  style={{ width: `${xp.progress}%` }}
-                />
-              </div>
-              <span className="text-xs font-bold text-foreground">{Math.round(xp.progress)}%</span>
-            </div>
-            <p className="mt-2 text-xs font-medium text-muted-foreground">
-              {xp.nextLevelXP - xp.totalXP} XP to Level {xp.level + 1}
+    <div className="space-y-5">
+      <section className="relative overflow-hidden rounded-[1.75rem] border border-primary/25 bg-[linear-gradient(135deg,oklch(0.2_0.06_266),oklch(0.25_0.1_280)_55%,oklch(0.19_0.04_255))] p-5 text-white">
+        <div className="absolute -right-10 -top-12 h-40 w-40 rounded-full bg-fuchsia-400/35 blur-3xl" />
+        <div className="relative flex items-center gap-4">
+          <span className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-amber-300/15 text-amber-300 ring-1 ring-white/20">
+            <Flame className="h-8 w-8" fill="currentColor" />
+          </span>
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-100/70">
+              Athlete level
+            </p>
+            <h2 className="mt-1 text-3xl font-extrabold">Level {xp.level}</h2>
+            <p className="text-sm text-blue-100/80">
+              {totalVolume.toLocaleString()} total volume logged
             </p>
           </div>
         </div>
-      </div>
-
-      {/* Streaks (Pill cards side-by-side) */}
+        <div className="relative mt-5">
+          <div className="mb-2 flex justify-between text-xs font-semibold text-blue-100">
+            <span>{xp.totalXP.toLocaleString()} XP</span>
+            <span>{xp.nextLevelXP.toLocaleString()} XP</span>
+          </div>
+          <div className="h-2.5 overflow-hidden rounded-full bg-black/20">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-sky-300 to-fuchsia-300"
+              style={{ width: `${xp.progress}%` }}
+            />
+          </div>
+          <p className="mt-2 text-xs text-blue-100/75">
+            {Math.max(0, xp.nextLevelXP - xp.totalXP).toLocaleString()} XP to Level {xp.level + 1}
+          </p>
+        </div>
+      </section>
       <div className="grid grid-cols-2 gap-3">
-        <div className="flex items-center gap-3 rounded-2xl border border-border/50 bg-card p-4 shadow-sm">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-orange-500/10 text-orange-500">
-            <Flame className="h-5 w-5" fill="currentColor" />
-          </div>
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Current Streak</p>
-            <p className="text-sm font-bold text-foreground">{currentStreak} days</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 rounded-2xl border border-border/50 bg-card p-4 shadow-sm">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500">
-            <Target className="h-5 w-5" />
-          </div>
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Longest</p>
-            <p className="text-sm font-bold text-foreground">{longestStreak} days</p>
-          </div>
-        </div>
+        <Metric
+          icon={<Flame className="h-5 w-5" />}
+          label="Current streak"
+          value={`${currentStreak} day${currentStreak === 1 ? "" : "s"}`}
+          tone="text-orange-500 bg-orange-500/10"
+        />
+        <Metric
+          icon={<Target className="h-5 w-5" />}
+          label="Longest streak"
+          value={`${longestStreak} day${longestStreak === 1 ? "" : "s"}`}
+          tone="text-emerald-500 bg-emerald-500/10"
+        />
       </div>
-
-      {/* Active Challenges */}
-      <div>
-        <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">Active Challenges</h3>
-        <div className="space-y-3">
-          {/* Weekly Consistency */}
-          <div className="flex items-center gap-4 rounded-2xl border border-border/50 bg-card p-4 shadow-sm">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-500/10 text-blue-500">
-              <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-            </div>
-            <div className="flex-1 min-w-0">
-              <h4 className="text-sm font-bold text-foreground">Weekly Consistency</h4>
-              <p className="text-xs font-medium text-muted-foreground mt-0.5">3 / 4 workouts</p>
-              <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted/60">
-                <div className="h-full w-3/4 rounded-full bg-blue-500" />
+      {!compact && (
+        <>
+          <section className="rounded-[1.5rem] border border-border bg-card p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                  Weekly consistency
+                </p>
+                <p className="mt-1 text-lg font-extrabold text-foreground">
+                  {weeklySessions} of {goal} workouts
+                </p>
               </div>
+              <span className="text-sm font-bold text-primary">
+                {Math.min(100, Math.round((weeklySessions / goal) * 100))}%
+              </span>
             </div>
-            <div className="shrink-0 text-muted-foreground">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-primary"
+                style={{ width: `${Math.min(100, (weeklySessions / goal) * 100)}%` }}
+              />
             </div>
-          </div>
-          
-          {/* Strength Challenge */}
-          <div className="flex items-center gap-4 rounded-2xl border border-border/50 bg-card p-4 shadow-sm">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500">
-              <Dumbbell className="h-5 w-5" />
+          </section>
+          <section>
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-base font-bold text-foreground">Achievements</h3>
+              <span className="text-xs font-semibold text-muted-foreground">
+                {unlocked.length}/{achievements.length} earned
+              </span>
             </div>
-            <div className="flex-1 min-w-0">
-              <h4 className="text-sm font-bold text-foreground">Strength Challenge</h4>
-              <p className="text-xs font-medium text-muted-foreground mt-0.5">Beat your Bench Press e1RM</p>
-              <p className="text-[10px] font-bold text-emerald-500 mt-1">+2.5 kg needed</p>
+            <div className="space-y-2">
+              {achievements.map((achievement) => (
+                <div
+                  key={achievement.id}
+                  className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3.5"
+                >
+                  <span
+                    className={`grid h-10 w-10 place-items-center rounded-xl ${achievement.unlocked ? "bg-amber-400/15 text-amber-500" : "bg-muted text-muted-foreground"}`}
+                  >
+                    {achievement.unlocked ? (
+                      <Award className="h-5 w-5" />
+                    ) : (
+                      <Lock className="h-4 w-4" />
+                    )}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-bold text-foreground">
+                      {achievement.name}
+                    </span>
+                    <span className="block text-xs text-muted-foreground">
+                      {achievement.description}
+                    </span>
+                  </span>
+                </div>
+              ))}
             </div>
-            <div className="shrink-0 text-muted-foreground">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><polyline points="9 18 15 12 9 6"></polyline></svg>
-            </div>
-          </div>
-        </div>
-      </div>
+          </section>
+        </>
+      )}{" "}
+      {compact && (
+        <Link
+          to="/journey"
+          className="flex items-center justify-between rounded-2xl border border-border bg-card p-4 text-sm font-bold text-foreground"
+        >
+          View full Athlete Journey <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        </Link>
+      )}
+    </div>
+  );
+}
+
+function Metric({
+  icon,
+  label,
+  value,
+  tone,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string;
+  tone: string;
+}) {
+  return (
+    <div className="rounded-[1.35rem] border border-border bg-card p-4">
+      <span className={`grid h-9 w-9 place-items-center rounded-xl ${tone}`}>{icon}</span>
+      <p className="mt-3 text-[11px] font-semibold text-muted-foreground">{label}</p>
+      <p className="mt-1 text-sm font-extrabold text-foreground">{value}</p>
     </div>
   );
 }

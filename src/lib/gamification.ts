@@ -15,7 +15,7 @@ export interface Achievement {
   name: string;
   description: string;
   unlocked: boolean;
-  unlockedAt?: number;
+  unlockedAt?: number | undefined;
 }
 
 const XP_PER_WORKOUT = 100;
@@ -40,14 +40,19 @@ function calculateLevel(xp: number): XPDetails {
   };
 }
 
-export function computeGamification(sessions: Session[]): { xp: XPDetails; achievements: Achievement[]; currentStreak: number; longestStreak: number } {
+export function computeGamification(sessions: Session[]): {
+  xp: XPDetails;
+  achievements: Achievement[];
+  currentStreak: number;
+  longestStreak: number;
+} {
   let xp = 0;
   let prCount = 0;
-  
+
   // XP from workouts
   // Filter valid completed workouts (must have at least one completed set)
-  const validSessions = sessions.filter(s => 
-    s.endedAt && s.exercises.some(ex => ex.sets.some(set => set.completed))
+  const validSessions = sessions.filter(
+    (s) => s.endedAt && s.exercises.some((ex) => ex.sets.some((set) => set.completed)),
   );
 
   xp += validSessions.length * XP_PER_WORKOUT;
@@ -59,28 +64,32 @@ export function computeGamification(sessions: Session[]): { xp: XPDetails; achie
 
   // Calculate Streaks
   // A streak is counted by unique days trained.
-  const daysTrained = [...new Set(validSessions.map(s => {
-    const d = new Date(s.startedAt);
-    d.setHours(0,0,0,0);
-    return d.getTime();
-  }))].sort((a,b) => b - a); // newest first
+  const daysTrained = [
+    ...new Set(
+      validSessions.map((s) => {
+        const d = new Date(s.startedAt);
+        d.setHours(0, 0, 0, 0);
+        return d.getTime();
+      }),
+    ),
+  ].sort((a, b) => b - a); // newest first
 
   let currentStreak = 0;
   let longestStreak = 0;
   let tempStreak = 0;
-  
+
   const today = new Date();
-  today.setHours(0,0,0,0);
-  
+  today.setHours(0, 0, 0, 0);
+
   // Check if today or yesterday is the start of the current streak
   let previousDay = today.getTime();
   const ONE_DAY = 24 * 60 * 60 * 1000;
 
   // Calculate current streak
   for (let i = 0; i < daysTrained.length; i++) {
-    const day = daysTrained[i];
+    const day = daysTrained[i]!;
     const diff = previousDay - day;
-    
+
     if (diff === 0 || diff === ONE_DAY) {
       currentStreak++;
       previousDay = day;
@@ -97,7 +106,7 @@ export function computeGamification(sessions: Session[]): { xp: XPDetails; achie
     let currentLongest = 1;
     tempStreak = 1;
     for (let i = 1; i < daysTrained.length; i++) {
-      const diff = daysTrained[i-1] - daysTrained[i];
+      const diff = daysTrained[i - 1]! - daysTrained[i]!;
       if (diff === ONE_DAY) {
         tempStreak++;
         if (tempStreak > currentLongest) currentLongest = tempStreak;
@@ -115,7 +124,8 @@ export function computeGamification(sessions: Session[]): { xp: XPDetails; achie
       name: "First Step",
       description: "Complete your first workout.",
       unlocked: validSessions.length >= 1,
-      unlockedAt: validSessions.length >= 1 ? validSessions[validSessions.length - 1].endedAt! : undefined
+      unlockedAt:
+        validSessions.length >= 1 ? validSessions[validSessions.length - 1]!.endedAt! : undefined,
     },
     {
       id: "workout_10",
@@ -140,13 +150,13 @@ export function computeGamification(sessions: Session[]): { xp: XPDetails; achie
       name: "Weekly Warrior",
       description: "Achieve a 7-day workout streak.",
       unlocked: longestStreak >= 7,
-    }
+    },
   ];
 
   return {
     xp: calculateLevel(xp),
     achievements,
     currentStreak,
-    longestStreak
+    longestStreak,
   };
 }
