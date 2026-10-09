@@ -90,11 +90,11 @@ export function Templates({ templates, exerciseNames, sessions = [], onStart, on
 
   return (
     <div className="mx-auto max-w-xl space-y-4 animate-fade-in">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
           Templates ({templates.length})
         </h2>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {recoverable.length > 0 && templates.length > 0 && (
             <button
               onClick={handleRecover}
