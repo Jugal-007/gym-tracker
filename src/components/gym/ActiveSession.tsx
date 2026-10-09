@@ -57,7 +57,7 @@ function ColonSeparator() {
   );
 }
 
-export function TimerDisplay({ ms }: { ms: number }) {
+export function TimerDisplay({ ms, className }: { ms: number; className?: string }) {
   const totalSeconds = Math.max(0, Math.floor(ms / 1000));
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -67,7 +67,7 @@ export function TimerDisplay({ ms }: { ms: number }) {
   const sStr = String(seconds).padStart(2, "0");
 
   return (
-    <span className="inline-flex items-center font-mono text-3xl font-semibold tracking-tight text-foreground tabular-nums select-none">
+    <span className={cn("inline-flex items-center font-mono text-3xl font-semibold tracking-tight tabular-nums select-none", className || "text-foreground")}>
       {hours > 0 && (
         <>
           <DigitSlot digit={String(hours)} />
@@ -324,32 +324,47 @@ export function ActiveSession({
         </AlertDialog>
 
         <div className="flex flex-col items-center">
-          <span className="text-xs font-semibold text-muted-foreground tracking-widest uppercase mb-1">
+          <span className="text-[10px] font-bold text-muted-foreground tracking-[0.2em] uppercase mb-1">
             Exercise {currentExIndex + 1} of {session.exercises.length}
           </span>
-          <span className="font-bold text-base">{session.templateName || "Active Workout"}</span>
+          <span className="font-extrabold text-sm">{session.templateName || "Active Workout"}</span>
         </div>
 
         <button
           onClick={() => onFinish({ ...session, endedAt: Date.now() })}
-          className="text-blue-600 dark:text-blue-500 font-bold active:scale-95"
+          className="text-blue-500 font-bold active:scale-95 text-sm"
         >
           Finish
         </button>
       </div>
 
+      {/* Timer Pill */}
+      <div className="flex justify-center mb-2 px-6">
+        <div className="flex items-center gap-4 bg-card/40 border border-green-500/20 rounded-[2rem] px-5 py-2 shadow-[0_4px_24px_-8px_rgba(34,197,94,0.15)] backdrop-blur-md">
+          <Timer className="h-6 w-6 text-[#22C55E]" strokeWidth={2.5} />
+          <div className="w-[1px] h-8 bg-border/50"></div>
+          <div className="flex flex-col">
+            <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold mb-0.5">Workout Time</span>
+            <div className="text-foreground leading-none flex items-center -mt-0.5">
+              <TimerDisplay ms={elapsed} className="text-[1.35rem]" />
+            </div>
+          </div>
+          <div className="h-2 w-2 rounded-full bg-[#22C55E] animate-pulse ml-2 shadow-[0_0_8px_rgba(34,197,94,0.8)]"></div>
+        </div>
+      </div>
+
       <div className="flex-1 overflow-y-auto px-6 pb-32 no-scrollbar flex flex-col">
         {/* Navigation Arrows for Exercises */}
-        <div className="flex items-center justify-between mt-6">
+        <div className="flex items-center justify-between mt-8">
           <button
             onClick={() => setCurrentExIndex(Math.max(0, currentExIndex - 1))}
             disabled={currentExIndex === 0}
-            className="p-2 rounded-full bg-foreground/5 text-foreground disabled:opacity-20 active:scale-95"
+            className="p-3 rounded-full bg-card border border-border/50 text-muted-foreground hover:text-foreground disabled:opacity-20 active:scale-95 shadow-sm"
           >
-            <ChevronLeft className="h-6 w-6" />
+            <ChevronLeft className="h-5 w-5" />
           </button>
 
-          <h1 className="text-4xl font-black tracking-tight text-center flex-1 mx-4">
+          <h1 className="text-[2rem] leading-tight font-black tracking-tight text-center flex-1 mx-4">
             {activeExercise.name}
           </h1>
 
@@ -358,9 +373,9 @@ export function ActiveSession({
               setCurrentExIndex(Math.min(session.exercises.length - 1, currentExIndex + 1))
             }
             disabled={currentExIndex === session.exercises.length - 1}
-            className="p-2 rounded-full bg-foreground/5 text-foreground disabled:opacity-20 active:scale-95"
+            className="p-3 rounded-full bg-card border border-border/50 text-muted-foreground hover:text-foreground disabled:opacity-20 active:scale-95 shadow-sm"
           >
-            <ChevronRight className="h-6 w-6" />
+            <ChevronRight className="h-5 w-5" />
           </button>
         </div>
 
@@ -400,39 +415,39 @@ export function ActiveSession({
 
         {/* Current Set Inputs */}
         <div className="mt-12 flex-1 flex flex-col justify-center">
-          <p className="text-center font-bold text-foreground mb-6">
+          <p className="text-center font-bold text-foreground mb-4">
             Set {currentSetNumber}{" "}
             <span className="text-muted-foreground font-medium">of {totalSets}</span>
           </p>
 
           <div className="flex gap-4">
-            <div className="flex-1 bg-card rounded-3xl p-6 border border-border/50 flex flex-col items-center justify-center shadow-md relative overflow-hidden focus-within:border-blue-500/50 transition-colors">
+            <div className="flex-1 bg-card rounded-[2rem] p-8 flex flex-col items-center justify-center shadow-[0_8px_30px_rgba(0,0,0,0.12)] relative overflow-hidden transition-colors">
               <input
                 type="number"
                 value={inputWeight}
                 onChange={(e) => setInputWeight(e.target.value)}
-                className="w-full bg-transparent text-center text-5xl font-black text-foreground outline-none"
+                className="w-full bg-transparent text-center text-[4rem] leading-none font-black text-foreground outline-none tracking-tighter"
                 placeholder="0"
               />
-              <span className="text-muted-foreground font-bold mt-2">{unit}</span>
+              <span className="text-muted-foreground font-bold mt-2 text-sm">{unit}</span>
             </div>
 
-            <div className="flex-1 bg-card rounded-3xl p-6 border border-border/50 flex flex-col items-center justify-center shadow-md relative overflow-hidden focus-within:border-blue-500/50 transition-colors">
+            <div className="flex-1 bg-card rounded-[2rem] p-8 flex flex-col items-center justify-center shadow-[0_8px_30px_rgba(0,0,0,0.12)] relative overflow-hidden transition-colors">
               <input
                 type="number"
                 value={inputReps}
                 onChange={(e) => setInputReps(e.target.value)}
-                className="w-full bg-transparent text-center text-5xl font-black text-foreground outline-none"
+                className="w-full bg-transparent text-center text-[4rem] leading-none font-black text-foreground outline-none tracking-tighter"
                 placeholder="0"
               />
-              <span className="text-muted-foreground font-bold mt-2">reps</span>
+              <span className="text-muted-foreground font-bold mt-2 text-sm">reps</span>
             </div>
           </div>
 
           <button
             onClick={handleCompleteSet}
             disabled={!inputWeight || !inputReps || isResting}
-            className="w-full mt-8 py-5 bg-[#22C55E] hover:bg-[#16A34A] text-white font-black text-xl tracking-wide rounded-[2rem] shadow-[0_0_30px_rgba(34,197,94,0.3)] transition-all active:scale-[0.98] disabled:opacity-40 disabled:scale-100 disabled:shadow-none"
+            className="w-full mt-10 py-5 bg-[#22C55E] hover:bg-[#16A34A] text-[#052E16] font-black text-xl tracking-wide rounded-[2rem] shadow-[0_0_40px_rgba(34,197,94,0.3)] transition-all active:scale-[0.98] disabled:opacity-40 disabled:scale-100 disabled:shadow-none"
           >
             Complete Set
           </button>
