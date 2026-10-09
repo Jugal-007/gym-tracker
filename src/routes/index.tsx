@@ -1,5 +1,5 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ArrowRight, Dumbbell, Sparkles, Trophy } from "lucide-react";
+import { ArrowRight, Dumbbell, Sparkles, Trophy, User as UserIcon, Clock, Activity, CalendarDays } from "lucide-react";
 import { useMemo } from "react";
 import { flushSync } from "react-dom";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -93,74 +93,83 @@ function Home() {
   }
 
   return (
-    <div className="space-y-7 pb-5">
-      <section className="flex items-start justify-between pt-2">
+    <div className="space-y-8 pb-10">
+      <section className="flex items-start justify-between pt-4">
         <div>
-          <p className="text-sm font-medium text-muted-foreground">
+          <p className="text-sm font-semibold text-muted-foreground">
             {now.getHours() < 12
-              ? "Good morning"
+              ? "Good morning,"
               : now.getHours() < 18
-                ? "Good afternoon"
-                : "Good evening"}
+                ? "Good afternoon,"
+                : "Good evening,"}
           </p>
-          <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-foreground">{name}</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
+            {name} <span className="text-xl">👋</span>
+          </h1>
         </div>
         <Link
-          to="/journey"
-          className="grid h-11 w-11 place-items-center rounded-2xl border border-amber-400/25 bg-amber-400/10 text-amber-500 transition-transform active:scale-95"
-          aria-label="Open Athlete Journey"
+          to="/profile"
+          className="h-12 w-12 rounded-full overflow-hidden border-2 border-border/50 bg-card flex items-center justify-center text-primary transition-transform active:scale-95"
+          aria-label="Profile"
         >
-          <Trophy className="h-5 w-5" />
+          {user?.user_metadata?.avatar_url ? (
+            <img src={user.user_metadata.avatar_url} alt={name} className="h-full w-full object-cover" />
+          ) : (
+            <UserIcon className="h-6 w-6" />
+          )}
         </Link>
       </section>
-      <section className="relative overflow-hidden rounded-[1.75rem] border border-primary/20 bg-[linear-gradient(135deg,oklch(0.18_0.05_265),oklch(0.26_0.09_275)_55%,oklch(0.21_0.035_260))] p-6 text-white shadow-[0_22px_45px_-28px_rgba(33,91,255,0.9)] dark:bg-[linear-gradient(135deg,oklch(0.21_0.07_270),oklch(0.27_0.11_275)_55%,oklch(0.17_0.04_258))]">
-        <div className="absolute -right-12 -top-16 h-44 w-44 rounded-full bg-fuchsia-400/30 blur-3xl" />
-        <div className="relative">
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-100/75">
-            {activeSession ? "Workout in progress" : "Today’s workout"}
+
+      {/* Today's Workout Card */}
+      <section className="relative overflow-hidden rounded-[2rem] border border-border/30 bg-card p-6 shadow-lg">
+        {/* Abstract glowing background */}
+        <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-fuchsia-500/10 blur-[80px]" />
+        <div className="absolute -left-10 bottom-0 h-40 w-40 rounded-full bg-green-500/10 blur-[60px]" />
+        
+        <div className="relative z-10">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+            {activeSession ? "Workout in progress" : "Today's Workout"}
           </p>
-          <h2 className="mt-2 text-3xl font-extrabold tracking-tight">
+          <h2 className="mt-1 text-3xl font-extrabold tracking-tight text-foreground">
             {activeSession?.templateName || suggestedTemplate?.name || "Build your session"}
           </h2>
-          <p className="mt-2 text-sm text-blue-100/80">
+          <p className="mt-2 text-sm font-medium text-muted-foreground flex items-center gap-1.5">
             {activeSession
-              ? `${activeSession.exercises.length} exercises in this session`
+              ? <><Activity className="h-4 w-4"/> {activeSession.exercises.length} exercises</>
               : suggestedTemplate
-                ? `${suggestedTemplate.exercises.length} exercises ready to go`
+                ? <><Dumbbell className="h-4 w-4"/> {suggestedTemplate.exercises.length} exercises <span className="opacity-50 mx-1">•</span> ~55 min</>
                 : "Start with an exercise and make it yours."}
           </p>
           <button
             onClick={activeSession ? () => navigate({ to: "/workout/active" }) : beginTemplate}
-            className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3.5 text-sm font-bold text-slate-900 transition-transform active:scale-[0.98]"
+            className="mt-8 flex w-full items-center justify-center gap-2 rounded-full bg-[#22C55E] px-4 py-4 text-base font-black text-[#052E16] transition-transform active:scale-[0.98] shadow-[0_0_30px_rgba(34,197,94,0.2)] hover:bg-[#16A34A]"
           >
-            <Dumbbell className="h-4 w-4" />{" "}
             {activeSession
-              ? "Resume workout"
+              ? "Resume Workout"
               : suggestedTemplate
-                ? "Start workout"
-                : "Start empty workout"}
+                ? "Start Workout"
+                : "Start Empty Workout"}
           </button>
         </div>
       </section>
+
+      {/* Weekly Progress */}
       <section>
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-base font-bold text-foreground">This week</h2>
-          <span className="text-xs font-semibold text-muted-foreground">
-            Goal: {weeklyGoal} workouts
-          </span>
+          <h2 className="text-lg font-bold text-foreground">Weekly Progress</h2>
         </div>
-        <div className="flex rounded-[1.5rem] border border-border bg-card px-3 py-4 shadow-sm">
+        <div className="flex justify-between px-2">
           <Ring
             value={(thisWeek.length / weeklyGoal) * 100}
             label="Workouts"
             detail={`${thisWeek.length}/${weeklyGoal}`}
-            color="text-primary"
+            color="text-[#22C55E]"
           />
           <Ring
             value={weeklyVolume ? 100 : 0}
             label="Volume"
             detail={weeklyVolume ? format(weeklyVolume).replace(/\s/g, "") : "—"}
-            color="text-emerald-500"
+            color="text-amber-500"
           />
           <Ring
             value={completed.length ? Math.min(100, (thisWeek.length / completed.length) * 100) : 0}
@@ -168,46 +177,55 @@ function Home() {
             detail={
               completed.length ? `${Math.round((thisWeek.length / completed.length) * 100)}%` : "—"
             }
-            color="text-amber-500"
+            color="text-cyan-500"
           />
         </div>
       </section>
-      <Link
-        to="/journey"
-        className="flex items-center gap-4 rounded-[1.5rem] border border-border bg-card p-4 shadow-sm transition-colors hover:bg-accent"
-      >
-        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-primary/10 text-primary">
-          <Sparkles className="h-5 w-5" />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-sm font-bold text-foreground">Athlete Journey</span>
-          <span className="block truncate text-xs text-muted-foreground">
-            Levels, earned milestones, and training streaks.
-          </span>
-        </span>
-        <ArrowRight className="h-5 w-5 text-muted-foreground" />
-      </Link>
-      <section className="rounded-[1.5rem] border border-border bg-card p-5 shadow-sm">
-        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
-          Personal best
-        </p>
-        {latestRecord ? (
-          <>
-            <p className="mt-2 text-xl font-extrabold text-foreground">{latestRecord.name}</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {format(latestRecord.bestWeight)} × {latestRecord.bestWeightReps} · estimated 1RM{" "}
-              {format(latestRecord.bestE1rm)}
-            </p>
-          </>
-        ) : (
-          <>
-            <p className="mt-2 text-lg font-bold text-foreground">Your first record starts here.</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Finish a workout to unlock strength history.
-            </p>
-          </>
-        )}
-      </section>
+
+      {/* Recent Workout */}
+      {completed.length > 0 && (
+        <section>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-bold text-foreground">Recent Workout</h2>
+          </div>
+          <Link
+            to="/history"
+            className="block rounded-[2rem] border border-border/50 bg-card p-5 shadow-sm transition-colors hover:bg-accent/50"
+          >
+            <div className="flex justify-between items-start">
+              <div>
+                <h3 className="text-xl font-extrabold text-foreground">{completed[0].templateName || "Workout"}</h3>
+                <p className="mt-1 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                  <CalendarDays className="h-3.5 w-3.5" /> 
+                  {new Date(completed[0].startedAt).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}
+                  <span className="opacity-50">•</span>
+                  {completed[0].exercises.length} exercises
+                </p>
+              </div>
+              <div className="grid h-10 w-10 place-items-center rounded-full bg-foreground/5 text-foreground">
+                <ArrowRight className="h-5 w-5" />
+              </div>
+            </div>
+            <div className="mt-5 flex items-center gap-6">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#22C55E]/10 text-[#22C55E]">
+                  <Activity className="h-4 w-4" />
+                </div>
+                <span className="text-sm font-bold text-foreground">{format(computeSessionVolume(completed[0]))}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500/10 text-blue-500">
+                  <Clock className="h-4 w-4" />
+                </div>
+                <span className="text-sm font-bold text-foreground">
+                  {Math.round(((completed[0].endedAt || Date.now()) - completed[0].startedAt) / 60000)} min
+                </span>
+              </div>
+            </div>
+          </Link>
+        </section>
+      )}
+
     </div>
   );
 }

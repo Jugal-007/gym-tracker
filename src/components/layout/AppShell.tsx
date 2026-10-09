@@ -134,8 +134,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <AuthOverlay isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
 
         {!isImmersive && (
-          <div className="fixed bottom-6 left-4 right-4 z-50 block sm:hidden">
-            <div className="mx-auto max-w-md rounded-[1.65rem] border border-border bg-card/95 p-2 shadow-[0_16px_36px_-20px_rgba(0,0,0,0.55)] backdrop-blur-xl">
+          <div className="fixed bottom-0 left-0 right-0 z-50 block sm:hidden">
+            <div className="border-t border-border/50 bg-background/95 pb-safe pt-2 backdrop-blur-xl">
               <TabNav isMobile={true} hasActiveSession={activeSession !== null} />
             </div>
           </div>
@@ -156,7 +156,7 @@ function TabNav({
   const tabs = TAB_ITEMS;
 
   return (
-    <nav className={cn("relative flex items-center", isMobile ? "justify-around w-full" : "gap-1")}>
+    <nav className={cn("relative flex items-center", isMobile ? "justify-around w-full px-2 pb-2" : "gap-1")}>
       {tabs.map((tab) => {
         const isActive = location.pathname === tab.key;
         const isSpecialActive = tab.key === "/workout" && hasActiveSession;
@@ -166,28 +166,16 @@ function TabNav({
             to={tab.key}
             className={cn(
               "relative z-10 flex flex-col items-center justify-center transition-colors duration-200 active:scale-95",
-              isMobile ? "w-16 h-14 gap-1" : "px-4 py-2 rounded-full flex-row gap-2",
-              isActive
-                ? "text-primary-foreground"
-                : isSpecialActive
-                  ? "text-blue-600 dark:text-blue-500 hover:text-blue-700 dark:hover:text-blue-400"
-                  : "text-muted-foreground hover:text-foreground",
+              isMobile ? "w-16 h-12 gap-1" : "px-4 py-2 rounded-full flex-row gap-2",
+              isActive || isSpecialActive
+                ? "text-[#22C55E]"
+                : "text-muted-foreground hover:text-foreground",
             )}
           >
-            {isActive && (
-              <motion.div
-                layoutId={isMobile ? "active-tab-mobile" : "active-tab-desktop"}
-                className={cn(
-                  "absolute z-[-1] bg-primary",
-                  isMobile ? "inset-0 rounded-2xl" : "inset-0 rounded-full",
-                )}
-                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-              />
-            )}
-            <span className={cn(isActive && "text-primary-foreground")}>{tab.icon}</span>
+            <span className={cn(isActive || isSpecialActive ? "text-[#22C55E]" : "")}>{tab.icon}</span>
             <span
               className={cn(
-                isActive && "text-primary-foreground",
+                isActive || isSpecialActive ? "text-[#22C55E]" : "",
                 isMobile ? "text-[10px] font-medium tracking-wide" : "text-sm font-medium",
               )}
             >
