@@ -35,7 +35,7 @@ export function AuthOverlay({ isOpen, onClose }: AuthOverlayProps) {
     setStatus("loading");
     setErrorMessage("");
 
-    const { error } = isSignUp 
+    const { error } = isSignUp
       ? await signUpWithPassword(email, password)
       : await signInWithPassword(email, password);
 
@@ -127,7 +127,7 @@ export function AuthOverlay({ isOpen, onClose }: AuthOverlayProps) {
               required
             />
           </div>
-          
+
           {status === "error" && (
             <p className="text-xs text-destructive text-center">{errorMessage}</p>
           )}
@@ -137,13 +137,15 @@ export function AuthOverlay({ isOpen, onClose }: AuthOverlayProps) {
             disabled={status === "loading" || !email || !password}
             className={cn(
               "flex w-full items-center justify-center gap-2 rounded-2xl bg-foreground py-3 text-sm font-bold text-background transition-all hover:bg-foreground/90 active:scale-[0.98]",
-              status === "loading" && "opacity-70"
+              status === "loading" && "opacity-70",
             )}
           >
             {status === "loading" ? (
               <Loader2 className="h-4 w-4 animate-spin" />
+            ) : isSignUp ? (
+              "Sign Up"
             ) : (
-              isSignUp ? "Sign Up" : "Sign In"
+              "Sign In"
             )}
           </button>
         </form>

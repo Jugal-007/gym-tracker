@@ -19,7 +19,7 @@ function ActiveWorkout() {
     cancelSession,
     sessions,
     templates,
-    isLoaded
+    isLoaded,
   } = useGym();
   const navigate = useNavigate();
 
@@ -29,7 +29,11 @@ function ActiveWorkout() {
   const records = useMemo(() => buildRecords(sessions), [sessions]);
 
   if (!isLoaded) {
-    return <div className="fixed inset-0 z-50 bg-background flex items-center justify-center">Loading gym data...</div>;
+    return (
+      <div className="fixed inset-0 z-50 bg-background flex items-center justify-center">
+        Loading gym data...
+      </div>
+    );
   }
 
   if (!activeSession && !completedSession) {
@@ -50,9 +54,9 @@ function ActiveWorkout() {
   if (completedSession) {
     return (
       <div className="fixed inset-0 z-50 bg-background overflow-y-auto">
-        <WorkoutCompleteScreen 
-          session={completedSession} 
-          allSessions={sessions} 
+        <WorkoutCompleteScreen
+          session={completedSession}
+          allSessions={sessions}
           onViewResults={() => navigate({ to: "/history" })}
           onGoHome={() => navigate({ to: "/" })}
         />

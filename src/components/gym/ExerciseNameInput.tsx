@@ -73,24 +73,24 @@ export function ExerciseNameInput({
           className={cn(
             "flex w-full items-center gap-3 rounded-2xl border border-border/40 bg-card px-4 py-3.5 text-left text-base transition-all",
             "hover:bg-accent/50 hover:border-border/80 active:scale-[0.98]",
-            value ? "text-foreground font-semibold" : "text-muted-foreground"
+            value ? "text-foreground font-semibold" : "text-muted-foreground",
           )}
         >
           <Search className="h-5 w-5 opacity-50" />
           {value || placeholder}
         </button>
       </Drawer.Trigger>
-      
+
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" />
         <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 flex max-h-[90vh] flex-col rounded-t-[32px] bg-background outline-none">
           <div className="flex-1 flex flex-col overflow-hidden rounded-t-[32px] bg-background p-4 pt-5 pb-safe">
             <div className="mx-auto mb-6 h-1.5 w-12 shrink-0 rounded-full bg-muted" />
-            
+
             <Command className="flex flex-col flex-1 overflow-hidden" shouldFilter={false}>
               <div className="flex items-center gap-3 rounded-2xl bg-muted/50 px-4 py-3 border border-border/50 focus-within:border-foreground/30 focus-within:ring-2 focus-within:ring-foreground/10 transition-all shrink-0">
                 <Search className="h-5 w-5 text-muted-foreground" />
-                <Command.Input 
+                <Command.Input
                   value={search}
                   onValueChange={setSearch}
                   placeholder="Search exercises..."
@@ -105,7 +105,7 @@ export function ExerciseNameInput({
                 <Command.Empty className="py-6 text-center text-sm text-muted-foreground">
                   No exercises found.
                 </Command.Empty>
-                
+
                 {filtered.map((name) => (
                   <Command.Item
                     key={name}

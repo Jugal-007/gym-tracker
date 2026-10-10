@@ -95,20 +95,19 @@ export function SessionHistory({ sessions, onDelete, onSaveTemplate }: SessionHi
                     </p>
                     {prs > 0 && (
                       <span className="inline-flex items-center gap-1 rounded-full bg-[#3B82F6]/10 px-2 py-0.5 text-[10px] font-bold text-[#3B82F6]">
-                        <Trophy className="h-3 w-3" />
-                        +{prs} PRs
+                        <Trophy className="h-3 w-3" />+{prs} PRs
                       </span>
                     )}
                   </div>
                   <p className="mt-1 text-xs font-medium text-muted-foreground">
-                    {duration > 0 ? formatDuration(duration) : "0s"} <span className="opacity-50 mx-1">â€¢</span> {session.exercises.length} exercises
+                    {duration > 0 ? formatDuration(duration) : "0s"}{" "}
+                    <span className="opacity-50 mx-1">â€¢</span> {session.exercises.length}{" "}
+                    exercises
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-4">
-                <p className="text-sm font-black text-foreground">
-                  {fmtWeight(volume)}
-                </p>
+                <p className="text-sm font-black text-foreground">{fmtWeight(volume)}</p>
                 <ChevronDown
                   className={cn(
                     "h-4 w-4 text-muted-foreground transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",

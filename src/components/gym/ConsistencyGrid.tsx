@@ -11,9 +11,9 @@ export function ConsistencyGrid({ sessions }: ConsistencyGridProps) {
   // We'll show the last 20 weeks on mobile (so it fits nicely horizontally if we let it scroll, or we can make it auto-fit)
   const WEEKS = 20;
   const DAYS = WEEKS * 7;
-  
+
   const today = startOfDay(new Date());
-  
+
   const grid = useMemo(() => {
     // End date is the end of the current week (Saturday)
     const endOfWeek = addDays(startOfWeek(today, { weekStartsOn: 0 }), 6);
@@ -24,9 +24,9 @@ export function ConsistencyGrid({ sessions }: ConsistencyGridProps) {
     let current = startDate;
     while (current <= endOfWeek) {
       // Find if there's a session on this day
-      const hasSession = sessions.some(s => isSameDay(new Date(s.startedAt), current));
+      const hasSession = sessions.some((s) => isSameDay(new Date(s.startedAt), current));
       const isFuture = current > today;
-      
+
       days.push({
         date: current,
         hasSession,
@@ -40,7 +40,7 @@ export function ConsistencyGrid({ sessions }: ConsistencyGridProps) {
   // Group days by column (weeks)
   // Grid layout will flow column by column
   // To do column by column in CSS Grid easily, we use grid-auto-flow: column
-  
+
   return (
     <div className="animate-slide-up rounded-xl border border-border bg-card p-4 shadow-sm overflow-hidden">
       <div className="mb-3 flex items-center gap-2">
@@ -48,7 +48,7 @@ export function ConsistencyGrid({ sessions }: ConsistencyGridProps) {
           Consistency Heatmap
         </h3>
       </div>
-      
+
       <div className="flex gap-2">
         {/* Y Axis labels (Mon, Wed, Fri) */}
         <div className="flex flex-col justify-between text-[10px] font-medium text-muted-foreground py-[6px]">
@@ -60,15 +60,15 @@ export function ConsistencyGrid({ sessions }: ConsistencyGridProps) {
           <span className="h-3 leading-3">F</span>
           <span className="h-3 leading-3">S</span>
         </div>
-        
+
         {/* The Grid */}
         <div className="flex-1 overflow-x-auto hide-scrollbar pb-1">
-          <div 
-            className="grid gap-[3px]" 
-            style={{ 
+          <div
+            className="grid gap-[3px]"
+            style={{
               gridTemplateRows: "repeat(7, minmax(0, 1fr))",
               gridAutoFlow: "column",
-              gridAutoColumns: "1fr"
+              gridAutoColumns: "1fr",
             }}
           >
             {grid.map((day, i) => {
@@ -79,9 +79,9 @@ export function ConsistencyGrid({ sessions }: ConsistencyGridProps) {
               } else if (day.hasSession) {
                 bg = "bg-primary";
               }
-              
+
               return (
-                <div 
+                <div
                   key={i}
                   title={format(day.date, "MMM d, yyyy")}
                   className={`w-3 h-3 rounded-[2px] transition-colors ${bg}`}

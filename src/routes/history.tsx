@@ -15,7 +15,7 @@ function HistoryPage() {
         <h1 className="text-3xl font-extrabold tracking-tight text-foreground">History</h1>
         <p className="mt-1 text-muted-foreground font-medium">Your completed workouts.</p>
       </div>
-      
+
       {sessions.length > 0 ? (
         <SessionHistory
           sessions={sessions}

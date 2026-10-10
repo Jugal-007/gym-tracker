@@ -1,5 +1,14 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ArrowRight, Dumbbell, Sparkles, Trophy, User as UserIcon, Clock, Activity, CalendarDays } from "lucide-react";
+import {
+  ArrowRight,
+  Dumbbell,
+  Sparkles,
+  Trophy,
+  User as UserIcon,
+  Clock,
+  Activity,
+  CalendarDays,
+} from "lucide-react";
 import { useMemo } from "react";
 import { flushSync } from "react-dom";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -8,6 +17,7 @@ import { computeSessionVolume, loadWeeklyGoal } from "@/components/gym/storage";
 import { getSmartSuggestedTemplate } from "@/components/gym/templates";
 import { useGym } from "@/hooks/useGymStore";
 import { useWeightUnit } from "@/hooks/useWeightUnit";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({ component: Home });
 
@@ -23,37 +33,52 @@ function Ring({
   color: string;
 }) {
   const clamped = Math.min(100, Math.max(0, value));
+  const radius = 42;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference * (1 - clamped / 100);
+
+  // Calculate dot position
+  const angle = (clamped / 100) * 2 * Math.PI - Math.PI / 2;
+  const dotX = 50 + radius * Math.cos(angle);
+  const dotY = 50 + radius * Math.sin(angle);
+
   return (
-    <div className="flex min-w-0 flex-1 flex-col items-center gap-2">
-      <div className="relative grid h-[76px] w-[76px] place-items-center rounded-full bg-card shadow-sm">
-        <svg className="absolute inset-0 -rotate-90" viewBox="0 0 100 100" aria-hidden="true">
+    <div className="flex min-w-0 flex-1 flex-col items-center gap-3">
+      <div className="relative grid h-[84px] w-[84px] place-items-center rounded-full">
+        <svg className="absolute inset-0" viewBox="0 0 100 100" aria-hidden="true">
+          {/* Thin track */}
           <circle
             cx="50"
             cy="50"
-            r="42"
+            r={radius}
             fill="none"
             stroke="currentColor"
-            strokeWidth="7"
+            strokeWidth="3"
             className="text-muted"
           />
+          {/* Thicker progress */}
           <circle
             cx="50"
             cy="50"
-            r="42"
+            r={radius}
             fill="none"
             stroke="currentColor"
-            strokeWidth="7"
+            strokeWidth="6"
             strokeLinecap="round"
-            strokeDasharray="264"
-            strokeDashoffset={264 * (1 - clamped / 100)}
-            className={color}
+            strokeDasharray={circumference}
+            strokeDashoffset={offset}
+            className={cn("-rotate-90 origin-center transition-all duration-1000 ease-out", color)}
           />
+          {/* Indicator dot */}
+          {clamped > 0 && (
+            <circle cx={dotX} cy={dotY} r="4" className={cn("fill-current", color)} />
+          )}
         </svg>
-        <span className="relative text-sm font-extrabold tabular-nums text-foreground">
+        <span className="relative text-[15px] font-bold tabular-nums text-foreground">
           {detail}
         </span>
       </div>
-      <span className="text-center text-[11px] font-medium text-muted-foreground">{label}</span>
+      <span className="text-center text-xs font-medium text-muted-foreground">{label}</span>
     </div>
   );
 }
@@ -80,7 +105,10 @@ function Home() {
   );
   const records = useMemo(() => buildRecords(completed), [completed]);
   const latestRecord = Object.values(records).sort((a, b) => b.bestWeight - a.bestWeight)[0];
-  const suggestedTemplate = useMemo(() => getSmartSuggestedTemplate(templates, sessions), [templates, sessions]);
+  const suggestedTemplate = useMemo(
+    () => getSmartSuggestedTemplate(templates, sessions),
+    [templates, sessions],
+  );
   const name = user?.user_metadata?.["full_name"] || user?.email?.split("@")[0] || "Athlete";
 
   function beginEmpty() {
@@ -97,59 +125,79 @@ function Home() {
     <div className="space-y-8 pb-10">
       <section className="flex items-start justify-between pt-4">
         <div>
-          <p className="text-sm font-semibold text-muted-foreground">
+          <p className="text-[15px] font-medium text-muted-foreground/80 mb-1">
             {now.getHours() < 12
               ? "Good morning,"
               : now.getHours() < 18
                 ? "Good afternoon,"
                 : "Good evening,"}
           </p>
-          <h1 className="text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
-            {name} <span className="text-xl">ðŸ‘‹</span>
+          <h1 className="text-[28px] font-bold tracking-tight text-foreground leading-none">
+            {name}
           </h1>
         </div>
         <Link
           to="/profile"
-          className="h-12 w-12 rounded-full overflow-hidden border-2 border-border/50 bg-card flex items-center justify-center text-primary transition-transform active:scale-95"
+          className="h-14 w-14 rounded-full bg-[#3B82F6] flex items-center justify-center text-white font-bold text-xl shadow-sm transition-transform active:scale-95 overflow-hidden"
           aria-label="Profile"
         >
-          {user?.user_metadata?.avatar_url ? (
-            <img src={user.user_metadata.avatar_url} alt={name} className="h-full w-full object-cover" />
+          {user?.user_metadata?.["avatar_url"] ? (
+            <img
+              src={user.user_metadata["avatar_url"]}
+              alt={name}
+              className="h-full w-full object-cover"
+            />
           ) : (
-            <UserIcon className="h-6 w-6" />
+            name.charAt(0).toUpperCase()
           )}
         </Link>
       </section>
 
       {/* Today's Workout Card */}
-      <section className="relative overflow-hidden rounded-[2rem] border border-border/30 bg-card p-6 shadow-lg">
-        {/* Abstract glowing background */}
-        <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-fuchsia-500/10 blur-[80px]" />
-        <div className="absolute -left-10 bottom-0 h-40 w-40 rounded-full bg-blue-500/10 blur-[60px]" />
-        
-        <div className="relative z-10">
-          <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-            {activeSession ? "Workout in progress" : "Today's Workout"}
-          </p>
-          <h2 className="mt-1 text-3xl font-extrabold tracking-tight text-foreground">
+      <section className="relative overflow-hidden rounded-[2rem] border border-border/40 bg-card shadow-sm">
+        <div className="relative z-10 p-6">
+          <div className="flex justify-between items-start mb-6">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+              {activeSession ? "Workout in progress" : "Today's Workout"}
+            </p>
+            <div className="h-10 w-10 rounded-2xl bg-blue-500/10 text-[#3B82F6] flex items-center justify-center">
+              <Dumbbell className="h-5 w-5" />
+            </div>
+          </div>
+
+          <h2 className="text-[32px] font-bold tracking-tight text-foreground leading-none mb-3">
             {activeSession?.templateName || suggestedTemplate?.name || "Build your session"}
           </h2>
-          <p className="mt-2 text-sm font-medium text-muted-foreground flex items-center gap-1.5">
-            {activeSession
-              ? <><Activity className="h-4 w-4"/> {activeSession.exercises.length} exercises</>
-              : suggestedTemplate
-                ? <><Dumbbell className="h-4 w-4"/> {suggestedTemplate.exercises.length} exercises <span className="opacity-50 mx-1">â€¢</span> ~55 min</>
-                : "Start with an exercise and make it yours."}
-          </p>
+
+          <div className="flex items-center gap-4 text-[13px] font-medium text-muted-foreground mb-8">
+            <div className="flex items-center gap-1.5">
+              <Dumbbell className="h-4 w-4" />
+              <span>
+                {activeSession
+                  ? activeSession.exercises.length
+                  : suggestedTemplate
+                    ? suggestedTemplate.exercises.length
+                    : 0}{" "}
+                exercises
+              </span>
+            </div>
+            <div className="w-[1px] h-4 bg-border/80"></div>
+            <div className="flex items-center gap-1.5">
+              <Clock className="h-4 w-4" />
+              <span>~55 min</span>
+            </div>
+          </div>
+
           <button
             onClick={activeSession ? () => navigate({ to: "/workout/active" }) : beginTemplate}
-            className="mt-8 flex w-full items-center justify-center gap-2 rounded-full bg-[#3B82F6] px-4 py-4 text-base font-black text-[#EFF6FF] transition-transform active:scale-[0.98] shadow-[0_0_30px_rgba(59,130,246,0.2)] hover:bg-[#2563EB]"
+            className="flex w-full items-center justify-center gap-2 rounded-full bg-[#3B82F6] px-4 py-4 text-[17px] font-semibold text-white transition-transform active:scale-[0.98]"
           >
             {activeSession
               ? "Resume Workout"
               : suggestedTemplate
                 ? "Start Workout"
                 : "Start Empty Workout"}
+            <ArrowRight className="h-5 w-5 ml-1" />
           </button>
         </div>
       </section>
@@ -169,64 +217,80 @@ function Home() {
           <Ring
             value={weeklyVolume ? 100 : 0}
             label="Volume"
-            detail={weeklyVolume ? format(weeklyVolume).replace(/\s/g, "") : "â€”"}
-            color="text-amber-500"
+            detail={weeklyVolume ? format(weeklyVolume).replace(/\s/g, "") : "—"}
+            color="text-[#3B82F6]"
           />
           <Ring
             value={completed.length ? Math.min(100, (thisWeek.length / completed.length) * 100) : 0}
             label="Consistency"
             detail={
-              completed.length ? `${Math.round((thisWeek.length / completed.length) * 100)}%` : "â€”"
+              completed.length ? `${Math.round((thisWeek.length / completed.length) * 100)}%` : "—"
             }
-            color="text-cyan-500"
+            color="text-[#3B82F6]"
           />
         </div>
       </section>
 
       {/* Recent Workout */}
-      {completed.length > 0 && (
+      {completed.length > 0 && completed[0] && (
         <section>
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-bold text-foreground">Recent Workout</h2>
           </div>
           <Link
             to="/history"
-            className="block rounded-[2rem] border border-border/50 bg-card p-5 shadow-sm transition-colors hover:bg-accent/50"
+            className="block rounded-[2rem] border border-border/40 bg-card p-5 shadow-sm transition-colors hover:bg-muted/30"
           >
-            <div className="flex justify-between items-start">
+            <div className="flex justify-between items-start mb-6">
               <div>
-                <h3 className="text-xl font-extrabold text-foreground">{completed[0].templateName || "Workout"}</h3>
-                <p className="mt-1 flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                  <CalendarDays className="h-3.5 w-3.5" /> 
-                  {new Date(completed[0].startedAt).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}
-                  <span className="opacity-50">â€¢</span>
-                  {completed[0].exercises.length} exercises
-                </p>
+                <h3 className="text-xl font-bold text-foreground mb-2">
+                  {completed[0].templateName || "Workout"}
+                </h3>
+                <div className="flex items-center gap-3 text-[13px] font-medium text-muted-foreground">
+                  <div className="flex items-center gap-1.5">
+                    <CalendarDays className="h-4 w-4" />
+                    {new Date(completed[0].startedAt).toLocaleDateString(undefined, {
+                      weekday: "short",
+                      day: "numeric",
+                      month: "short",
+                    })}
+                  </div>
+                  <div className="w-[1px] h-3 bg-border/80"></div>
+                  <div className="flex items-center gap-1.5">
+                    <Dumbbell className="h-4 w-4" />
+                    {completed[0].exercises.length} exercises
+                  </div>
+                </div>
               </div>
-              <div className="grid h-10 w-10 place-items-center rounded-full bg-foreground/5 text-foreground">
+              <div className="grid h-10 w-10 place-items-center rounded-full bg-muted/50 text-foreground transition-colors hover:bg-muted">
                 <ArrowRight className="h-5 w-5" />
               </div>
             </div>
-            <div className="mt-5 flex items-center gap-6">
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#3B82F6]/10 text-[#3B82F6]">
-                  <Activity className="h-4 w-4" />
+
+            <div className="flex items-center gap-3">
+              <div className="flex flex-1 items-center gap-2 rounded-2xl bg-muted/40 px-3 py-2.5">
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#3B82F6]/10 text-[#3B82F6]">
+                  <Activity className="h-3.5 w-3.5" />
                 </div>
-                <span className="text-sm font-bold text-foreground">{format(computeSessionVolume(completed[0]))}</span>
+                <span className="text-[13px] font-bold text-foreground">
+                  {format(computeSessionVolume(completed[0]))}
+                </span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500/10 text-blue-500">
-                  <Clock className="h-4 w-4" />
+              <div className="flex flex-1 items-center gap-2 rounded-2xl bg-muted/40 px-3 py-2.5">
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#3B82F6]/10 text-[#3B82F6]">
+                  <Clock className="h-3.5 w-3.5" />
                 </div>
-                <span className="text-sm font-bold text-foreground">
-                  {Math.round(((completed[0].endedAt || Date.now()) - completed[0].startedAt) / 60000)} min
+                <span className="text-[13px] font-bold text-foreground">
+                  {Math.round(
+                    ((completed[0].endedAt || Date.now()) - completed[0].startedAt) / 60000,
+                  )}{" "}
+                  min
                 </span>
               </div>
             </div>
           </Link>
         </section>
       )}
-
     </div>
   );
 }

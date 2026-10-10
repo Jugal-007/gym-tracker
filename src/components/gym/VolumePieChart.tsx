@@ -104,7 +104,11 @@ export function VolumePieChart({ sessions, templates = [] }: VolumePieChartProps
                 style={{ outline: "none" }}
               >
                 {data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} style={{ outline: "none" }} />
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                    style={{ outline: "none" }}
+                  />
                 ))}
               </Pie>
               <Tooltip

@@ -53,7 +53,8 @@ export function WorkoutCompleteScreen({
             {session.templateName || "Custom Workout"}
           </h2>
           <p className="mt-2 text-sm font-medium text-muted-foreground">
-            {minutes} min <span className="opacity-50 mx-1">â€¢</span> {session.exercises.length} exercises <span className="opacity-50 mx-1">â€¢</span> {format(volume)}
+            {minutes} min <span className="opacity-50 mx-1">â€¢</span> {session.exercises.length}{" "}
+            exercises <span className="opacity-50 mx-1">â€¢</span> {format(volume)}
           </p>
         </div>
 

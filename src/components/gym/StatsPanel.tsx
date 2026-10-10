@@ -103,7 +103,10 @@ export function StatsPanel({ sessions, templates = [] }: StatsPanelProps) {
   );
 
   const ordered = useMemo(
-    () => [...filteredSessions].sort((a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime()),
+    () =>
+      [...filteredSessions].sort(
+        (a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime(),
+      ),
     [filteredSessions],
   );
 
@@ -147,7 +150,7 @@ export function StatsPanel({ sessions, templates = [] }: StatsPanelProps) {
   }, [ordered]);
 
   const exerciseOptions = useMemo(() => recordList.map((record) => record.name), [recordList]);
-  
+
   const mostFrequentExercise = useMemo(() => {
     const counts = new Map<string, number>();
     for (const s of filteredSessions) {
@@ -197,7 +200,9 @@ export function StatsPanel({ sessions, templates = [] }: StatsPanelProps) {
     const totalVolume = filteredSessions.reduce((s, x) => s + computeSessionVolume(x), 0);
     const totalSets = filteredSessions.reduce((s, x) => s + computeSessionSets(x), 0);
     const weeks = new Set(
-      filteredSessions.map((s) => startOfWeek(new Date(s.startedAt), { weekStartsOn: 1 }).getTime()),
+      filteredSessions.map((s) =>
+        startOfWeek(new Date(s.startedAt), { weekStartsOn: 1 }).getTime(),
+      ),
     );
     const perWeek = weeks.size ? filteredSessions.length / weeks.size : 0;
     return {
@@ -210,27 +215,27 @@ export function StatsPanel({ sessions, templates = [] }: StatsPanelProps) {
 
   const streak = useMemo(() => {
     if (ordered.length === 0) return 0;
-    
+
     const weekCounts = new Map<number, number>();
     for (const session of ordered) {
       const w = startOfWeek(new Date(session.startedAt), { weekStartsOn: 1 }).getTime();
       weekCounts.set(w, (weekCounts.get(w) || 0) + 1);
     }
-    
+
     const sortedWeeks = Array.from(weekCounts.keys()).sort((a, b) => b - a);
     const currentWeek = startOfWeek(Date.now(), { weekStartsOn: 1 }).getTime();
     const ONE_WEEK = 7 * 24 * 60 * 60 * 1000;
-    
+
     let currentStreak = 0;
     let expectedWeek = sortedWeeks[0];
-    
+
     if (expectedWeek !== currentWeek && expectedWeek !== currentWeek - ONE_WEEK) {
       return 0;
     }
-    
+
     let i = 0;
     const currentWeekCount = weekCounts.get(currentWeek) || 0;
-    
+
     if (expectedWeek === currentWeek && currentWeekCount < weeklyGoal) {
       expectedWeek = currentWeek - ONE_WEEK;
       if (sortedWeeks[1] !== expectedWeek) {
@@ -238,7 +243,7 @@ export function StatsPanel({ sessions, templates = [] }: StatsPanelProps) {
       }
       i = 1;
     }
-    
+
     while (i < sortedWeeks.length) {
       const w = sortedWeeks[i];
       if (w === expectedWeek) {
@@ -254,7 +259,7 @@ export function StatsPanel({ sessions, templates = [] }: StatsPanelProps) {
         break;
       }
     }
-    
+
     return currentStreak;
   }, [ordered, weeklyGoal]);
 
@@ -327,19 +332,22 @@ export function StatsPanel({ sessions, templates = [] }: StatsPanelProps) {
       <div className="grid grid-cols-2 gap-3">
         {/* Full-width Streak Card (Only visible when viewing 'all' workouts) */}
         {activeRoutine === "all" && (
-          <div className={`col-span-2 relative overflow-hidden rounded-xl border p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md ${streak > 0 ? "border-orange-500/30 bg-gradient-to-br from-orange-500/5 to-red-600/5" : "border-border bg-card"}`}>
-            
+          <div
+            className={`col-span-2 relative overflow-hidden rounded-xl border p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md ${streak > 0 ? "border-orange-500/30 bg-gradient-to-br from-orange-500/5 to-red-600/5" : "border-border bg-card"}`}
+          >
             {/* Background Glow */}
             {streak > 0 && (
               <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-orange-500/10 blur-3xl pointer-events-none" />
             )}
-            
+
             <div className="relative z-10">
               <div className="flex items-start justify-between">
                 <div>
                   <div className="flex items-center gap-3 mb-1.5">
                     <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                      <Flame className={`h-4 w-4 ${streak > 0 ? "text-orange-500 animate-pulse drop-shadow-[0_0_8px_rgba(249,115,22,0.5)]" : "text-muted-foreground"}`} />
+                      <Flame
+                        className={`h-4 w-4 ${streak > 0 ? "text-orange-500 animate-pulse drop-shadow-[0_0_8px_rgba(249,115,22,0.5)]" : "text-muted-foreground"}`}
+                      />
                       Active Streak
                     </p>
                     <select
@@ -355,13 +363,22 @@ export function StatsPanel({ sessions, templates = [] }: StatsPanelProps) {
                     </select>
                   </div>
                   <p className="text-sm font-medium text-foreground">
-                    {streak > 0 
-                      ? <span>You've hit your goal for <strong className="text-orange-500">{streak} consecutive weeks</strong>!</span> 
-                      : "Start your streak this week!"}
+                    {streak > 0 ? (
+                      <span>
+                        You've hit your goal for{" "}
+                        <strong className="text-orange-500">{streak} consecutive weeks</strong>!
+                      </span>
+                    ) : (
+                      "Start your streak this week!"
+                    )}
                   </p>
                 </div>
                 <div className="flex items-baseline gap-1">
-                  <span className={`text-4xl font-black tracking-tighter ${streak > 0 ? "text-orange-500 drop-shadow-sm" : "text-muted-foreground"}`}>{streak}</span>
+                  <span
+                    className={`text-4xl font-black tracking-tighter ${streak > 0 ? "text-orange-500 drop-shadow-sm" : "text-muted-foreground"}`}
+                  >
+                    {streak}
+                  </span>
                   <span className="text-xs font-bold text-muted-foreground uppercase">wks</span>
                 </div>
               </div>
@@ -369,21 +386,25 @@ export function StatsPanel({ sessions, templates = [] }: StatsPanelProps) {
               {/* Current Week Progress */}
               <div className="mt-5 pt-4 border-t border-border/50">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">This Week</span>
-                  <span className={`text-xs font-bold ${isGoalMet ? "text-primary" : "text-foreground"}`}>
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    This Week
+                  </span>
+                  <span
+                    className={`text-xs font-bold ${isGoalMet ? "text-primary" : "text-foreground"}`}
+                  >
                     {currentWeekCount} / {weeklyGoal} workouts
                   </span>
                 </div>
                 <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted/30 border border-border/50 shadow-inner">
-                  <div 
+                  <div
                     className={`h-full rounded-full transition-all duration-1000 ease-out ${isGoalMet ? "bg-primary" : "bg-foreground/50"}`}
                     style={{ width: `${progressPercent}%` }}
                   />
                 </div>
                 <p className="mt-2 text-[11px] font-medium text-muted-foreground">
-                  {isGoalMet 
-                    ? "Weekly goal crushed. Keep it up." 
-                    : `${weeklyGoal - currentWeekCount} more workout${(weeklyGoal - currentWeekCount) > 1 ? 's' : ''} to ${streak > 0 ? 'extend your streak' : 'start your streak'}.`}
+                  {isGoalMet
+                    ? "Weekly goal crushed. Keep it up."
+                    : `${weeklyGoal - currentWeekCount} more workout${weeklyGoal - currentWeekCount > 1 ? "s" : ""} to ${streak > 0 ? "extend your streak" : "start your streak"}.`}
                 </p>
               </div>
             </div>
@@ -407,16 +428,18 @@ export function StatsPanel({ sessions, templates = [] }: StatsPanelProps) {
               <span className="text-2xl font-black tracking-tighter">{currentLevel}</span>
             </div>
           </div>
-          
+
           <div className="mt-2">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Level Progress</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                Level Progress
+              </span>
               <span className="text-[10px] font-bold uppercase tracking-widest text-foreground font-mono">
                 {xpIntoLevel.toLocaleString()} / {xpNeeded.toLocaleString()} XP
               </span>
             </div>
             <div className="h-2 w-full overflow-hidden rounded-full bg-muted/40 border border-border/50 shadow-inner">
-              <div 
+              <div
                 className="h-full bg-foreground rounded-full transition-all duration-1000 ease-out"
                 style={{ width: `${levelProgress}%` }}
               />
@@ -456,9 +479,9 @@ export function StatsPanel({ sessions, templates = [] }: StatsPanelProps) {
       </div>
 
       <ConsistencyGrid sessions={filteredSessions} />
-      
+
       <MuscleHeatmap sessions={filteredSessions} />
-      
+
       <VolumePieChart sessions={filteredSessions} templates={templates} />
 
       <ChartCard title="Volume per session">
@@ -467,7 +490,10 @@ export function StatsPanel({ sessions, templates = [] }: StatsPanelProps) {
             <CartesianGrid strokeDasharray="2 4" stroke="var(--border)" vertical={false} />
             <XAxis dataKey="label" {...axisProps} />
             <YAxis {...axisProps} width={44} />
-            <Tooltip content={<MonoTooltip suffix={` ${unit}`} />} cursor={{ stroke: "var(--border)" }} />
+            <Tooltip
+              content={<MonoTooltip suffix={` ${unit}`} />}
+              cursor={{ stroke: "var(--border)" }}
+            />
             <Line
               type="monotone"
               dataKey="volume"
@@ -488,10 +514,7 @@ export function StatsPanel({ sessions, templates = [] }: StatsPanelProps) {
               <CartesianGrid strokeDasharray="2 4" stroke="var(--border)" vertical={false} />
               <XAxis dataKey="label" {...axisProps} />
               <YAxis allowDecimals={false} {...axisProps} width={38} />
-              <Tooltip
-                content={<MonoTooltip suffix=" min" />}
-                cursor={{ fill: "var(--muted)" }}
-              />
+              <Tooltip content={<MonoTooltip suffix=" min" />} cursor={{ fill: "var(--muted)" }} />
               <Bar
                 dataKey="duration"
                 fill="#3B82F6"
@@ -513,12 +536,7 @@ export function StatsPanel({ sessions, templates = [] }: StatsPanelProps) {
               content={<MonoTooltip suffix=" sessions" />}
               cursor={{ fill: "var(--muted)" }}
             />
-            <Bar
-              dataKey="sessions"
-              fill="#3B82F6"
-              radius={[4, 4, 0, 0]}
-              animationDuration={600}
-            />
+            <Bar dataKey="sessions" fill="#3B82F6" radius={[4, 4, 0, 0]} animationDuration={600} />
           </BarChart>
         </ResponsiveContainer>
       </ChartCard>
@@ -565,7 +583,11 @@ export function StatsPanel({ sessions, templates = [] }: StatsPanelProps) {
                 stroke="var(--muted-foreground)"
                 strokeDasharray="4 4"
                 strokeWidth={1.5}
-                dot={progressSeries.length === 1 ? { r: 2.5, fill: "var(--muted-foreground)", strokeWidth: 0 } : false}
+                dot={
+                  progressSeries.length === 1
+                    ? { r: 2.5, fill: "var(--muted-foreground)", strokeWidth: 0 }
+                    : false
+                }
                 activeDot={false}
                 animationDuration={600}
               />
@@ -582,7 +604,9 @@ export function StatsPanel({ sessions, templates = [] }: StatsPanelProps) {
         <ul className="divide-y divide-border">
           {recordList.map((record) => (
             <li key={record.name} className="flex items-center justify-between py-2.5">
-              <span className="truncate pr-2 text-sm font-medium text-foreground">{record.name}</span>
+              <span className="truncate pr-2 text-sm font-medium text-foreground">
+                {record.name}
+              </span>
               <span className="shrink-0 text-right text-xs text-muted-foreground">
                 <span className="block font-mono text-sm text-foreground">
                   {fmtWeight(record.bestWeight)} Ã— {record.bestWeightReps}
@@ -608,7 +632,7 @@ export function StatsPanel({ sessions, templates = [] }: StatsPanelProps) {
               const templates = localStorage.getItem("gym-tracker-templates-v1");
               const data = {
                 sessions: sessions ? JSON.parse(sessions) : [],
-                templates: templates ? JSON.parse(templates) : []
+                templates: templates ? JSON.parse(templates) : [],
               };
               const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
               const url = URL.createObjectURL(blob);
@@ -625,7 +649,7 @@ export function StatsPanel({ sessions, templates = [] }: StatsPanelProps) {
             <Download className="h-4 w-4" />
             Export Data
           </button>
-          
+
           <button
             onClick={() => {
               const input = document.createElement("input");
@@ -639,10 +663,16 @@ export function StatsPanel({ sessions, templates = [] }: StatsPanelProps) {
                   try {
                     const data = JSON.parse(e.target?.result as string);
                     if (data.sessions && Array.isArray(data.sessions)) {
-                      localStorage.setItem("gym-tracker-sessions-v1", JSON.stringify(data.sessions));
+                      localStorage.setItem(
+                        "gym-tracker-sessions-v1",
+                        JSON.stringify(data.sessions),
+                      );
                     }
                     if (data.templates && Array.isArray(data.templates)) {
-                      localStorage.setItem("gym-tracker-templates-v1", JSON.stringify(data.templates));
+                      localStorage.setItem(
+                        "gym-tracker-templates-v1",
+                        JSON.stringify(data.templates),
+                      );
                     }
                     window.location.reload();
                   } catch (err) {

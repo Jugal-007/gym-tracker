@@ -1,8 +1,8 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
-test('inject dummy data and screenshot stats', async ({ page }) => {
-  await page.goto('http://localhost:3000');
-  
+test("inject dummy data and screenshot stats", async ({ page }) => {
+  await page.goto("http://localhost:3000");
+
   // Inject robust dummy data
   await page.evaluate(() => {
     const now = Date.now();
@@ -19,26 +19,26 @@ test('inject dummy data and screenshot stats', async ({ page }) => {
             sets: [
               { id: "set1", reps: 8, weight: 60, completed: true },
               { id: "set2", reps: 8, weight: 60, completed: true },
-              { id: "set3", reps: 6, weight: 65, completed: true }
-            ]
+              { id: "set3", reps: 6, weight: 65, completed: true },
+            ],
           },
           {
             id: "e2",
             name: "Incline Dumbbell Press",
             sets: [
               { id: "set4", reps: 10, weight: 25, completed: true },
-              { id: "set5", reps: 10, weight: 25, completed: true }
-            ]
+              { id: "set5", reps: 10, weight: 25, completed: true },
+            ],
           },
           {
             id: "e3",
             name: "Tricep Pushdown",
             sets: [
               { id: "set6", reps: 12, weight: 20, completed: true },
-              { id: "set7", reps: 12, weight: 20, completed: true }
-            ]
-          }
-        ]
+              { id: "set7", reps: 12, weight: 20, completed: true },
+            ],
+          },
+        ],
       },
       {
         id: "s2",
@@ -51,18 +51,18 @@ test('inject dummy data and screenshot stats', async ({ page }) => {
             sets: [
               { id: "set8", reps: 5, weight: 100, completed: true },
               { id: "set9", reps: 5, weight: 100, completed: true },
-              { id: "set10", reps: 5, weight: 105, completed: true, pr: "weight" }
-            ]
+              { id: "set10", reps: 5, weight: 105, completed: true, pr: "weight" },
+            ],
           },
           {
             id: "e5",
             name: "Leg Extension",
             sets: [
               { id: "set11", reps: 15, weight: 50, completed: true },
-              { id: "set12", reps: 15, weight: 50, completed: true }
-            ]
-          }
-        ]
+              { id: "set12", reps: 15, weight: 50, completed: true },
+            ],
+          },
+        ],
       },
       {
         id: "s3",
@@ -74,27 +74,27 @@ test('inject dummy data and screenshot stats', async ({ page }) => {
             name: "Pull Up",
             sets: [
               { id: "set13", reps: 8, weight: 0, completed: true },
-              { id: "set14", reps: 8, weight: 0, completed: true }
-            ]
+              { id: "set14", reps: 8, weight: 0, completed: true },
+            ],
           },
           {
             id: "e7",
             name: "Barbell Row",
             sets: [
               { id: "set15", reps: 10, weight: 60, completed: true },
-              { id: "set16", reps: 10, weight: 60, completed: true }
-            ]
+              { id: "set16", reps: 10, weight: 60, completed: true },
+            ],
           },
           {
             id: "e8",
             name: "Bicep Curl",
             sets: [
               { id: "set17", reps: 12, weight: 15, completed: true },
-              { id: "set18", reps: 12, weight: 15, completed: true }
-            ]
-          }
-        ]
-      }
+              { id: "set18", reps: 12, weight: 15, completed: true },
+            ],
+          },
+        ],
+      },
     ];
     localStorage.setItem("gym_sessions", JSON.stringify(dummySessions));
   });
@@ -110,7 +110,7 @@ test('inject dummy data and screenshot stats', async ({ page }) => {
 
   // Wait for animations
   await page.waitForTimeout(1000);
-  
+
   // Screenshot the entire page
-  await page.screenshot({ path: 'stats-heatmap.png', fullPage: true });
+  await page.screenshot({ path: "stats-heatmap.png", fullPage: true });
 });

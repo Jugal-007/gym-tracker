@@ -67,7 +67,12 @@ export function TimerDisplay({ ms, className }: { ms: number; className?: string
   const sStr = String(seconds).padStart(2, "0");
 
   return (
-    <span className={cn("inline-flex items-center font-mono text-3xl font-semibold tracking-tight tabular-nums select-none", className || "text-foreground")}>
+    <span
+      className={cn(
+        "inline-flex items-center font-mono text-3xl font-semibold tracking-tight tabular-nums select-none",
+        className || "text-foreground",
+      )}
+    >
       {hours > 0 && (
         <>
           <DigitSlot digit={String(hours)} />
@@ -344,7 +349,9 @@ export function ActiveSession({
           <Timer className="h-6 w-6 text-[#3B82F6]" strokeWidth={2.5} />
           <div className="w-[1px] h-8 bg-border/50"></div>
           <div className="flex flex-col">
-            <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold mb-0.5">Workout Time</span>
+            <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold mb-0.5">
+              Workout Time
+            </span>
             <div className="text-foreground leading-none flex items-center -mt-0.5">
               <TimerDisplay ms={elapsed} className="text-[1.35rem]" />
             </div>

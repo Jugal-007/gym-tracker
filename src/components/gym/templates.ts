@@ -67,10 +67,28 @@ export const STARTER_TEMPLATES: Template[] = [
     createdAt: Date.now() - 3000,
     exercises: [
       { id: "starter-p1", name: "Bench Press", targetSets: 4, targetReps: 8, targetWeight: 60 },
-      { id: "starter-p2", name: "Incline Dumbbell Press", targetSets: 3, targetReps: 10, targetWeight: 24 },
+      {
+        id: "starter-p2",
+        name: "Incline Dumbbell Press",
+        targetSets: 3,
+        targetReps: 10,
+        targetWeight: 24,
+      },
       { id: "starter-p3", name: "Overhead Press", targetSets: 3, targetReps: 8, targetWeight: 40 },
-      { id: "starter-p4", name: "Dumbbell Lateral Raises", targetSets: 4, targetReps: 12, targetWeight: 10 },
-      { id: "starter-p5", name: "Tricep Extension", targetSets: 3, targetReps: 12, targetWeight: 25 },
+      {
+        id: "starter-p4",
+        name: "Dumbbell Lateral Raises",
+        targetSets: 4,
+        targetReps: 12,
+        targetWeight: 10,
+      },
+      {
+        id: "starter-p5",
+        name: "Tricep Extension",
+        targetSets: 3,
+        targetReps: 12,
+        targetWeight: 25,
+      },
     ],
   },
   {
@@ -105,7 +123,9 @@ export function recoverTemplatesFromSessions(sessions: Session[]): Template[] {
   const sorted = [...sessions].sort((a, b) => a.startedAt - b.startedAt);
   for (const session of sorted) {
     if (session.exercises.length === 0) continue;
-    const name = session.templateName?.trim() || (session.exercises[0]?.name ? `${session.exercises[0].name} Day` : "Custom Template");
+    const name =
+      session.templateName?.trim() ||
+      (session.exercises[0]?.name ? `${session.exercises[0].name} Day` : "Custom Template");
     map.set(name.toLowerCase(), templateFromSession(session, name));
   }
   return Array.from(map.values());
@@ -153,13 +173,16 @@ export function sessionFromTemplate(template: Template): Session {
   };
 }
 
-/** 
- * Smartly suggests the next template to use based on least-recently-used (LRU) logic. 
+/**
+ * Smartly suggests the next template to use based on least-recently-used (LRU) logic.
  * This creates a natural rotation (e.g. Push -> Pull -> Legs).
  */
-export function getSmartSuggestedTemplate(templates: Template[], sessions: Session[]): Template | null {
+export function getSmartSuggestedTemplate(
+  templates: Template[],
+  sessions: Session[],
+): Template | null {
   if (templates.length === 0) return null;
-  if (templates.length === 1) return templates[0];
+  if (templates.length === 1) return templates[0] || null;
 
   const lastUsed = new Map<string, number>();
   for (const t of templates) {
@@ -173,7 +196,9 @@ export function getSmartSuggestedTemplate(templates: Template[], sessions: Sessi
         lastUsed.set(session.templateId, session.startedAt);
       }
     } else if (session.templateName) {
-      const matched = templates.find(t => t.name.toLowerCase() === session.templateName?.toLowerCase());
+      const matched = templates.find(
+        (t) => t.name.toLowerCase() === session.templateName?.toLowerCase(),
+      );
       if (matched) {
         const current = lastUsed.get(matched.id) || 0;
         if (session.startedAt > current) {
@@ -194,5 +219,5 @@ export function getSmartSuggestedTemplate(templates: Template[], sessions: Sessi
     }
   }
 
-  return oldestTemplate;
+  return oldestTemplate || null;
 }

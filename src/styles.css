@@ -80,6 +80,9 @@
   --animate-ripple: ripple 0.4s ease-out forwards;
   --animate-border-glow: border-glow 0.8s ease-out;
   --animate-slide-out-collapse: slide-out-collapse 0.35s ease-out forwards;
+  --animate-float-line-1: float-line-1 40s ease-in-out infinite;
+  --animate-float-line-2: float-line-2 35s ease-in-out infinite;
+  --animate-float-line-3: float-line-3 45s ease-in-out infinite;
 }
 
 :root {
@@ -262,6 +265,36 @@
   }
 }
 
+@keyframes float-line-1 {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-50px) rotate(3deg);
+  }
+}
+
+@keyframes float-line-2 {
+  0%,
+  100% {
+    transform: translateX(0) scale(1);
+  }
+  50% {
+    transform: translateX(-30px) scale(1.05);
+  }
+}
+
+@keyframes float-line-3 {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate(20px, 30px) rotate(-3deg);
+  }
+}
+
 /* Set completion: smooth background sweep */
 @keyframes sweep-right {
   from {
@@ -374,6 +407,25 @@
     padding-bottom: 0;
     border-width: 0;
     overflow: hidden;
+  }
+}
+
+/* Float animation for background SVG overlays */
+@keyframes float-bg {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(-1%, 1%) scale(1.02);
+  }
+  50% {
+    transform: translate(1%, -1%) scale(1);
+  }
+  75% {
+    transform: translate(-1%, -1%) scale(1.02);
+  }
+  100% {
+    transform: translate(0, 0) scale(1);
   }
 }
 

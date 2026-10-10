@@ -30,7 +30,9 @@ export async function syncUp() {
         ? new Date(s.updatedAt).toISOString()
         : new Date(s.startedAt).toISOString(),
     }));
-    const { error: sessionErr } = await supabase.from("sessions").upsert(sessionsPayload, { onConflict: "id" });
+    const { error: sessionErr } = await supabase
+      .from("sessions")
+      .upsert(sessionsPayload, { onConflict: "id" });
     if (sessionErr) console.error("Error syncing sessions up:", sessionErr);
   }
 
@@ -45,7 +47,9 @@ export async function syncUp() {
         ? new Date(t.updatedAt).toISOString()
         : new Date(t.createdAt).toISOString(),
     }));
-    const { error: templateErr } = await supabase.from("templates").upsert(templatesPayload, { onConflict: "id" });
+    const { error: templateErr } = await supabase
+      .from("templates")
+      .upsert(templatesPayload, { onConflict: "id" });
     if (templateErr) console.error("Error syncing templates up:", templateErr);
   }
 
@@ -67,7 +71,6 @@ export async function syncDeleteTemplate(templateId: string) {
   if (!user) return;
   await supabase.from("templates").delete().eq("id", templateId).eq("user_id", user.id);
 }
-
 
 /**
  * syncDown — "Cloud fills gaps". Only adds cloud items whose IDs don't
@@ -97,8 +100,15 @@ export async function syncDown() {
       .filter((row) => !localIds.has(row.id))
       .map((row) => ({
         id: row.id,
-        startedAt: typeof row.started_at === "number" ? row.started_at : Number(row.started_at) || Date.now(),
-        endedAt: row.ended_at ? (typeof row.ended_at === "number" ? row.ended_at : Number(row.ended_at)) : null,
+        startedAt:
+          typeof row.started_at === "number"
+            ? row.started_at
+            : Number(row.started_at) || Date.now(),
+        endedAt: row.ended_at
+          ? typeof row.ended_at === "number"
+            ? row.ended_at
+            : Number(row.ended_at)
+          : null,
         exercises: row.exercises,
         templateId: row.template_id ?? undefined,
         templateName: row.template_name ?? undefined,
@@ -106,9 +116,7 @@ export async function syncDown() {
       }));
 
     if (toAdd.length > 0) {
-      saveSessions(
-        [...localSessions, ...toAdd].sort((a, b) => b.startedAt - a.startedAt)
-      );
+      saveSessions([...localSessions, ...toAdd].sort((a, b) => b.startedAt - a.startedAt));
       synced = true;
     }
   }
@@ -123,14 +131,15 @@ export async function syncDown() {
         id: row.id,
         name: row.name,
         exercises: row.exercises,
-        createdAt: typeof row.created_at === "number" ? row.created_at : Number(row.created_at) || Date.now(),
+        createdAt:
+          typeof row.created_at === "number"
+            ? row.created_at
+            : Number(row.created_at) || Date.now(),
         updatedAt: new Date(row.updated_at).getTime(),
       }));
 
     if (toAdd.length > 0) {
-      saveTemplates(
-        [...localTemplates, ...toAdd].sort((a, b) => b.createdAt - a.createdAt)
-      );
+      saveTemplates([...localTemplates, ...toAdd].sort((a, b) => b.createdAt - a.createdAt));
       synced = true;
     }
   }

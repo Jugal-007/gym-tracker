@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 528 1145" fill="none">
+  <defs>
+    <filter id="soft" x="-30%" y="-20%" width="160%" height="140%" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="2.2"/>
+    </filter>
+    <filter id="haze" x="-40%" y="-30%" width="180%" height="160%" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="8"/>
+    </filter>
+  </defs>
+  <!-- Soft halo layers -->
+  <g stroke="#73B4FF" stroke-width="3.5" opacity="0.16" filter="url(#haze)">
+    <path d="M218 -34 C248 52 260 121 310 167 C357 211 427 230 469 277 C498 309 515 337 548 365"/>
+    <path d="M-28 382 C27 452 66 514 121 562 C174 608 242 619 291 665 C331 703 346 749 371 788 C405 842 457 867 549 910"/>
+    <path d="M-24 738 C22 807 70 846 129 864 C200 885 278 878 338 917 C397 955 407 1032 460 1082 C484 1106 511 1125 545 1144"/>
+  </g>
+  <!-- Fine, low-contrast linework -->
+  <g stroke="#73B4FF" stroke-width="1.15" stroke-linecap="round" opacity="0.58">
+    <path d="M218 -34 C248 52 260 121 310 167 C357 211 427 230 469 277 C498 309 515 337 548 365"/>
+    <path d="M-28 382 C27 452 66 514 121 562 C174 608 242 619 291 665 C331 703 346 749 371 788 C405 842 457 867 549 910" opacity="0.65"/>
+    <path d="M-24 738 C22 807 70 846 129 864 C200 885 278 878 338 917 C397 955 407 1032 460 1082 C484 1106 511 1125 545 1144" opacity="0.48"/>
+  </g>
+  <!-- Faint secondary strands create the layered, asymmetric feel -->
+  <g stroke="#B0D5FF" stroke-width="0.9" stroke-linecap="round" opacity="0.36">
+    <path d="M-18 752 C47 815 103 843 174 853 C251 864 327 877 377 928 C416 967 432 1021 482 1064"/>
+    <path d="M248 -24 C273 61 292 130 340 171 C383 208 442 230 482 269"/>
+  </g>
+</svg>

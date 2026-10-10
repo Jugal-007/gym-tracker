@@ -28,8 +28,14 @@ const SessionSchema = z.object({
   exercises: z.array(ExerciseSchema),
   templateId: z.string().nullable().optional(),
   templateName: z.string().nullable().optional(),
-  restTimerEndsAt: z.union([z.number(), z.string().transform((s) => new Date(s).getTime())]).nullable().optional(),
-  warmupEndsAt: z.union([z.number(), z.string().transform((s) => new Date(s).getTime())]).nullable().optional(),
+  restTimerEndsAt: z
+    .union([z.number(), z.string().transform((s) => new Date(s).getTime())])
+    .nullable()
+    .optional(),
+  warmupEndsAt: z
+    .union([z.number(), z.string().transform((s) => new Date(s).getTime())])
+    .nullable()
+    .optional(),
   updatedAt: z.union([z.number(), z.string().transform((s) => new Date(s).getTime())]).optional(),
 });
 
@@ -107,7 +113,7 @@ const COMMON_EXERCISES = [
   "Dumbbell Lateral Raises",
   "Seated Cable Row",
   "Bulgarian Split Squat",
-  "Calf Raises"
+  "Calf Raises",
 ];
 
 export function getExerciseNames(sessions: Session[], templates: Template[] = []): string[] {
@@ -133,7 +139,7 @@ export function getExerciseNames(sessions: Session[], templates: Template[] = []
 
 export function computeVolume(exercise: Exercise): number {
   return exercise.sets
-    .filter(s => s.kind !== "warmup")
+    .filter((s) => s.kind !== "warmup")
     .reduce((sum, set) => sum + set.reps * set.weight, 0);
 }
 

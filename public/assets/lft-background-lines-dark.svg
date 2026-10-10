@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 528 1145" fill="none">
+  <defs>
+    <filter id="glow" x="-35%" y="-25%" width="170%" height="150%" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="4.2"/>
+    </filter>
+    <filter id="soft" x="-30%" y="-20%" width="160%" height="140%" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="1.7"/>
+    </filter>
+  </defs>
+  <!-- Restrained blue halos sit beneath the thin paths -->
+  <g stroke="#087CFF" stroke-width="3.4" opacity="0.22" filter="url(#glow)">
+    <path d="M138 -28 C191 55 239 79 302 112 C370 148 415 181 435 235 C453 286 452 336 477 385 C490 410 511 430 548 451"/>
+    <path d="M-26 324 C19 402 59 476 111 533 C165 593 238 619 303 643 C364 666 416 690 446 747 C474 801 479 870 547 934"/>
+    <path d="M-25 766 C20 821 54 851 109 864 C184 883 264 883 319 916 C373 948 410 1004 443 1056 C474 1103 502 1125 548 1146"/>
+  </g>
+  <!-- Main paths: thin, elegant, and intentionally low contrast -->
+  <g stroke="#087CFF" stroke-width="1.05" stroke-linecap="round" opacity="0.68">
+    <path d="M138 -28 C191 55 239 79 302 112 C370 148 415 181 435 235 C453 286 452 336 477 385 C490 410 511 430 548 451"/>
+    <path d="M-26 324 C19 402 59 476 111 533 C165 593 238 619 303 643 C364 666 416 690 446 747 C474 801 479 870 547 934" opacity="0.82"/>
+    <path d="M-25 766 C20 821 54 851 109 864 C184 883 264 883 319 916 C373 948 410 1004 443 1056 C474 1103 502 1125 548 1146" opacity="0.58"/>
+  </g>
+  <!-- Secondary dark-blue crossings echo the reference's fine intersecting lines -->
+  <g stroke="#0754B8" stroke-width="0.9" stroke-linecap="round" opacity="0.52">
+    <path d="M-20 278 C42 395 82 485 140 551 C198 616 264 641 337 665 C413 690 474 728 550 787"/>
+    <path d="M154 -24 C215 65 278 95 344 131 C414 169 462 207 493 255 C517 293 532 325 550 346"/>
+    <path d="M-22 785 C36 849 91 874 157 882 C238 892 304 911 357 957 C409 1002 451 1062 549 1110"/>
+  </g>
+</svg>

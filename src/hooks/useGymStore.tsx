@@ -1,6 +1,19 @@
 import { createContext, useContext, useEffect, useMemo, useState, ReactNode } from "react";
-import { loadSessions, saveSessions, loadActiveSession, saveActiveSession, generateId } from "@/components/gym/storage";
-import { loadTemplates, saveTemplates, STARTER_TEMPLATES, recoverTemplatesFromSessions, sessionFromTemplate, templateFromSession } from "@/components/gym/templates";
+import {
+  loadSessions,
+  saveSessions,
+  loadActiveSession,
+  saveActiveSession,
+  generateId,
+} from "@/components/gym/storage";
+import {
+  loadTemplates,
+  saveTemplates,
+  STARTER_TEMPLATES,
+  recoverTemplatesFromSessions,
+  sessionFromTemplate,
+  templateFromSession,
+} from "@/components/gym/templates";
 import { buildRecords } from "@/components/gym/records";
 import type { Session, Template } from "@/components/gym/types";
 import { useWorkoutSettings } from "@/hooks/useWorkoutSettings";

@@ -38,10 +38,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="relative min-h-screen bg-background pb-32 sm:pb-6 overflow-hidden">
-      {/* Background blobs */}
-      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-        <div className="absolute -top-32 right-[-20%] h-80 w-80 rounded-full bg-primary/12 blur-[90px]" />
-        <div className="absolute bottom-24 left-[-30%] h-72 w-72 rounded-full bg-indigo-500/8 blur-[90px]" />
+      {/* Subtle animated background lines from SVG assets */}
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden flex items-center justify-center">
+        <img
+          src="/assets/lft-background-lines-dark.svg"
+          alt=""
+          className="hidden dark:block absolute min-w-full min-h-full object-cover opacity-[0.15] animate-[float-bg_35s_ease-in-out_infinite]"
+        />
+        <img
+          src="/assets/lft-background-lines-light.svg"
+          alt=""
+          className="dark:hidden block absolute min-w-full min-h-full object-cover opacity-20 animate-[float-bg_45s_ease-in-out_infinite_alternate]"
+        />
       </div>
 
       {!isImmersive && activeSession && (
@@ -59,7 +67,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 to="/"
                 className="flex items-center gap-2 text-foreground transition-all hover:opacity-70 active:scale-95"
               >
-                <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#3B82F6] text-white shadow-sm">
                   <Dumbbell className="h-4 w-4" />
                 </span>
                 <span className="whitespace-nowrap text-lg font-extrabold tracking-[0.16em]">
@@ -100,8 +108,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       user ? (window.location.href = "/profile") : setIsAuthOpen(true)
                     }
                     className={cn(
-                      "relative flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary/20 focus:outline-none",
-                      location.pathname === "/profile" && "bg-primary text-primary-foreground",
+                      "relative flex h-10 w-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted focus:outline-none",
+                      location.pathname === "/profile" && "bg-muted text-foreground",
                     )}
                   >
                     <UserIcon className="h-5 w-5" />
@@ -156,7 +164,12 @@ function TabNav({
   const tabs = TAB_ITEMS;
 
   return (
-    <nav className={cn("relative flex items-center", isMobile ? "justify-around w-full px-2 pb-2" : "gap-1")}>
+    <nav
+      className={cn(
+        "relative flex items-center",
+        isMobile ? "justify-around w-full px-2 pb-2" : "gap-1",
+      )}
+    >
       {tabs.map((tab) => {
         const isActive = location.pathname === tab.key;
         const isSpecialActive = tab.key === "/workout" && hasActiveSession;
@@ -172,7 +185,9 @@ function TabNav({
                 : "text-muted-foreground hover:text-foreground",
             )}
           >
-            <span className={cn(isActive || isSpecialActive ? "text-[#3B82F6]" : "")}>{tab.icon}</span>
+            <span className={cn(isActive || isSpecialActive ? "text-[#3B82F6]" : "")}>
+              {tab.icon}
+            </span>
             <span
               className={cn(
                 isActive || isSpecialActive ? "text-[#3B82F6]" : "",

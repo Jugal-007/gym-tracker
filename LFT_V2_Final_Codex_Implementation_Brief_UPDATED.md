@@ -1,4 +1,5 @@
 # LFT V2 — Final Codex Implementation Brief
+
 ## End-to-end redesign and implementation, with preservation of existing functionality
 
 **Project:** LFT (Lift) — workout tracker  
@@ -10,6 +11,7 @@
 # 1. Your mission
 
 You have already been given:
+
 - The existing LFT project folder/codebase.
 - The LFT V2 design reference image.
 - This implementation brief.
@@ -19,6 +21,7 @@ Use the project and image already available in your working context. **Do not as
 You are responsible for both **UI/UX design and engineering implementation**. The design reference is an actual visual target, not optional inspiration. Redesign the application comprehensively and implement the redesign in the existing project.
 
 The required result is one cohesive, working product:
+
 - A substantial visual redesign across all important screens.
 - Clearer, faster workout UX.
 - A premium dark theme and a genuinely designed light theme.
@@ -50,6 +53,7 @@ Where the image does not show every screen or state, extend the same design lang
 # 3. Existing technical context to verify
 
 The current application has been described as using:
+
 - React 19.2
 - Vite 8.2
 - Nitro
@@ -68,6 +72,7 @@ The current application has been described as using:
 Verify the actual repository before relying on this list. Preserve its real package manager, framework conventions, routing, state management, and existing patterns. **Do not migrate frameworks or replace the architecture just for preference.**
 
 Existing capabilities that must be located and preserved include:
+
 - Email/password and Google authentication where currently implemented
 - Guest mode where currently implemented
 - Workout creation and active session management
@@ -98,6 +103,7 @@ If a listed feature is not present in the actual code, do not invent that it is.
 Never reset or wipe user data to make the new UI easier to implement.
 
 Do not:
+
 - Drop or recreate production tables.
 - Reset Supabase.
 - Delete user sessions, templates, exercises, PRs, or profile settings.
@@ -114,6 +120,7 @@ For schema changes, prefer additive migrations and safe defaults. If data conver
 Separate presentation changes from business-logic changes. Reuse and wrap existing working hooks, calculations, services, and models when sensible. Do not rewrite core workout/sync logic just to achieve a new look.
 
 For every feature you touch:
+
 1. Identify the existing implementation and its callers.
 2. Understand its persistence and edge cases.
 3. Change the smallest appropriate surface.
@@ -138,6 +145,7 @@ Do not create buttons that do nothing, decorative controls that imply functional
 LFT should feel like a **premium, focused training companion**. Use Apple Fitness as a quality and interaction reference, not as a pixel-for-pixel copy.
 
 Core principles:
+
 - Workout-first: starting and logging a workout should be fast.
 - High signal, low clutter: show the next useful action before secondary information.
 - Premium typography and spacing.
@@ -154,6 +162,7 @@ Core principles:
 ## Primary navigation
 
 Use five clear primary destinations:
+
 1. **Home**
 2. **Progress**
 3. **Workout**
@@ -175,6 +184,7 @@ Create or consolidate reusable design tokens and primitives using the project's 
 Implement a complete premium dark theme and a complete premium light theme. Both must be first-class, not an inverted afterthought.
 
 Dark theme direction:
+
 - Deep near-black app background.
 - Slightly elevated surface layers.
 - Subtle separators and borders.
@@ -184,6 +194,7 @@ Dark theme direction:
 - Avoid excessive glow, neon, or glass effects.
 
 Light theme direction:
+
 - White/off-white background.
 - Clean surface hierarchy.
 - Subtle neutral borders.
@@ -196,6 +207,7 @@ Persist the selected theme using the existing preference system where possible. 
 ## 6.2 Token categories
 
 Centralize tokens for:
+
 - App backgrounds and elevated surfaces
 - Primary, secondary, muted, and inverse text
 - Borders/dividers
@@ -214,6 +226,7 @@ Use existing OKLCH token conventions if present. Avoid scattered one-off hex val
 ## 6.3 Typography and metrics
 
 Establish a consistent type hierarchy for:
+
 - Display / hero metric
 - Page title
 - Section title
@@ -228,6 +241,7 @@ Use tabular numerals for values where supported. Large numbers should feel inten
 ## 6.4 Reusable components
 
 Create or improve shared components as needed; do not duplicate them per screen:
+
 - App shell and top bar
 - Primary navigation
 - Buttons and icon buttons
@@ -251,6 +265,7 @@ Use the existing Radix/Lucide/etc. setup where appropriate. Avoid adding depende
 ## 6.5 Component states
 
 Define and test visual states where applicable:
+
 - Default
 - Hover (desktop)
 - Focus-visible
@@ -282,6 +297,7 @@ Redesign all existing screens, not just the home page. Preserve the existing rou
 ## 7.2 Onboarding
 
 If onboarding exists or is required by the current product:
+
 - Make it concise and visually clear.
 - Explain the core value: track workouts, see progress, build consistency.
 - Allow skipping where appropriate.
@@ -291,6 +307,7 @@ If onboarding exists or is required by the current product:
 ## 7.3 Authentication
 
 Redesign sign-in, sign-up, and recovery screens to match the design system.
+
 - Preserve current auth providers and flows.
 - Show useful validation and error messages.
 - Prevent double submission.
@@ -303,6 +320,7 @@ Redesign sign-in, sign-up, and recovery screens to match the design system.
 Home should answer: **“What should I do next, and how am I progressing?”**
 
 Prioritize:
+
 - A concise greeting/context.
 - One strong primary **Start Workout** action.
 - Resume active workout if one exists.
@@ -320,6 +338,7 @@ Do not turn Home into a long analytics report. Keep the primary action visible w
 This is the most important operational screen. It must be optimized for use between sets in a gym.
 
 Create an immersive training layout that clearly shows:
+
 - Workout name and elapsed duration.
 - Current exercise and exercise order.
 - Previous performance where available.
@@ -333,6 +352,7 @@ Create an immersive training layout that clearly shows:
 - Finish workout and cancel/discard flows with confirmation.
 
 ### Set logging UX
+
 - Minimize taps and unnecessary navigation.
 - Use large, touch-friendly controls.
 - Support fast weight/reps entry and editing.
@@ -345,11 +365,14 @@ Create an immersive training layout that clearly shows:
 - Use previous-set values or previous-session values as sensible defaults only when safe and consistent with current behavior.
 
 Example visual comparison:
+
 - Previous: `32.5 kg × 8`
 - Current: editable weight/reps fields
 
 ### Active workout states
+
 Design and implement:
+
 - No exercises yet
 - Exercise selector open
 - Set in progress
@@ -367,6 +390,7 @@ Do not show the regular bottom navigation over the active workout if it competes
 ## 7.6 Rest timer and transitions
 
 The timer should feel integrated and premium:
+
 - Large readable countdown.
 - Clear progress indicator.
 - Skip/end timer.
@@ -383,6 +407,7 @@ Timer completion must not depend on a fragile interval that drifts badly. Use ro
 Make finishing a workout feel rewarding without becoming slow or childish.
 
 Show metrics calculated from the completed session, where available:
+
 - Duration
 - Exercises completed
 - Sets completed
@@ -393,6 +418,7 @@ Show metrics calculated from the completed session, where available:
 - Comparison with a previous workout when meaningful
 
 Actions:
+
 - Save/confirm completion
 - View workout details
 - Save as template if supported
@@ -403,12 +429,14 @@ Do not count XP/PR rewards more than once if the completion view is revisited or
 ## 7.8 Progress
 
 Replace the old dense Stats presentation with a structured, scannable Progress experience. Organize information into:
+
 - **Strength**
 - **Volume**
 - **Consistency**
 - **Body** (only if body metrics exist or are implemented)
 
 Use tabs/segmented controls or distinct sections to avoid one overwhelming page. Each chart should have:
+
 - Clear title and units
 - A useful time range where applicable
 - Empty state when there is insufficient history
@@ -421,6 +449,7 @@ Include consistency/streak information and a clear entry to Athlete Journey. Kee
 ## 7.9 Exercise progression detail
 
 For each exercise, show available history and progression:
+
 - Current best / personal record
 - Estimated 1RM if calculated
 - Weight/reps progression
@@ -435,6 +464,7 @@ Use the existing e1RM calculation if it is already the product rule: `e1RM = wei
 
 Redesign workout history as a visual, scannable timeline/list.
 Each entry should communicate, where available:
+
 - Date
 - Workout name
 - Duration
@@ -449,6 +479,7 @@ Provide useful filtering/search only if it can be implemented cleanly. Opening a
 Create a dedicated, premium athletic progression experience.
 
 Include:
+
 - Current level
 - Current XP/progress to next level
 - Lifetime training volume
@@ -462,12 +493,14 @@ Include:
 Use a restrained, athletic visual language: rewarding but not childish, cluttered, or casino-like.
 
 ### Preserve the existing level formula unless intentionally versioned
+
 The current documented lifetime-volume level formula is:
 `level = floor(sqrt(totalVolume / 2000)) + 1`
 
 Verify the actual implementation and volume units before changing anything. If this formula is currently in use, preserve it for existing users unless there is a strong reason and an explicit versioned migration. Do not reset levels/XP or silently alter level thresholds.
 
 ### Gamification correctness
+
 - Derive values from real workout records.
 - Reward completion idempotently.
 - Reopening results must not award XP again.
@@ -480,6 +513,7 @@ Verify the actual implementation and volume units before changing anything. If t
 ## 7.12 Templates and programs
 
 Redesign template/routine lists and details:
+
 - Clear template names and exercise previews.
 - Exercise count and useful metadata.
 - Obvious start action.
@@ -507,6 +541,7 @@ Do not block workout logging because exercise metadata or network access is unav
 Make Profile an athlete/settings hub, not one giant form.
 
 Organize:
+
 - Profile/account
 - Preferences
 - Theme
@@ -523,6 +558,7 @@ Preserve current preferences and persistence. Unit changes must not corrupt unde
 ## 7.15 Goals and body metrics
 
 If current product scope/data model supports these, implement clean screens and safe persistence for:
+
 - Training goals
 - Weekly targets
 - Body measurements/weight history
@@ -532,6 +568,7 @@ Do not present body metrics as existing data if none exists. Use opt-in, clearly
 ## 7.16 Dialogs, sheets, toasts, and secondary screens
 
 Redesign all existing overlays and secondary screens. Check that:
+
 - Dialogs are not clipped on mobile.
 - Destructive actions require confirmation.
 - Success/error feedback is readable and brief.
@@ -568,6 +605,7 @@ If a new UI requires a data field, first check whether existing data can support
 Mobile is the primary environment for gym use, but desktop/tablet must remain coherent.
 
 Verify:
+
 - Small mobile widths
 - Typical phone widths
 - Tablet
@@ -576,6 +614,7 @@ Verify:
 Do not simply shrink desktop cards. Adapt layout and navigation intentionally.
 
 Accessibility requirements:
+
 - Semantic controls and headings.
 - Keyboard navigation.
 - Visible focus indicators.
@@ -594,6 +633,7 @@ Accessibility requirements:
 Use motion to reinforce hierarchy and feedback, not to decorate every element.
 
 Appropriate moments:
+
 - Screen transitions
 - Button press feedback
 - Set completion
@@ -610,6 +650,7 @@ Keep animations short and non-blocking. Respect reduced motion. Haptics must be 
 # 11. Implementation workflow — finish in one pass
 
 ## Phase A: inspect and baseline
+
 1. Inspect repository structure, package scripts, routing, components, state/data architecture, migrations, and tests.
 2. Identify all screens and existing features.
 3. Locate all persistence/sync/auth code.
@@ -620,6 +661,7 @@ Keep animations short and non-blocking. Respect reduced motion. Haptics must be 
 Do not stop here.
 
 ## Phase B: design foundation
+
 1. Establish coherent tokens for dark and light themes.
 2. Build/reuse shared primitives.
 3. Set typography, spacing, radii, surfaces, borders, and semantic colors.
@@ -627,7 +669,9 @@ Do not stop here.
 5. Verify theme switching and persistence.
 
 ## Phase C: core training journey
+
 Implement and polish in this order:
+
 1. Home
 2. Start/resume workout
 3. Active workout and set logging
@@ -637,6 +681,7 @@ Implement and polish in this order:
 7. Persistence/offline verification
 
 ## Phase D: review and progression
+
 1. Progress overview
 2. Exercise progression
 3. History list and details
@@ -646,6 +691,7 @@ Implement and polish in this order:
 7. Goals/body metrics and other existing secondary features
 
 ## Phase E: responsive and polish
+
 1. Audit every route/screen for consistent design.
 2. Audit dark and light themes.
 3. Audit mobile/tablet/desktop.
@@ -654,6 +700,7 @@ Implement and polish in this order:
 6. Remove placeholder UI and dead controls.
 
 ## Phase F: verify and fix
+
 Run available checks and test the app. Fix regressions before declaring completion. Do not stop at a successful compile.
 
 If a tool/browser/screenshot capability is available, use it to inspect the running application at real viewport sizes and compare it with the provided design image. If visual inspection is not available, still perform code-level and runtime verification and be explicit in the final summary about what was and was not visually inspected. Never claim visual QA you did not perform.
@@ -665,6 +712,7 @@ If a tool/browser/screenshot capability is available, use it to inspect the runn
 Use the repository's existing test tools. Add targeted tests for critical logic if practical. At minimum verify the following flows manually or through automated tests.
 
 ## Core workout journey
+
 - Launch app.
 - Home loads with real user data or a proper empty state.
 - Start an empty workout.
@@ -682,6 +730,7 @@ Use the repository's existing test tools. Add targeted tests for critical logic 
 - Reopen completed workout details.
 
 ## Preservation and calculations
+
 - Existing workout records still appear.
 - Existing templates still appear.
 - PR detection still works.
@@ -692,12 +741,14 @@ Use the repository's existing test tools. Add targeted tests for critical logic 
 - Export/backup still works.
 
 ## Gamification
+
 - Level is derived consistently from the intended source data.
 - Completion rewards are not duplicated by reopening results or retrying.
 - Achievements/streaks use real records.
 - Empty/locked states are coherent.
 
 ## Data and resilience
+
 - Local persistence survives reload.
 - Basic logging works without network access.
 - Sync resumes when online.
@@ -707,6 +758,7 @@ Use the repository's existing test tools. Add targeted tests for critical logic 
 - Sign-out or account switching does not leak data between users.
 
 ## UI
+
 - Dark theme on major screens.
 - Light theme on major screens.
 - Theme preference survives reload.
@@ -785,19 +837,23 @@ Do not claim that a screen is redesigned if only its colors changed. Do not clai
 The supplied images are complementary references with different purposes, not competing instructions.
 
 ## Reference A — Full design system showcase
+
 The wide `Fitness App Design System Showcase` image is the overall product-wide visual reference. Use it for the broad screen inventory, dark/light theme direction, Home, workout, rest timer, completion, Progress, History, Athlete Journey, Profile, and shared components such as cards, buttons, inputs, badges, charts, navigation, empty states, and toasts.
 
 This image does not fully specify every interaction or the newer persistent workout-duration timer. Do not assume it overrides the more recent, specific workout-screen and timer references.
 
 ## Reference B — Main active-workout screen
+
 The single-screen image showing `EXERCISE 1 OF 9`, `Upper A`, `Incline Dumbbell Press`, Previous/Suggested cards, set number, weight/reps cards, and the green Complete Set button is the specific reference for the current active-workout composition. Keep this visual structure while connecting every control to real functionality.
 
 ## Reference C — Timer component design board
+
 The separate timer-only image is the specific reference for the persistent workout-duration timer. Use its **top-left Default (Running) variant** as the primary design.
 
 Place it immediately below the active-workout header and above the exercise title. It should show a stopwatch icon, divider, `WORKOUT TIME`, live `HH:MM:SS`, green running indicator, subtle green border/glow, and rounded dark pill.
 
 ### Timer behavior is mandatory
+
 - Start when the workout session actually starts.
 - Derive elapsed duration from the persisted session start timestamp, accounting for explicit pause behavior only if the app supports it.
 - Continue while changing exercises, logging/editing sets, and running a rest timer.
@@ -809,6 +865,7 @@ Place it immediately below the active-workout header and above the exercise titl
 - Never hardcode the sample time from the reference.
 
 ## Reference priority
+
 1. Timer appearance and behavior: Reference C plus the timer requirements above.
 2. Active workout layout: Reference B.
 3. Overall screen system, shared components, and themes: Reference A.
@@ -821,6 +878,7 @@ Do not discard Reference A because it lacks the latest timer, and do not discard
 # 16. Final visual coverage audit
 
 Before declaring completion, inspect every existing route and screen and verify both visual and functional coverage. At minimum, audit the applicable equivalents of:
+
 - Splash / launch
 - Onboarding
 - Sign in / sign up / recovery
