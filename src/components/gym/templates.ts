@@ -174,8 +174,8 @@ export function sessionFromTemplate(template: Template): Session {
 }
 
 /**
- * Smartly suggests the next template to use based on least-recently-used (LRU) logic.
- * This creates a natural rotation (e.g. Push -> Pull -> Legs).
+ * Smartly suggests the next template to use based on the sequential order of templates.
+ * If you do template at index i, the next suggestion will be index i+1 (wrapping around).
  */
 export function getSmartSuggestedTemplate(
   templates: Template[],
@@ -184,40 +184,34 @@ export function getSmartSuggestedTemplate(
   if (templates.length === 0) return null;
   if (templates.length === 1) return templates[0] || null;
 
-  const lastUsed = new Map<string, number>();
-  for (const t of templates) {
-    lastUsed.set(t.id, 0);
-  }
+  let latestSessionTime = 0;
+  let latestTemplateIndex = -1;
 
   for (const session of sessions) {
-    if (session.templateId && lastUsed.has(session.templateId)) {
-      const current = lastUsed.get(session.templateId) || 0;
-      if (session.startedAt > current) {
-        lastUsed.set(session.templateId, session.startedAt);
-      }
-    } else if (session.templateName) {
-      const matched = templates.find(
+    if (!session.templateId && !session.templateName) continue;
+
+    let index = -1;
+    if (session.templateId) {
+      index = templates.findIndex((t) => t.id === session.templateId);
+    }
+    // Fallback to name matching if template ID isn't found
+    if (index === -1 && session.templateName) {
+      index = templates.findIndex(
         (t) => t.name.toLowerCase() === session.templateName?.toLowerCase(),
       );
-      if (matched) {
-        const current = lastUsed.get(matched.id) || 0;
-        if (session.startedAt > current) {
-          lastUsed.set(matched.id, session.startedAt);
-        }
-      }
+    }
+
+    if (index !== -1 && session.startedAt > latestSessionTime) {
+      latestSessionTime = session.startedAt;
+      latestTemplateIndex = index;
     }
   }
 
-  let oldestTemplate = templates[0];
-  let oldestTime = Infinity;
-
-  for (const t of templates) {
-    const time = lastUsed.get(t.id) || 0;
-    if (time < oldestTime) {
-      oldestTime = time;
-      oldestTemplate = t;
-    }
+  if (latestTemplateIndex !== -1) {
+    const nextIndex = (latestTemplateIndex + 1) % templates.length;
+    return templates[nextIndex] || templates[0] || null;
   }
 
-  return oldestTemplate || null;
+  // If no matching past session, just suggest the first template
+  return templates[0] || null;
 }

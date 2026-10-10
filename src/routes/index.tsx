@@ -217,14 +217,14 @@ function Home() {
           <Ring
             value={weeklyVolume ? 100 : 0}
             label="Volume"
-            detail={weeklyVolume ? format(weeklyVolume).replace(/\s/g, "") : "—"}
+            detail={format(weeklyVolume || 0).replace(/\s/g, "")}
             color="text-[#3B82F6]"
           />
           <Ring
             value={completed.length ? Math.min(100, (thisWeek.length / completed.length) * 100) : 0}
             label="Consistency"
             detail={
-              completed.length ? `${Math.round((thisWeek.length / completed.length) * 100)}%` : "—"
+              completed.length ? `${Math.round((thisWeek.length / completed.length) * 100)}%` : "0%"
             }
             color="text-[#3B82F6]"
           />
