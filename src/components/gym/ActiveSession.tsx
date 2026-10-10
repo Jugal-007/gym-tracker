@@ -21,7 +21,7 @@ import {
 import { useWorkoutSettings } from "@/hooks/useWorkoutSettings";
 import { createPortal } from "react-dom";
 
-/* ─── Single-digit rolling counter slot ─── */
+/* â”€â”€â”€ Single-digit rolling counter slot â”€â”€â”€ */
 function DigitSlot({ digit }: { digit: string }) {
   const prevRef = useRef(digit);
   const [animating, setAnimating] = useState(false);
@@ -340,8 +340,8 @@ export function ActiveSession({
 
       {/* Timer Pill */}
       <div className="flex justify-center mb-2 px-6">
-        <div className="flex items-center gap-4 bg-card/40 border border-green-500/20 rounded-[2rem] px-5 py-2 shadow-[0_4px_24px_-8px_rgba(34,197,94,0.15)] backdrop-blur-md">
-          <Timer className="h-6 w-6 text-[#22C55E]" strokeWidth={2.5} />
+        <div className="flex items-center gap-4 bg-card/40 border border-blue-500/20 rounded-[2rem] px-5 py-2 shadow-[0_4px_24px_-8px_rgba(59,130,246,0.15)] backdrop-blur-md">
+          <Timer className="h-6 w-6 text-[#3B82F6]" strokeWidth={2.5} />
           <div className="w-[1px] h-8 bg-border/50"></div>
           <div className="flex flex-col">
             <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold mb-0.5">Workout Time</span>
@@ -349,7 +349,7 @@ export function ActiveSession({
               <TimerDisplay ms={elapsed} className="text-[1.35rem]" />
             </div>
           </div>
-          <div className="h-2 w-2 rounded-full bg-[#22C55E] animate-pulse ml-2 shadow-[0_0_8px_rgba(34,197,94,0.8)]"></div>
+          <div className="h-2 w-2 rounded-full bg-[#3B82F6] animate-pulse ml-2 shadow-[0_0_8px_rgba(59,130,246,0.8)]"></div>
         </div>
       </div>
 
@@ -398,16 +398,16 @@ export function ActiveSession({
               Previous
             </span>
             <span className="font-bold text-foreground">
-              {record ? `${fmtWeight(record.bestWeight)} × ${record.bestWeightReps}` : "--"}
+              {record ? `${fmtWeight(record.bestWeight)} Ã— ${record.bestWeightReps}` : "--"}
             </span>
           </div>
           <div className="bg-card rounded-2xl p-4 flex flex-col items-center border border-border/50 shadow-sm">
             <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">
               Suggested
             </span>
-            <span className="font-bold text-green-600 dark:text-green-400">
+            <span className="font-bold text-blue-600 dark:text-blue-400">
               {activeExercise.targetWeight
-                ? `${fmtWeight(activeExercise.targetWeight)} × ${activeExercise.targetReps}`
+                ? `${fmtWeight(activeExercise.targetWeight)} Ã— ${activeExercise.targetReps}`
                 : "--"}
             </span>
           </div>
@@ -447,7 +447,7 @@ export function ActiveSession({
           <button
             onClick={handleCompleteSet}
             disabled={!inputWeight || !inputReps || isResting}
-            className="w-full mt-10 py-5 bg-[#22C55E] hover:bg-[#16A34A] text-[#052E16] font-black text-xl tracking-wide rounded-[2rem] shadow-[0_0_40px_rgba(34,197,94,0.3)] transition-all active:scale-[0.98] disabled:opacity-40 disabled:scale-100 disabled:shadow-none"
+            className="w-full mt-10 py-5 bg-[#3B82F6] hover:bg-[#2563EB] text-[#EFF6FF] font-black text-xl tracking-wide rounded-[2rem] shadow-[0_0_40px_rgba(59,130,246,0.3)] transition-all active:scale-[0.98] disabled:opacity-40 disabled:scale-100 disabled:shadow-none"
           >
             Complete Set
           </button>
@@ -459,7 +459,7 @@ export function ActiveSession({
                 key={set.id}
                 className={cn(
                   "h-1.5 rounded-full transition-all",
-                  set.completed ? "w-6 bg-[#22C55E]" : "w-1.5 bg-foreground/20",
+                  set.completed ? "w-6 bg-[#3B82F6]" : "w-1.5 bg-foreground/20",
                 )}
               />
             ))}
@@ -484,7 +484,7 @@ export function ActiveSession({
                     fill="transparent"
                   ></circle>
                   <circle
-                    className="text-[#22C55E] stroke-current transition-all duration-1000 ease-linear"
+                    className="text-[#3B82F6] stroke-current transition-all duration-1000 ease-linear"
                     strokeWidth="8"
                     strokeLinecap="round"
                     cx="50"

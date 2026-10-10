@@ -80,38 +80,35 @@ export function SessionHistory({ sessions, onDelete, onSaveTemplate }: SessionHi
           >
             <button
               onClick={() => setExpanded((prev) => ({ ...prev, [session.id]: !isExpanded }))}
-              className="flex w-full items-center justify-between px-4 py-4 text-left"
+              className="flex w-full items-center justify-between px-5 py-4 text-left"
               aria-expanded={isExpanded}
               aria-controls={`session-panel-${session.id}`}
             >
-              <div>
-                <p className="flex items-center gap-2 font-bold tracking-tight text-foreground">
-                  {format(new Date(session.startedAt), "EEEE, MMM d")}
-                  {prs > 0 && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-primary-foreground shadow-[0_0_10px_rgba(var(--color-primary),0.4)]">
-                      <Trophy className="h-3 w-3" />
-                      {prs} PR
-                    </span>
-                  )}
-                </p>
-                {session.templateName && (
-                  <p className="text-xs text-muted-foreground">{session.templateName}</p>
-                )}
-                <p className="text-xs text-muted-foreground">
-                  {format(new Date(session.startedAt), "h:mm a")} ·{" "}
-                  {duration > 0 ? formatDuration(duration) : "0s"}
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="text-right">
-                  <p className="text-sm font-black tracking-tighter text-foreground">
-                    {fmtWeight(volume)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {session.exercises.length} exercises · {sets} sets
+              <div className="flex items-center gap-4">
+                <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
+                  <Calendar className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="font-extrabold text-foreground">
+                      {session.templateName || format(new Date(session.startedAt), "EEEE, MMM d")}
+                    </p>
+                    {prs > 0 && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-[#3B82F6]/10 px-2 py-0.5 text-[10px] font-bold text-[#3B82F6]">
+                        <Trophy className="h-3 w-3" />
+                        +{prs} PRs
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-1 text-xs font-medium text-muted-foreground">
+                    {duration > 0 ? formatDuration(duration) : "0s"} <span className="opacity-50 mx-1">â€¢</span> {session.exercises.length} exercises
                   </p>
                 </div>
-                {/* Chevron with rotation animation */}
+              </div>
+              <div className="flex items-center gap-4">
+                <p className="text-sm font-black text-foreground">
+                  {fmtWeight(volume)}
+                </p>
                 <ChevronDown
                   className={cn(
                     "h-4 w-4 text-muted-foreground transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
@@ -150,7 +147,7 @@ export function SessionHistory({ sessions, onDelete, onSaveTemplate }: SessionHi
                               {exPr && <Trophy className="h-3.5 w-3.5" />}
                             </span>
                             <span className="text-muted-foreground">
-                              {exercise.sets.length} sets · {fmtWeight(exVolume)}
+                              {exercise.sets.length} sets Â· {fmtWeight(exVolume)}
                             </span>
                           </li>
                         );
@@ -168,7 +165,7 @@ export function SessionHistory({ sessions, onDelete, onSaveTemplate }: SessionHi
                           className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-semibold text-muted-foreground transition-all hover:bg-muted hover:text-foreground active:scale-95"
                         >
                           <LayoutTemplate className="h-3.5 w-3.5" />
-                          Save as routine
+                          Save as template
                         </button>
                       )}
                       <button

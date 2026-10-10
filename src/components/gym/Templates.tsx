@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { LayoutTemplate, Play, Plus, Trash2, X, Pencil, GripVertical, Sparkles, RotateCcw } from "lucide-react";
 import { DndContext, closestCenter, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
@@ -35,8 +35,10 @@ export function Templates({ templates, exerciseNames, sessions = [], onStart, on
   const [editing, setEditing] = useState<Template | null>(null);
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
 
-  const recoverable = useMemo(() => {
-    return recoverTemplatesFromSessions(sessions);
+  const [recoverable, setRecoverable] = useState<Template[]>([]);
+
+  useEffect(() => {
+    setRecoverable(recoverTemplatesFromSessions(sessions));
   }, [sessions]);
 
   function handleLoadStarters() {
@@ -99,7 +101,7 @@ export function Templates({ templates, exerciseNames, sessions = [], onStart, on
             <button
               onClick={handleRecover}
               className="inline-flex items-center gap-1 rounded-xl border border-primary/40 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition-all hover:bg-primary/20 active:scale-95"
-              title="Restore routines found in your workout history"
+              title="Restore templates found in your workout history"
             >
               <RotateCcw className="h-3.5 w-3.5" />
               Restore ({recoverable.length})
@@ -109,7 +111,7 @@ export function Templates({ templates, exerciseNames, sessions = [], onStart, on
             <button
               onClick={handleLoadStarters}
               className="inline-flex items-center gap-1 rounded-xl border border-border/60 bg-muted/40 px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-all hover:text-foreground active:scale-95"
-              title="Load Push / Pull / Legs starter routines"
+              title="Load Push / Pull / Legs starter templates"
             >
               <Sparkles className="h-3.5 w-3.5" />
               + Starters
@@ -136,14 +138,14 @@ export function Templates({ templates, exerciseNames, sessions = [], onStart, on
                 <div className="flex-1">
                   <h3 className="font-bold text-foreground">Restore from Workout History</h3>
                   <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-                    Found <strong className="text-foreground">{recoverable.length} routine{recoverable.length > 1 ? "s" : ""}</strong> from your previously logged workouts: {recoverable.map((r) => r.name).join(", ")}.
+                    Found <strong className="text-foreground">{recoverable.length} template{recoverable.length > 1 ? "s" : ""}</strong> from your previously logged workouts: {recoverable.map((r) => r.name).join(", ")}.
                   </p>
                   <button
                     onClick={handleRecover}
                     className="mt-3.5 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-primary-foreground shadow-sm hover:bg-primary/90 active:scale-95"
                   >
                     <RotateCcw className="h-3.5 w-3.5" />
-                    Restore {recoverable.length} Routine{recoverable.length > 1 ? "s" : ""}
+                    Restore {recoverable.length} Template{recoverable.length > 1 ? "s" : ""}
                   </button>
                 </div>
               </div>
@@ -157,7 +159,7 @@ export function Templates({ templates, exerciseNames, sessions = [], onStart, on
             <div>
               <h3 className="text-base font-bold text-foreground">No Templates Saved</h3>
               <p className="mt-1 text-xs text-muted-foreground max-w-sm mx-auto">
-                Save routines to start workouts in one tap, or load our pre-made Push/Pull/Legs templates to begin immediately.
+                Save templates to start workouts in one tap, or load our pre-made Push/Pull/Legs templates to begin immediately.
               </p>
             </div>
 
@@ -167,7 +169,7 @@ export function Templates({ templates, exerciseNames, sessions = [], onStart, on
                 className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-foreground px-5 py-3 text-xs font-bold text-background shadow-sm hover:bg-foreground/90 active:scale-95"
               >
                 <Sparkles className="h-4 w-4" />
-                Load Starter Routines (Push / Pull / Legs)
+                Load Starter Templates (Push / Pull / Legs)
               </button>
               <button
                 onClick={newTemplate}
@@ -205,7 +207,7 @@ export function Templates({ templates, exerciseNames, sessions = [], onStart, on
                 <button
                   onClick={() => setEditing(template)}
                   className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground transition-all hover:bg-muted/80 active:scale-95"
-                  aria-label="Edit routine"
+                  aria-label="Edit template"
                 >
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
@@ -213,14 +215,14 @@ export function Templates({ templates, exerciseNames, sessions = [], onStart, on
                   <AlertDialogTrigger asChild>
                     <button
                       className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-destructive/10 text-destructive transition-all hover:bg-destructive/20 active:scale-95"
-                      aria-label="Delete routine"
+                      aria-label="Delete template"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </AlertDialogTrigger>
                   <AlertDialogContent className="rounded-3xl border-border/20 bg-card backdrop-blur-[25px] sm:rounded-3xl">
                     <AlertDialogHeader>
-                      <AlertDialogTitle className="text-foreground">Delete routine?</AlertDialogTitle>
+                      <AlertDialogTitle className="text-foreground">Delete template?</AlertDialogTitle>
                       <AlertDialogDescription className="text-muted-foreground">
                         Are you sure you want to delete "{template.name}"? This action cannot be undone.
                       </AlertDialogDescription>
@@ -304,7 +306,7 @@ function TemplateEditor({ template, exerciseNames, onCancel, onSave }: TemplateE
     <div className="mx-auto max-w-xl space-y-4 animate-fade-in">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-          Edit routine
+          Edit template
         </h2>
         <button
           onClick={onCancel}
@@ -317,7 +319,7 @@ function TemplateEditor({ template, exerciseNames, onCancel, onSave }: TemplateE
 
       <div>
         <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          Routine name
+          Template name
         </label>
         <input
           value={name}
@@ -362,7 +364,7 @@ function TemplateEditor({ template, exerciseNames, onCancel, onSave }: TemplateE
         disabled={!canSave}
         className="w-full rounded-2xl bg-foreground px-6 py-4 text-base font-bold text-background transition-all hover:bg-foreground/90 hover:shadow-lg active:scale-95 disabled:opacity-40 disabled:active:scale-100"
       >
-        Save routine
+        Save template
       </button>
     </div>
   );

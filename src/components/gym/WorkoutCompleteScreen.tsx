@@ -49,15 +49,15 @@ export function WorkoutCompleteScreen({
           <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
             Workout Complete!
           </h1>
-          <h2 className="text-xl font-bold text-foreground mt-2">
+          <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500 mt-3">
             {session.templateName || "Custom Workout"}
           </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {minutes} min · {session.exercises.length} exercises · {format(volume)}
+          <p className="mt-2 text-sm font-medium text-muted-foreground">
+            {minutes} min <span className="opacity-50 mx-1">â€¢</span> {session.exercises.length} exercises <span className="opacity-50 mx-1">â€¢</span> {format(volume)}
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-4 mt-8">
           <div className="rounded-2xl border border-border/50 bg-card p-4">
             <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
               Volume
@@ -80,7 +80,7 @@ export function WorkoutCompleteScreen({
             <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
               XP Earned
             </p>
-            <p className="text-xl font-extrabold text-green-500">+{xpEarned} XP</p>
+            <p className="text-xl font-extrabold text-blue-500">+{xpEarned} XP</p>
           </div>
         </div>
 
@@ -88,16 +88,16 @@ export function WorkoutCompleteScreen({
           "Great work! You're 1 step closer to a stronger you."
         </p>
 
-        <div className="space-y-3 pt-4">
+        <div className="space-y-4 pt-6">
           <button
             onClick={onViewResults}
-            className="w-full rounded-2xl bg-blue-600 px-4 py-4 text-center font-bold text-white shadow-md transition-all hover:bg-blue-500 active:scale-95"
+            className="w-full rounded-full bg-[#3B82F6] px-4 py-4 text-center text-base font-black text-[#EFF6FF] shadow-[0_0_30px_rgba(59,130,246,0.2)] transition-all hover:bg-[#2563EB] active:scale-[0.98]"
           >
             View Results
           </button>
           <button
             onClick={onGoHome}
-            className="w-full rounded-2xl bg-transparent px-4 py-4 text-center font-bold text-foreground transition-all hover:bg-muted active:scale-95"
+            className="w-full rounded-full border-2 border-border/50 bg-transparent px-4 py-4 text-center text-base font-bold text-foreground transition-all hover:bg-muted active:scale-[0.98]"
           >
             Back to Home
           </button>

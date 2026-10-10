@@ -84,7 +84,7 @@ export function VolumePieChart({ sessions, templates = [] }: VolumePieChartProps
         </h3>
         {templates.length > 0 && (
           <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-            By routine
+            By template
           </span>
         )}
       </div>

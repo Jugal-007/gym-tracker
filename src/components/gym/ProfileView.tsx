@@ -197,7 +197,7 @@ export function ProfileView({ onSignOut }: ProfileViewProps) {
 
   return (
     <div className="mx-auto max-w-xl space-y-6 pb-8">
-      {/* ── Account Card ── */}
+      {/* â”€â”€ Account Card â”€â”€ */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -230,7 +230,7 @@ export function ProfileView({ onSignOut }: ProfileViewProps) {
         <AthleteJourney sessions={sessions} compact />
       </motion.div>
 
-      {/* ── Stats Summary ── */}
+      {/* â”€â”€ Stats Summary â”€â”€ */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -247,7 +247,7 @@ export function ProfileView({ onSignOut }: ProfileViewProps) {
         </div>
       </motion.div>
 
-      {/* ── Preferences ── */}
+      {/* â”€â”€ Preferences â”€â”€ */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -294,7 +294,7 @@ export function ProfileView({ onSignOut }: ProfileViewProps) {
                 onClick={() => handleWeeklyGoalChange(Math.max(1, weeklyGoal - 1))}
                 className="flex h-8 w-8 items-center justify-center rounded-xl bg-muted/60 text-lg font-bold text-foreground transition-colors hover:bg-muted active:scale-90"
               >
-                −
+                âˆ’
               </button>
               <span className="w-5 text-center text-base font-extrabold tabular-nums text-foreground">
                 {weeklyGoal}
@@ -310,7 +310,7 @@ export function ProfileView({ onSignOut }: ProfileViewProps) {
         </div>
       </motion.div>
 
-      {/* ── Workout Timers ── */}
+      {/* â”€â”€ Workout Timers â”€â”€ */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -331,7 +331,7 @@ export function ProfileView({ onSignOut }: ProfileViewProps) {
                 onClick={() => updateSettings({ warmupDuration: Math.max(0, warmupDuration - 15) })}
                 className="flex h-8 w-8 items-center justify-center rounded-xl bg-muted/60 text-lg font-bold text-foreground transition-colors hover:bg-muted active:scale-90"
               >
-                −
+                âˆ’
               </button>
               <span className="w-8 text-center text-base font-extrabold tabular-nums text-foreground">
                 {warmupDuration}
@@ -362,7 +362,7 @@ export function ProfileView({ onSignOut }: ProfileViewProps) {
                 }
                 className="flex h-8 w-8 items-center justify-center rounded-xl bg-muted/60 text-lg font-bold text-foreground transition-colors hover:bg-muted active:scale-90"
               >
-                −
+                âˆ’
               </button>
               <span className="w-8 text-center text-base font-extrabold tabular-nums text-foreground">
                 {restBetweenSets}
@@ -393,7 +393,7 @@ export function ProfileView({ onSignOut }: ProfileViewProps) {
                 }
                 className="flex h-8 w-8 items-center justify-center rounded-xl bg-muted/60 text-lg font-bold text-foreground transition-colors hover:bg-muted active:scale-90"
               >
-                −
+                âˆ’
               </button>
               <span className="w-8 text-center text-base font-extrabold tabular-nums text-foreground">
                 {restBetweenExercises}
@@ -411,7 +411,7 @@ export function ProfileView({ onSignOut }: ProfileViewProps) {
         </div>
       </motion.div>
 
-      {/* ── Data & Backup ── */}
+      {/* â”€â”€ Data & Backup â”€â”€ */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -445,7 +445,7 @@ export function ProfileView({ onSignOut }: ProfileViewProps) {
               ) : (
                 <CloudUpload className="h-4 w-4" />
               )}
-              {isSyncing ? "Uploading…" : "Upload to Cloud"}
+              {isSyncing ? "Uploadingâ€¦" : "Upload to Cloud"}
             </button>
             <AlertDialog>
               <AlertDialogTrigger asChild>
@@ -490,7 +490,7 @@ export function ProfileView({ onSignOut }: ProfileViewProps) {
               <div>
                 <p className="text-sm font-semibold text-foreground">Export Data</p>
                 <p className="text-xs text-muted-foreground">
-                  Download all sessions & routines as JSON
+                  Download all sessions & templates as JSON
                 </p>
               </div>
             </div>
@@ -501,10 +501,10 @@ export function ProfileView({ onSignOut }: ProfileViewProps) {
 
           {/* Backup indicator */}
           <div className="flex items-center gap-3 py-2">
-            <CheckCircle2 className="h-5 w-5 text-green-500" />
+            <CheckCircle2 className="h-5 w-5 text-blue-500" />
             <div>
               <p className="text-sm font-semibold text-foreground">
-                {sessions.length} sessions · {templates.length} routines
+                {sessions.length} sessions Â· {templates.length} templates
               </p>
               <p className="text-xs text-muted-foreground">Backed up to Supabase</p>
             </div>
@@ -512,7 +512,7 @@ export function ProfileView({ onSignOut }: ProfileViewProps) {
         </div>
       </motion.div>
 
-      {/* ── Danger Zone ── */}
+      {/* â”€â”€ Danger Zone â”€â”€ */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}

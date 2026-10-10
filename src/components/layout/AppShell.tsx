@@ -168,14 +168,14 @@ function TabNav({
               "relative z-10 flex flex-col items-center justify-center transition-colors duration-200 active:scale-95",
               isMobile ? "w-16 h-12 gap-1" : "px-4 py-2 rounded-full flex-row gap-2",
               isActive || isSpecialActive
-                ? "text-[#22C55E]"
+                ? "text-[#3B82F6]"
                 : "text-muted-foreground hover:text-foreground",
             )}
           >
-            <span className={cn(isActive || isSpecialActive ? "text-[#22C55E]" : "")}>{tab.icon}</span>
+            <span className={cn(isActive || isSpecialActive ? "text-[#3B82F6]" : "")}>{tab.icon}</span>
             <span
               className={cn(
-                isActive || isSpecialActive ? "text-[#22C55E]" : "",
+                isActive || isSpecialActive ? "text-[#3B82F6]" : "",
                 isMobile ? "text-[10px] font-medium tracking-wide" : "text-sm font-medium",
               )}
             >

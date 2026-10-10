@@ -5,6 +5,7 @@ import { flushSync } from "react-dom";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { buildRecords } from "@/components/gym/records";
 import { computeSessionVolume, loadWeeklyGoal } from "@/components/gym/storage";
+import { getSmartSuggestedTemplate } from "@/components/gym/templates";
 import { useGym } from "@/hooks/useGymStore";
 import { useWeightUnit } from "@/hooks/useWeightUnit";
 
@@ -79,7 +80,7 @@ function Home() {
   );
   const records = useMemo(() => buildRecords(completed), [completed]);
   const latestRecord = Object.values(records).sort((a, b) => b.bestWeight - a.bestWeight)[0];
-  const suggestedTemplate = templates[0];
+  const suggestedTemplate = useMemo(() => getSmartSuggestedTemplate(templates, sessions), [templates, sessions]);
   const name = user?.user_metadata?.["full_name"] || user?.email?.split("@")[0] || "Athlete";
 
   function beginEmpty() {
@@ -104,7 +105,7 @@ function Home() {
                 : "Good evening,"}
           </p>
           <h1 className="text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
-            {name} <span className="text-xl">👋</span>
+            {name} <span className="text-xl">ðŸ‘‹</span>
           </h1>
         </div>
         <Link
@@ -124,7 +125,7 @@ function Home() {
       <section className="relative overflow-hidden rounded-[2rem] border border-border/30 bg-card p-6 shadow-lg">
         {/* Abstract glowing background */}
         <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-fuchsia-500/10 blur-[80px]" />
-        <div className="absolute -left-10 bottom-0 h-40 w-40 rounded-full bg-green-500/10 blur-[60px]" />
+        <div className="absolute -left-10 bottom-0 h-40 w-40 rounded-full bg-blue-500/10 blur-[60px]" />
         
         <div className="relative z-10">
           <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
@@ -137,12 +138,12 @@ function Home() {
             {activeSession
               ? <><Activity className="h-4 w-4"/> {activeSession.exercises.length} exercises</>
               : suggestedTemplate
-                ? <><Dumbbell className="h-4 w-4"/> {suggestedTemplate.exercises.length} exercises <span className="opacity-50 mx-1">•</span> ~55 min</>
+                ? <><Dumbbell className="h-4 w-4"/> {suggestedTemplate.exercises.length} exercises <span className="opacity-50 mx-1">â€¢</span> ~55 min</>
                 : "Start with an exercise and make it yours."}
           </p>
           <button
             onClick={activeSession ? () => navigate({ to: "/workout/active" }) : beginTemplate}
-            className="mt-8 flex w-full items-center justify-center gap-2 rounded-full bg-[#22C55E] px-4 py-4 text-base font-black text-[#052E16] transition-transform active:scale-[0.98] shadow-[0_0_30px_rgba(34,197,94,0.2)] hover:bg-[#16A34A]"
+            className="mt-8 flex w-full items-center justify-center gap-2 rounded-full bg-[#3B82F6] px-4 py-4 text-base font-black text-[#EFF6FF] transition-transform active:scale-[0.98] shadow-[0_0_30px_rgba(59,130,246,0.2)] hover:bg-[#2563EB]"
           >
             {activeSession
               ? "Resume Workout"
@@ -163,19 +164,19 @@ function Home() {
             value={(thisWeek.length / weeklyGoal) * 100}
             label="Workouts"
             detail={`${thisWeek.length}/${weeklyGoal}`}
-            color="text-[#22C55E]"
+            color="text-[#3B82F6]"
           />
           <Ring
             value={weeklyVolume ? 100 : 0}
             label="Volume"
-            detail={weeklyVolume ? format(weeklyVolume).replace(/\s/g, "") : "—"}
+            detail={weeklyVolume ? format(weeklyVolume).replace(/\s/g, "") : "â€”"}
             color="text-amber-500"
           />
           <Ring
             value={completed.length ? Math.min(100, (thisWeek.length / completed.length) * 100) : 0}
             label="Consistency"
             detail={
-              completed.length ? `${Math.round((thisWeek.length / completed.length) * 100)}%` : "—"
+              completed.length ? `${Math.round((thisWeek.length / completed.length) * 100)}%` : "â€”"
             }
             color="text-cyan-500"
           />
@@ -198,7 +199,7 @@ function Home() {
                 <p className="mt-1 flex items-center gap-2 text-xs font-medium text-muted-foreground">
                   <CalendarDays className="h-3.5 w-3.5" /> 
                   {new Date(completed[0].startedAt).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}
-                  <span className="opacity-50">•</span>
+                  <span className="opacity-50">â€¢</span>
                   {completed[0].exercises.length} exercises
                 </p>
               </div>
@@ -208,7 +209,7 @@ function Home() {
             </div>
             <div className="mt-5 flex items-center gap-6">
               <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#22C55E]/10 text-[#22C55E]">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#3B82F6]/10 text-[#3B82F6]">
                   <Activity className="h-4 w-4" />
                 </div>
                 <span className="text-sm font-bold text-foreground">{format(computeSessionVolume(completed[0]))}</span>

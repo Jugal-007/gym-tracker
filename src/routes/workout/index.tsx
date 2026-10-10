@@ -3,7 +3,7 @@ import { Dumbbell, Play } from "lucide-react";
 import { useGym } from "@/hooks/useGymStore";
 import { Templates } from "@/components/gym/Templates.tsx";
 import { getExerciseNames } from "@/components/gym/storage";
-import { useMemo } from "react";
+import { useState, useEffect } from "react";
 
 import { flushSync } from "react-dom";
 import type { Template } from "@/components/gym/types";
@@ -24,7 +24,11 @@ function WorkoutHub() {
   } = useGym();
   const navigate = useNavigate();
 
-  const exerciseNames = useMemo(() => getExerciseNames(sessions, templates), [sessions, templates]);
+  const [exerciseNames, setExerciseNames] = useState<string[]>([]);
+
+  useEffect(() => {
+    setExerciseNames(getExerciseNames(sessions, templates));
+  }, [sessions, templates]);
 
   function handleStartEmpty() {
     flushSync(() => {

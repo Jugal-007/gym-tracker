@@ -59,7 +59,7 @@ export function emptyTemplateExercise(): TemplateExercise {
   };
 }
 
-/** Pre-configured standard starter routines for instant setup */
+/** Pre-configured standard starter templates for instant setup */
 export const STARTER_TEMPLATES: Template[] = [
   {
     id: "starter-push",
@@ -99,13 +99,13 @@ export const STARTER_TEMPLATES: Template[] = [
   },
 ];
 
-/** Recover routines from past workout sessions if templates were cleared or missing */
+/** Recover templates from past workout sessions if templates were cleared or missing */
 export function recoverTemplatesFromSessions(sessions: Session[]): Template[] {
   const map = new Map<string, Template>();
   const sorted = [...sessions].sort((a, b) => a.startedAt - b.startedAt);
   for (const session of sorted) {
     if (session.exercises.length === 0) continue;
-    const name = session.templateName?.trim() || (session.exercises[0]?.name ? `${session.exercises[0].name} Day` : "Custom Routine");
+    const name = session.templateName?.trim() || (session.exercises[0]?.name ? `${session.exercises[0].name} Day` : "Custom Template");
     map.set(name.toLowerCase(), templateFromSession(session, name));
   }
   return Array.from(map.values());
@@ -153,3 +153,46 @@ export function sessionFromTemplate(template: Template): Session {
   };
 }
 
+/** 
+ * Smartly suggests the next template to use based on least-recently-used (LRU) logic. 
+ * This creates a natural rotation (e.g. Push -> Pull -> Legs).
+ */
+export function getSmartSuggestedTemplate(templates: Template[], sessions: Session[]): Template | null {
+  if (templates.length === 0) return null;
+  if (templates.length === 1) return templates[0];
+
+  const lastUsed = new Map<string, number>();
+  for (const t of templates) {
+    lastUsed.set(t.id, 0);
+  }
+
+  for (const session of sessions) {
+    if (session.templateId && lastUsed.has(session.templateId)) {
+      const current = lastUsed.get(session.templateId) || 0;
+      if (session.startedAt > current) {
+        lastUsed.set(session.templateId, session.startedAt);
+      }
+    } else if (session.templateName) {
+      const matched = templates.find(t => t.name.toLowerCase() === session.templateName?.toLowerCase());
+      if (matched) {
+        const current = lastUsed.get(matched.id) || 0;
+        if (session.startedAt > current) {
+          lastUsed.set(matched.id, session.startedAt);
+        }
+      }
+    }
+  }
+
+  let oldestTemplate = templates[0];
+  let oldestTime = Infinity;
+
+  for (const t of templates) {
+    const time = lastUsed.get(t.id) || 0;
+    if (time < oldestTime) {
+      oldestTime = time;
+      oldestTemplate = t;
+    }
+  }
+
+  return oldestTemplate;
+}

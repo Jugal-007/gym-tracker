@@ -37,7 +37,7 @@ const axisProps = {
   axisLine: false,
 } as const;
 
-/* ─── Count-up hook ─── */
+/* â”€â”€â”€ Count-up hook â”€â”€â”€ */
 function useCountUp(target: number, duration = 450): number {
   const [current, setCurrent] = useState(0);
   const prevTarget = useRef(0);
@@ -471,10 +471,10 @@ export function StatsPanel({ sessions, templates = [] }: StatsPanelProps) {
             <Line
               type="monotone"
               dataKey="volume"
-              stroke="var(--foreground)"
+              stroke="#3B82F6"
               strokeWidth={2}
-              dot={{ r: 2.5, fill: "var(--foreground)" }}
-              activeDot={{ r: 4 }}
+              dot={{ r: 2.5, fill: "#3B82F6", strokeWidth: 0 }}
+              activeDot={{ r: 4, strokeWidth: 0 }}
               animationDuration={600}
             />
           </LineChart>
@@ -494,7 +494,7 @@ export function StatsPanel({ sessions, templates = [] }: StatsPanelProps) {
               />
               <Bar
                 dataKey="duration"
-                fill="var(--foreground)"
+                fill="#3B82F6"
                 radius={[4, 4, 0, 0]}
                 animationDuration={600}
               />
@@ -515,7 +515,7 @@ export function StatsPanel({ sessions, templates = [] }: StatsPanelProps) {
             />
             <Bar
               dataKey="sessions"
-              fill="var(--foreground)"
+              fill="#3B82F6"
               radius={[4, 4, 0, 0]}
               animationDuration={600}
             />
@@ -553,9 +553,9 @@ export function StatsPanel({ sessions, templates = [] }: StatsPanelProps) {
                 type="monotone"
                 dataKey="e1rm"
                 name="Est. 1RM"
-                stroke="var(--foreground)"
+                stroke="#3B82F6"
                 strokeWidth={2}
-                dot={{ r: 2.5, fill: "var(--foreground)" }}
+                dot={{ r: 2.5, fill: "#3B82F6", strokeWidth: 0 }}
                 animationDuration={600}
               />
               <Line
@@ -585,7 +585,7 @@ export function StatsPanel({ sessions, templates = [] }: StatsPanelProps) {
               <span className="truncate pr-2 text-sm font-medium text-foreground">{record.name}</span>
               <span className="shrink-0 text-right text-xs text-muted-foreground">
                 <span className="block font-mono text-sm text-foreground">
-                  {fmtWeight(record.bestWeight)} × {record.bestWeightReps}
+                  {fmtWeight(record.bestWeight)} Ã— {record.bestWeightReps}
                 </span>
                 est. 1RM {fmtWeight(Math.round(record.bestE1rm))}
               </span>
